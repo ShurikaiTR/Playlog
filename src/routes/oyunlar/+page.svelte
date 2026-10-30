@@ -2,104 +2,73 @@
 	import { goto } from '$app/navigation';
 	import GameCard from '#lib/components/game-card.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Slider } from '#lib/components/ui/slider/index.js';
+	import { Switch } from '#lib/components/ui/switch/index.js';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import { sorts } from '#lib/games.js';
 	import { cn } from '#lib/utils.js';
 	import ArrowUpDownIcon from '@lucide/svelte/icons/arrow-up-down';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-	import SearchIcon from '@lucide/svelte/icons/search';
 	import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
 	import SearchXIcon from '@lucide/svelte/icons/search-x';
 	import XIcon from '@lucide/svelte/icons/x';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
 	import { MediaQuery } from 'svelte/reactivity';
+	import type { Snippet } from 'svelte';
 
 	let { data } = $props();
 
-	type Key = 'platform' | 'mod' | 'tur' | 'tema' | 'sure' | 'yil' | 'yas' | 'puan';
-	const playtimeHints: Record<string, string> = {
-		Kısa: 'Kısa · 10 saate kadar',
-		Orta: 'Orta · 10–30 saat',
-		Uzun: 'Uzun · 30+ saat'
-	};
-	const groups: {
-		key: Key;
-		label: string;
-		single?: boolean;
-		format?: (value: string) => string;
-	}[] = [
+	type ListKey = 'platform' | 'tur' | 'mod';
+	type Filters = typeof data.filters;
+	const lists: { key: ListKey; label: string }[] = [
 		{ key: 'platform', label: 'Platform' },
-		{ key: 'mod', label: 'Oyun modu' },
-		{ key: 'tur', label: 'Türler' },
-		{ key: 'tema', label: 'Tema' },
-		{ key: 'sure', label: 'Oynama süresi', format: (value) => playtimeHints[value] },
-		{ key: 'yil', label: 'Çıkış yılı' },
-		{ key: 'yas', label: 'Yaş sınırı' },
-		{ key: 'puan', label: 'En düşük puan', single: true, format: (value) => `${value}+` }
+		{ key: 'tur', label: 'Tür' },
+		{ key: 'mod', label: 'Oyun modu' }
 	];
-	const none: Record<Key, string[]> = {
-		platform: [],
-		mod: [],
-		tur: [],
-		tema: [],
-		sure: [],
-		yil: [],
-		yas: [],
-		puan: []
-	};
 
-	function update(patch: Partial<Record<Key, string[]>> & { q?: string; sirala?: string }) {
+	function update(patch: Partial<Filters> & { sirala?: string }) {
+		const next = { ...data.filters, ...patch };
 		const params = new URLSearchParams();
-		const q = patch.q ?? data.q;
-		if (q) params.set('q', q);
-		for (const { key } of groups)
-			for (const value of patch[key] ?? data.filters[key]) params.append(key, value);
+		for (const { key } of lists) for (const value of next[key]) params.append(key, value);
+		if (next.yilmin !== data.minYear) params.set('yilmin', String(next.yilmin));
+		if (next.yilmax !== data.maxYear) params.set('yilmax', String(next.yilmax));
+		if (next.yakinda) params.set('yakinda', '1');
+		if (next.puan > 0) params.set('puan', String(next.puan));
 		const sirala = patch.sirala ?? data.sort;
 		if (sirala !== 'populer') params.set('sirala', sirala);
 		const search = params.toString();
 		goto(search ? `?${search}` : '?', { replace: true, reset: false });
 	}
 
-	function toggle(key: Key, value: string, single = false) {
+	function toggle(key: ListKey, value: string) {
 		const current = data.filters[key];
 		update({
-			[key]: current.includes(value)
-				? current.filter((v) => v !== value)
-				: single
-					? [value]
-					: [...current, value]
+			[key]: current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
 		});
 	}
 
-	// The search box is local state that follows the address (back button) and writes to it after a pause.
-	let query = $state('');
-	$effect(() => {
-		query = data.q;
-	});
-	let timer: ReturnType<typeof setTimeout>;
-	function onInput() {
-		clearTimeout(timer);
-		timer = setTimeout(() => update({ q: query.trim() }), 250);
-	}
-
-	const chosen = $derived(
-		groups.flatMap((group) =>
-			data.filters[group.key].map((value) => ({
-				key: group.key,
-				value,
-				label: group.format?.(value) ?? value,
-				group: group.label
-			}))
-		)
+	const yearsChanged = $derived(
+		data.filters.yilmin !== data.minYear || data.filters.yilmax !== data.maxYear
 	);
-	const filtered = $derived(chosen.length > 0 || Boolean(data.q));
-	const clearAll = () => {
-		query = '';
-		update({ ...none, q: '' });
-	};
+	const chosen = $derived([
+		...lists.flatMap(({ key, label }) =>
+			data.filters[key].map((value) => ({ id: key + value, label: value, group: label, remove: () => toggle(key, value) }))
+		),
+		...(yearsChanged
+			? [{ id: 'yil', label: `${data.filters.yilmin}–${data.filters.yilmax}`, group: 'Çıkış yılı', remove: () => update({ yilmin: data.minYear, yilmax: data.maxYear }) }]
+			: []),
+		...(data.filters.yakinda
+			? [{ id: 'yakinda', label: 'Yakında çıkacaklar', group: 'Çıkış yılı', remove: () => update({ yakinda: false }) }]
+			: []),
+		...(data.filters.puan > 0
+			? [{ id: 'puan', label: `Puan ${data.filters.puan}+`, group: 'Topluluk puanı', remove: () => update({ puan: 0 }) }]
+			: [])
+	]);
+	const filtered = $derived(chosen.length > 0);
+	const clearAll = () =>
+		update({ platform: [], tur: [], mod: [], yilmin: data.minYear, yilmax: data.maxYear, yakinda: false, puan: 0 });
 
 	const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
 	// Each card shows its first genre and score under the title.
@@ -108,17 +77,11 @@
 	);
 	const sortLabel = $derived(sorts.find((sort) => sort.key === data.sort)?.label ?? '');
 
-	// Only Platform starts open; the other sections unfold on demand.
-	let openGroups = $state<Record<Key, boolean>>({
-		platform: true,
-		mod: false,
-		tur: false,
-		tema: false,
-		sure: false,
-		yil: false,
-		yas: false,
-		puan: false
-	});
+	// Platform and Tür start open; the rest unfold on demand.
+	let openGroups = $state<Record<string, boolean>>({ platform: true, tur: true });
+	// Slider values while dragging; the address updates on release.
+	let years = $derived([data.filters.yilmin, data.filters.yilmax]);
+	let puan = $derived(data.filters.puan);
 
 	const optionClass =
 		'focus-visible:ring-ring/50 inline-flex min-h-9 cursor-pointer items-center border px-3.5 text-[0.8125rem] font-medium outline-none focus-visible:ring-[3px]';
@@ -128,58 +91,113 @@
 	<title>Tüm oyunlar | Playlog</title>
 	<meta
 		name="description"
-		content="Playlog'daki tüm oyunlara göz at: ada, platforma, türe, temaya ve puana göre ara, süz ve sırala."
+		content="Playlog'daki tüm oyunlara göz at: platforma, türe, temaya ve puana göre süz ve sırala."
 	/>
 </svelte:head>
 
-{#snippet filterSections()}
-	<div class="divide-y border-y">
-		{#each groups as group (group.key)}
-			{@const picked = data.filters[group.key]}
-			<details
-				class="group/section"
-				open={openGroups[group.key]}
-				ontoggle={(event) => (openGroups[group.key] = event.currentTarget.open)}
-			>
-				<summary
-					class="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 outline-none marker:hidden hover:bg-muted/50 focus-visible:bg-muted/50 [&::-webkit-details-marker]:hidden"
+{#snippet section(id: string, label: string, count: number, body: Snippet)}
+	<details
+		class="group/section"
+		open={openGroups[id]}
+		ontoggle={(event) => (openGroups[id] = event.currentTarget.open)}
+	>
+		<summary
+			class="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 outline-none marker:hidden hover:bg-muted/50 focus-visible:bg-muted/50 [&::-webkit-details-marker]:hidden"
+		>
+			<span class="text-sm font-semibold text-primary">{label}</span>
+			{#if count > 0}
+				<span
+					class="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground tabular-nums"
 				>
-					<span class="text-sm font-semibold text-primary">{group.label}</span>
-					{#if picked.length > 0}
-						<span
-							class="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground tabular-nums"
-						>
-							{picked.length}
-						</span>
-					{/if}
-					<ChevronDownIcon
-						class="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-open/section:rotate-180 motion-reduce:transition-none"
-						aria-hidden="true"
-					/>
-				</summary>
-				<div class="flex flex-wrap gap-2 px-4 pt-1 pb-4">
-					{#each data.options[group.key] as option (option)}
-						{@const on = picked.includes(option)}
-						<button
-							type="button"
-							data-slot="choice"
-							aria-pressed={on}
-							onclick={() => toggle(group.key, option, group.single)}
-							class={cn(
-								optionClass,
-								on
-									? 'border-transparent bg-primary text-primary-foreground'
-									: 'text-primary hover:bg-muted'
-							)}
-						>
-							{group.format?.(option) ?? option}
-						</button>
-					{/each}
-				</div>
-			</details>
+					{count}
+				</span>
+			{/if}
+			<ChevronDownIcon
+				class="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-open/section:rotate-180 motion-reduce:transition-none"
+				aria-hidden="true"
+			/>
+		</summary>
+		<div class="px-4 pt-1 pb-4">{@render body()}</div>
+	</details>
+{/snippet}
+
+{#snippet chips(key: ListKey)}
+	<div class="flex flex-wrap gap-2">
+		{#each data.options[key] as option (option)}
+			{@const on = data.filters[key].includes(option)}
+			<button
+				type="button"
+				data-slot="choice"
+				aria-pressed={on}
+				onclick={() => toggle(key, option)}
+				class={cn(
+					optionClass,
+					on ? 'border-transparent bg-primary text-primary-foreground' : 'text-primary hover:bg-muted'
+				)}
+			>
+				{option}
+			</button>
 		{/each}
 	</div>
 {/snippet}
+
+{#snippet platformBody()}{@render chips('platform')}{/snippet}
+{#snippet genreBody()}{@render chips('tur')}{/snippet}
+{#snippet modeBody()}{@render chips('mod')}{/snippet}
+
+{#snippet yearBody()}
+	<div class="flex flex-col gap-4">
+		<div class="flex flex-col gap-3">
+			<div class="flex justify-between text-[0.8125rem] font-medium text-primary tabular-nums">
+				<span>{years[0]}</span><span>{years[1]}</span>
+			</div>
+			<Slider
+				type="multiple"
+				bind:value={years}
+				min={data.minYear}
+				max={data.maxYear}
+				step={1}
+				onValueCommit={([from, to]) => update({ yilmin: from, yilmax: to })}
+				aria-label="Çıkış yılı aralığı"
+			/>
+		</div>
+		<label class="flex min-h-9 cursor-pointer items-center justify-between gap-3 text-sm text-primary">
+			Yakında çıkacaklar
+			<Switch
+				checked={data.filters.yakinda}
+				onCheckedChange={(checked) => update({ yakinda: checked })}
+			/>
+		</label>
+	</div>
+{/snippet}
+
+{#snippet scoreBody()}
+	<div class="flex flex-col gap-3">
+		<div class="flex justify-between text-[0.8125rem] text-muted-foreground">
+			<span>En az</span><span class="font-medium text-primary tabular-nums">{puan}</span>
+		</div>
+		<Slider
+			type="single"
+			bind:value={puan}
+			min={0}
+			max={10}
+			step={0.5}
+			onValueCommit={(value) => update({ puan: value })}
+			aria-label="En düşük topluluk puanı"
+		/>
+	</div>
+{/snippet}
+
+{#snippet filterSections()}
+	<div class="divide-y border-y">
+		{@render section('platform', 'Platform', data.filters.platform.length, platformBody)}
+		{@render section('tur', 'Tür', data.filters.tur.length, genreBody)}
+		{@render section('yil', 'Çıkış yılı', (yearsChanged ? 1 : 0) + (data.filters.yakinda ? 1 : 0), yearBody)}
+		{@render section('puan', 'Topluluk puanı', data.filters.puan > 0 ? 1 : 0, scoreBody)}
+		{@render section('mod', 'Oyun modu', data.filters.mod.length, modeBody)}
+	</div>
+{/snippet}
+
 
 <div lang="tr" class="min-w-0 px-4 pb-20 md:px-8 md:pb-24">
 	<header class="pt-2 pb-6 md:pt-4">
@@ -193,139 +211,96 @@
 		</p>
 	</header>
 
-	<!-- One glass toolbar that follows the scroll: search, filters, order and a rail of quick genre chips. -->
-	<div
-		class="sticky top-3 z-20 rounded-3xl bg-background/80 p-2 shadow-sm ring-1 ring-black/8 backdrop-blur-xl dark:ring-white/10"
-	>
-		<div class="flex items-center gap-2">
-			<div class="relative min-w-0 flex-1">
-				<SearchIcon
-					class="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
-					aria-hidden="true"
-				/>
-				<Input
-					type="search"
-					bind:value={query}
-					oninput={onInput}
-					placeholder="Oyun veya geliştirici ara"
-					aria-label="Oyun veya geliştirici ara"
-					autocomplete="off"
-					class="h-11 rounded-full border-transparent bg-muted/60 pr-4 pl-11 text-[0.9375rem]"
-				/>
-			</div>
-
-			<Sheet.Root>
-				<Sheet.Trigger>
-					{#snippet child({ props })}
-						<Button
-							{...props}
-							variant="outline"
-							size="lg"
-							class="h-11 shrink-0 px-4 text-[0.9375rem]"
-						>
-							<SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
-							<span class="max-sm:sr-only">Filtrele</span>
-							{#if chosen.length > 0}
-								<span
-									class="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground tabular-nums"
-								>
-									{chosen.length}
-								</span>
-							{/if}
-						</Button>
-					{/snippet}
-				</Sheet.Trigger>
-
-				<Sheet.Content side="right" class="gap-0 p-0 data-[side=right]:w-[88%]">
-					<Sheet.Header class="pr-12">
-						<Sheet.Title class="text-base font-semibold">Filtrele</Sheet.Title>
-						<Sheet.Description>Oyunları süz.</Sheet.Description>
-					</Sheet.Header>
-					<div class="min-h-0 flex-1 overflow-y-auto">{@render filterSections()}</div>
-					<Sheet.Footer class="flex-row gap-2 border-t">
-						<Button
-							variant="ghost"
-							size="lg"
-							class="h-11 px-5 text-[0.9375rem]"
-							disabled={chosen.length === 0}
-							onclick={() => update(none)}>Temizle</Button
-						>
-						<Sheet.Close>
-							{#snippet child({ props })}
-								<Button {...props} size="lg" class="h-11 flex-1 px-5 text-[0.9375rem]"
-									>{data.games.length} oyunu göster</Button
-								>
-							{/snippet}
-						</Sheet.Close>
-					</Sheet.Footer>
-				</Sheet.Content>
-			</Sheet.Root>
-
-			<DropdownMenu.Root>
-				<DropdownMenu.Trigger>
-					{#snippet child({ props })}
-						<Button
-							{...props}
-							variant="outline"
-							size="lg"
-							class="h-11 shrink-0 px-4 text-[0.9375rem]"
-						>
-							<ArrowUpDownIcon data-icon="inline-start" aria-hidden="true" />
-							<span class="max-sm:sr-only">Sırala:</span>
-							{sortLabel}
-						</Button>
-					{/snippet}
-				</DropdownMenu.Trigger>
-				<DropdownMenu.Content align="end" sideOffset={8} class="w-44 p-2">
-					<DropdownMenu.RadioGroup
-						value={data.sort}
-						onValueChange={(value) => update({ sirala: value })}
+	<div class="flex items-center justify-end gap-2">
+		<Sheet.Root>
+			<Sheet.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="outline"
+						size="lg"
+						class="h-11 shrink-0 px-4 text-[0.9375rem]"
 					>
-						{#each sorts as sort (sort.key)}
-							<DropdownMenu.RadioItem value={sort.key} class="h-9 rounded-xl px-2 font-medium"
-								>{sort.label}</DropdownMenu.RadioItem
+						<SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
+						<span class="max-sm:sr-only">Filtrele</span>
+						{#if chosen.length > 0}
+							<span
+								class="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground tabular-nums"
 							>
-						{/each}
-					</DropdownMenu.RadioGroup>
-				</DropdownMenu.Content>
-			</DropdownMenu.Root>
-		</div>
+								{chosen.length}
+							</span>
+						{/if}
+					</Button>
+				{/snippet}
+			</Sheet.Trigger>
 
-		<div
-			class="mt-2 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-1 pb-1 [&::-webkit-scrollbar]:hidden"
-			role="group"
-			aria-label="Türler"
-		>
-			{#each data.options.tur as genre (genre)}
-				{@const on = data.filters.tur.includes(genre)}
-				<button
-					type="button"
-					data-slot="choice"
-					aria-pressed={on}
-					onclick={() => toggle('tur', genre)}
-					class={cn(
-						'inline-flex min-h-9 shrink-0 cursor-pointer items-center px-3.5 text-[0.8125rem] font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-						on ? 'bg-primary text-primary-foreground' : 'text-primary hover:bg-muted'
-					)}
+			<Sheet.Content side="right" class="gap-0 p-0 data-[side=right]:w-[88%]">
+				<Sheet.Header class="pr-12">
+					<Sheet.Title class="text-base font-semibold">Filtrele</Sheet.Title>
+					<Sheet.Description>Oyunları süz.</Sheet.Description>
+				</Sheet.Header>
+				<div class="min-h-0 flex-1 overflow-y-auto">{@render filterSections()}</div>
+				<Sheet.Footer class="flex-row gap-2 border-t">
+					<Button
+						variant="ghost"
+						size="lg"
+						class="h-11 px-5 text-[0.9375rem]"
+						disabled={chosen.length === 0}
+						onclick={clearAll}>Temizle</Button
+					>
+					<Sheet.Close>
+						{#snippet child({ props })}
+							<Button {...props} size="lg" class="h-11 flex-1 px-5 text-[0.9375rem]"
+								>{data.games.length} oyunu göster</Button
+							>
+						{/snippet}
+					</Sheet.Close>
+				</Sheet.Footer>
+			</Sheet.Content>
+		</Sheet.Root>
+
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="outline"
+						size="lg"
+						class="h-11 shrink-0 px-4 text-[0.9375rem]"
+					>
+						<ArrowUpDownIcon data-icon="inline-start" aria-hidden="true" />
+						<span class="max-sm:sr-only">Sırala:</span>
+						{sortLabel}
+					</Button>
+				{/snippet}
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content align="end" sideOffset={8} class="w-44 p-2">
+				<DropdownMenu.RadioGroup
+					value={data.sort}
+					onValueChange={(value) => update({ sirala: value })}
 				>
-					{genre}
-				</button>
-			{/each}
-		</div>
+					{#each sorts as sort (sort.key)}
+						<DropdownMenu.RadioItem value={sort.key} class="h-9 rounded-xl px-2 font-medium"
+							>{sort.label}</DropdownMenu.RadioItem
+						>
+					{/each}
+				</DropdownMenu.RadioGroup>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
 	</div>
 
 	{#if filtered}
 		<ul class="mt-4 flex flex-wrap items-center gap-2" aria-label="Seçili filtreler">
-			{#each chosen as item (item.key + item.value)}
+			{#each chosen as item (item.id)}
 				<li>
 					<button
 						type="button"
 						data-slot="choice"
-						onclick={() => toggle(item.key, item.value)}
+						onclick={item.remove}
 						aria-label="{item.group}: {item.label} filtresini kaldır"
 						class="inline-flex min-h-9 cursor-pointer items-center gap-1.5 bg-muted pr-2.5 pl-3.5 text-[0.8125rem] font-medium text-primary outline-none hover:bg-muted/70 focus-visible:ring-[3px] focus-visible:ring-ring/50"
 					>
-						{item.key === 'puan' ? `Puan ${item.label}` : item.label}
+						{item.label}
 						<XIcon class="size-3.5" aria-hidden="true" />
 					</button>
 				</li>
@@ -358,8 +333,8 @@
 			>
 				<SearchXIcon class="size-6" aria-hidden="true" />
 			</span>
-			<p class="text-[0.9375rem] font-medium text-primary">Aramana uyan oyun bulamadık</p>
-			<p class="text-sm text-muted-foreground">Başka bir ad dene ya da birkaç filtreyi kaldır.</p>
+			<p class="text-[0.9375rem] font-medium text-primary">Bu filtrelere uyan oyun bulamadık</p>
+			<p class="text-sm text-muted-foreground">Birkaç filtreyi kaldırmayı dene.</p>
 			<Button variant="outline" size="lg" class="mt-1 h-11 px-5" onclick={clearAll}
 				>Filtreleri temizle</Button
 			>

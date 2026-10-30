@@ -62,6 +62,8 @@ export type GameDetail = Game & {
 	themes: string[];
 	// YouTube video id of the trailer.
 	trailer?: string;
+	// Screenshot urls; the detail page falls back to placeholders when empty.
+	screenshots?: string[];
 	// Transparent title logo, shown instead of the title text over the trailer.
 	logo?: string;
 };
