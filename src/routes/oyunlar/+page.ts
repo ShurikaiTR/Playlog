@@ -4,6 +4,8 @@ import type { PageLoad } from "./$types";
 const platformOptions = ["PC", "PlayStation", "Xbox", "Switch", "Mobil"];
 const genreOptions = ["Aksiyon", "Macera", "RPG", "Strateji", "Nişancı", "Simülasyon", "Spor", "Yarış", "Bulmaca", "Korku", "Platform", "Dövüş"];
 const modeOptions = ["Tek oyunculu", "Çok oyunculu", "Co-op"];
+// The genres the catalog really has also work in the address (the Türler page links to them), even when the drawer does not list them.
+const knownGenres = [...new Set([...genreOptions, ...allGameDetails.flatMap((g) => g.genres)])];
 const minYear = 1990;
 const maxYear = new Date().getFullYear();
 const today = new Date().toISOString().slice(0, 10);
@@ -19,7 +21,7 @@ export const load: PageLoad = ({ url }) => {
 	};
 	const filters = {
 		platform: pick("platform", platformOptions),
-		tur: pick("tur", genreOptions),
+		tur: pick("tur", knownGenres),
 		mod: pick("mod", modeOptions),
 		yilmin: number("yilmin", minYear, maxYear, minYear),
 		yilmax: number("yilmax", minYear, maxYear, maxYear),

@@ -2,10 +2,11 @@
 	import * as Avatar from "#lib/components/ui/avatar/index.js";
 	import * as Card from "#lib/components/ui/card/index.js";
 	import * as Dialog from "#lib/components/ui/dialog/index.js";
+	import { AspectRatio } from "#lib/components/ui/aspect-ratio/index.js";
 	import { Button } from "#lib/components/ui/button/index.js";
+	import * as Item from "#lib/components/ui/item/index.js";
 	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
-	import { Separator } from "#lib/components/ui/separator/index.js";
-	import { listHref, userLists } from "#lib/user-lists.svelte.js";
+	import { listHref, ownLists } from "#lib/user-lists.svelte.js";
 	import ClockIcon from "@lucide/svelte/icons/clock-3";
 	import GamepadIcon from "@lucide/svelte/icons/gamepad-2";
 	import HeartIcon from "@lucide/svelte/icons/heart";
@@ -36,7 +37,7 @@
 	// The owner sees their live lists (same data as the list pages); visitors see the profile's sample lists.
 	const lists = $derived(
 		data.isOwner
-			? userLists.map((list) => ({
+			? ownLists().map((list) => ({
 					id: list.id,
 					kind: list.kind === "play_later" ? ("play_later" as const) : list.kind,
 					name: list.name,
@@ -79,11 +80,13 @@
 			<div class="flex shrink-0 flex-wrap items-center gap-2 pb-1">
 				{#each connections as connection (connection.key)}
 					<Dialog.Root>
-						<Dialog.Trigger
-							class="bg-background/70 hover:bg-muted focus-visible:ring-ring/50 flex cursor-pointer flex-col items-start rounded-xl border px-4 py-2 text-left backdrop-blur-sm transition-colors outline-none focus-visible:ring-3"
-						>
-							<span class="text-lg leading-tight font-semibold tabular-nums">{connection.people.length}</span>
-							<span class="text-muted-foreground text-xs">{connection.label}</span>
+						<Dialog.Trigger>
+							{#snippet child({ props })}
+								<Button {...props} variant="outline" class="bg-background/70 h-auto cursor-pointer flex-col items-start gap-0 rounded-xl px-4 py-2 text-left backdrop-blur-sm">
+									<span class="text-lg leading-tight font-semibold tabular-nums">{connection.people.length}</span>
+									<span class="text-muted-foreground text-xs font-normal">{connection.label}</span>
+								</Button>
+							{/snippet}
 						</Dialog.Trigger>
 						<Dialog.Content class="gap-5 sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
 							<Dialog.Header class="text-left">
@@ -94,30 +97,36 @@
 								<Dialog.Description>{connection.description}</Dialog.Description>
 							</Dialog.Header>
 							<ScrollArea class="[&>[data-slot=scroll-area-viewport]]:max-h-[min(24rem,60dvh)]">
-								<ul>
-									{#each connection.people as person, index (person.username)}
-										{#if index > 0}<Separator class="my-1" />{/if}
-										<li class="flex items-center gap-3 py-2">
+								{#if connection.people.length}
+									<Item.Group class="gap-0">
+										{#each connection.people as person, index (person.username)}
+											{#if index > 0}<Item.Separator class="my-0" />{/if}
 											{#snippet row()}
-												<Avatar.Root class="size-10 shrink-0">
-													{#if person.image}<Avatar.Image src={person.image} alt="" />{/if}
-													<Avatar.Fallback class="bg-foreground text-background text-xs font-semibold">{initial(person.name)}</Avatar.Fallback>
-												</Avatar.Root>
-												<span class="min-w-0">
-													<span class="text-primary block truncate text-sm font-medium">{person.name}</span>
-													<span class="text-muted-foreground block truncate text-xs">@{person.username}</span>
-												</span>
+												<Item.Media>
+													<Avatar.Root class="size-10">
+														{#if person.image}<Avatar.Image src={person.image} alt="" />{/if}
+														<Avatar.Fallback class="bg-foreground text-background text-xs font-semibold">{initial(person.name)}</Avatar.Fallback>
+													</Avatar.Root>
+												</Item.Media>
+												<Item.Content>
+													<Item.Title>{person.name}</Item.Title>
+													<Item.Description>@{person.username}</Item.Description>
+												</Item.Content>
 											{/snippet}
 											{#if data.linkable.includes(person.username)}
-												<a href="/profil/{person.username}" class="focus-visible:ring-ring/50 flex min-w-0 flex-1 items-center gap-3 rounded-lg outline-none focus-visible:ring-3">{@render row()}</a>
+												<Item.Root size="xs">
+													{#snippet child({ props })}
+														<a {...props} href="/profil/{person.username}">{@render row()}</a>
+													{/snippet}
+												</Item.Root>
 											{:else}
-												<div class="flex min-w-0 flex-1 items-center gap-3">{@render row()}</div>
+												<Item.Root size="xs">{@render row()}</Item.Root>
 											{/if}
-										</li>
-									{:else}
-										<li class="text-muted-foreground py-4 text-sm">{connection.empty}</li>
-									{/each}
-								</ul>
+										{/each}
+									</Item.Group>
+								{:else}
+									<p class="text-muted-foreground py-4 text-sm">{connection.empty}</p>
+								{/if}
 							</ScrollArea>
 						</Dialog.Content>
 					</Dialog.Root>
@@ -147,18 +156,20 @@
 				{#each lists as list (list.id)}
 					{@const Icon = listIcon[list.kind]}
 					{#snippet listCard()}
-						<div class="bg-muted relative h-36 rounded-t-xl">
-							<img src={list.cover} alt="" width="1600" height="560" loading="lazy" class="size-full rounded-t-xl object-cover" />
-							<span class="bg-muted ring-card absolute -bottom-7 left-(--card-spacing) flex size-16 items-center justify-center overflow-hidden rounded-xl ring-4">
-								<Icon class="text-muted-foreground size-6" strokeWidth={1.5} />
-							</span>
+						<div class="relative">
+							<AspectRatio ratio={2.6} class="bg-muted">
+								<img src={list.cover} alt="" width="1600" height="560" loading="lazy" class="size-full object-cover" />
+							</AspectRatio>
+							<Avatar.Root class="ring-card absolute -bottom-7 left-(--card-spacing) size-16 rounded-xl ring-4">
+								<Avatar.Fallback class="rounded-xl"><Icon class="text-muted-foreground size-6" strokeWidth={1.5} /></Avatar.Fallback>
+							</Avatar.Root>
 						</div>
-						<div class="p-(--card-spacing) pt-11">
-							<p class="text-primary truncate font-medium">{list.name}</p>
-							<p class="text-muted-foreground mt-0.5 truncate text-sm">{list.gameCount} oyun{list.description ? ` · ${list.description}` : ""}</p>
-						</div>
+						<Card.Header class="pt-10">
+							<Card.Title class="truncate">{list.name}</Card.Title>
+							<Card.Description class="truncate">{list.gameCount} oyun{list.description ? ` · ${list.description}` : ""}</Card.Description>
+						</Card.Header>
 					{/snippet}
-					<Card.Root class="group/list gap-0 py-0 {list.href ? 'transition-transform duration-300 hover:-translate-y-1' : ''}">
+					<Card.Root class="group/list gap-0 pt-0 pb-5 {list.href ? 'transition-transform duration-300 hover:-translate-y-1' : ''}">
 						{#if list.href}
 							<a href={list.href} class="focus-visible:ring-ring/50 flex flex-col rounded-2xl outline-none focus-visible:ring-3" aria-label="{list.name} listesini gör">{@render listCard()}</a>
 						{:else}

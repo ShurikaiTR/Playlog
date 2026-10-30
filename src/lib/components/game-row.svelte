@@ -11,7 +11,7 @@
 	<h2 id={headingId} class="mb-4">
 		<a
 			href={href}
-			class="text-primary focus-visible:ring-ring/50 group/title hover:bg-muted -mx-3 -my-1.5 inline-flex items-center gap-1 rounded-2xl px-3 py-1.5 text-sm font-semibold tracking-wider uppercase outline-none focus-visible:ring-[3px]"
+			class="text-primary focus-visible:ring-ring/50 group/title hover:bg-muted -mx-3 -my-1.5 inline-flex items-center gap-1 rounded-2xl px-3 py-1.5 scroll-m-20 text-2xl font-semibold tracking-tight outline-none focus-visible:ring-[3px]"
 		>
 			{title}
 			<ChevronRightIcon

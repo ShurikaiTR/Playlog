@@ -66,6 +66,8 @@ export type GameDetail = Game & {
 	screenshots?: string[];
 	// Transparent title logo, shown instead of the title text over the trailer.
 	logo?: string;
+	// Slugs of other games from the same series (sequels, spin-offs, DLC).
+	series?: string[];
 };
 
 const extras: Record<string, Omit<GameDetail, keyof Game>> = {
@@ -73,6 +75,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 		platforms: ["PC", "macOS", "PlayStation", "Xbox"],
 		modes: ["Tek oyunculu", "Co-op"],
 		themes: ["Distopya", "Cyberpunk", "Atmosferik", "Hikâye odaklı"],
+		series: ["golgeler-vadisi", "kirik-kilic"],
 		backdrop: covers[0],
 		genres: ["Aksiyon", "Bilim kurgu", "Açık dünya"],
 		description:
@@ -121,6 +124,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 		platforms: ["PC", "PlayStation", "Xbox"],
 		modes: ["Tek oyunculu", "Co-op"],
 		themes: ["Karanlık fantezi", "Atmosferik", "Hikâye odaklı", "Zorlayıcı"],
+		series: ["neon-surgun"],
 		backdrop: covers[0],
 		genres: ["RPG", "Fantastik"],
 		description:
@@ -209,3 +213,14 @@ export const sorts = [
 // How long a game takes, as the browse page buckets it.
 export const playtimes = ["Kısa", "Orta", "Uzun"] as const;
 export const playtimeOf = (hours: number) => (hours < 10 ? "Kısa" : hours <= 30 ? "Orta" : "Uzun");
+
+const ageDescriptions: Record<string, { title: string; text: string }> = {
+	"3+": { title: "Genel oyuncu", text: "Her yaştan oyuncu için uygundur. Rahatsız edici içerik barındırmaz." },
+	"7+": { title: "7 yaş ve üzeri", text: "7 yaş ve üzeri oyuncu için uygundur. Hafif fantastik şiddet içerir. Oyuncu 7 yaşından küçükse ebeveyn gözetimi önerilir." },
+	"12+": { title: "12 yaş ve üzeri", text: "12 yaş ve üzeri oyuncu için uygundur. Şiddet ve çatışma içerir. Oyuncu 12 yaşından küçükse ebeveyn gözetimi gereklidir." },
+	"16+": { title: "16 yaş ve üzeri", text: "16 yaş ve üzeri oyuncu için uygundur. Yoğun şiddet ve olgun temalar içerir. Oyuncu 16 yaşından küçükse ebeveyn gözetimi gereklidir." },
+	"18+": { title: "18 yaş ve üzeri", text: "Yalnızca 18 yaş ve üzeri oyuncu için uygundur. Şiddet ve yetişkin içerik barındırır." },
+};
+
+/** A short Turkish title and sentence for the age tooltip. */
+export const ageDescription = (label: string) => ageDescriptions[label] ?? null;

@@ -1,18 +1,37 @@
 <script lang="ts">
 	import * as Card from "#lib/components/ui/card/index.js";
+	import * as ButtonGroup from "#lib/components/ui/button-group/index.js";
+	import * as Alert from "#lib/components/ui/alert/index.js";
+	import * as Avatar from "#lib/components/ui/avatar/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+	import { Progress } from "#lib/components/ui/progress/index.js";
+	import { Checkbox } from "#lib/components/ui/checkbox/index.js";
+	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
+	import * as Select from "#lib/components/ui/select/index.js";
+	import { AspectRatio } from "#lib/components/ui/aspect-ratio/index.js";
+	import * as Empty from "#lib/components/ui/empty/index.js";
+	import * as Item from "#lib/components/ui/item/index.js";
+	import * as Sheet from "#lib/components/ui/sheet/index.js";
+	import * as Tabs from "#lib/components/ui/tabs/index.js";
+	import { Textarea } from "#lib/components/ui/textarea/index.js";
+	import { toast } from "svelte-sonner";
 	import { Badge } from "#lib/components/ui/badge/index.js";
 	import * as Dialog from "#lib/components/ui/dialog/index.js";
 	import { cn } from "#lib/utils.js";
 	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
 	import { Separator } from "#lib/components/ui/separator/index.js";
 	import GameSaveMenu from "#lib/components/game-save-menu.svelte";
-	import { toListGame } from "#lib/user-lists.svelte.js";
+	import { gameRating, myReviews, toListGame } from "#lib/user-lists.svelte.js";
 	import * as Carousel from "#lib/components/ui/carousel/index.js";
 	import type { CarouselAPI } from "#lib/components/ui/carousel/context.js";
 	import GameRow from "#lib/components/game-row.svelte";
-	import { trendingGames } from "#lib/games.js";
+	import { ageDescription, allGameDetails, trendingGames } from "#lib/games.js";
+	import FlagIcon from "@lucide/svelte/icons/flag";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
+	import StoreIcon from "@lucide/svelte/icons/store";
 	import XIcon from "@lucide/svelte/icons/x";
+	import ThumbsUpIcon from "@lucide/svelte/icons/thumbs-up";
+	import EyeOffIcon from "@lucide/svelte/icons/eye-off";
 	import CalendarIcon from "@lucide/svelte/icons/calendar";
 	import GamepadIcon from "@lucide/svelte/icons/gamepad-2";
 	import MonitorIcon from "@lucide/svelte/icons/monitor";
@@ -73,16 +92,149 @@
 		const total = weights.reduce((a, b) => a + b, 0);
 		return ["9–10", "7–8", "5–6", "3–4", "1–2"].map((range, i) => ({ range, percent: Math.round((weights[i] / total) * 100) }));
 	});
-	const featuredReview = {
-		text: "Atmosferi ve hikâyesiyle uzun zamandır oynadığım en akılda kalıcı oyunlardan biri. Birkaç küçük aksaklığa rağmen bırakmak çok zor.",
-		name: "Deniz Aksoy",
-		initials: "DA",
-		score: 9,
-		date: "2 hafta önce",
-		helpful: 128,
-	};
+	// Placeholder reviews until they come from real data, newest first.
+	type Review = { key: string; text: string; name: string; initials: string; score?: number; date: string; helpful: number; spoiler: boolean; mine?: boolean };
+	const sampleReviews: Review[] = [
+		{ key: "mert", name: "Mert Yıldız", initials: "MY", score: 7, date: "3 hafta önce", helpful: 41, spoiler: false, text: "Görsel tasarım harika ama orta kısımlar biraz uzamış. Yine de müziklerle birlikte keyifli bir deneyim." },
+		{ key: "deniz", name: "Deniz Aksoy", initials: "DA", score: 9, date: "2 hafta önce", helpful: 128, spoiler: false, text: "Atmosferi ve hikâyesiyle uzun zamandır oynadığım en akılda kalıcı oyunlardan biri. Birkaç küçük aksaklığa rağmen bırakmak çok zor." },
+		{ key: "elif", name: "Elif Karaca", initials: "EK", score: 8, date: "1 ay önce", helpful: 74, spoiler: true, text: "Final bölümündeki seçim beni gerçekten düşündürdü. Hangi sonu seçersen seç, bedelini ödüyorsun ve bu çok iyi işlenmiş." },
+		{ key: "zeynep", name: "Zeynep Arslan", initials: "ZA", score: 6, date: "2 ay önce", helpful: 19, spoiler: false, text: "Fikir çok iyi ama kontroller bazen cevap vermiyor. Yama sonrası daha iyi olabilir." },
+	];
+
+	const rating = $derived(gameRating[game.slug]);
+	const myReview = $derived(myReviews[game.slug]);
+	const reviews = $derived<Review[]>([
+		...(myReview ? [{ key: "mine", name: "Sen", initials: "S", score: rating, date: "Az önce", helpful: 0, spoiler: myReview.spoiler, text: myReview.text, mine: true }] : []),
+		...sampleReviews,
+	]);
+	let reviewSort = $state("helpful");
+	let revealed = $state<Record<string, boolean>>({});
+	let voted = $state<Record<string, boolean>>({});
+	const votes = (review: Review) => review.helpful + (voted[review.key] ? 1 : 0);
+	const sortedReviews = $derived(reviewSort === "helpful" ? [...reviews].sort((a, b) => votes(b) - votes(a)) : reviews);
+	// The featured review never contains spoilers, since it shows without a click.
+	const featuredReview = $derived([...reviews].filter((review) => !review.spoiler).sort((a, b) => votes(b) - votes(a))[0]);
+
+
+	function scrollToReviews(event: MouseEvent) {
+		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		const heading = document.getElementById("reviews-title");
+		if (!heading) return;
+		event.preventDefault();
+		heading.focus({ preventScroll: true });
+		heading.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+	}
+
+	let reportOpen = $state(false);
+	let reportReason = $state("");
+	let reportDetails = $state("");
+	let reportNotice = $state("");
+
+	function submitReport(event: SubmitEvent) {
+		event.preventDefault();
+		reportNotice = "Bildirimler şu anda kullanılamıyor. Bildirimin gönderilmedi.";
+	}
+
+	let reviewsSheetOpen = $state(false);
+	let reviewSheetOpen = $state(false);
+	let draftText = $state("");
+	let draftSpoiler = $state(false);
+	let reviewError = $state("");
+
+	function openReview() {
+		draftText = myReview?.text ?? "";
+		draftSpoiler = myReview?.spoiler ?? false;
+		reviewError = "";
+		reviewsSheetOpen = false;
+		reviewSheetOpen = true;
+	}
+
+	function saveReview(event: SubmitEvent) {
+		event.preventDefault();
+		if (!rating) {
+			reviewError = "Önce 1 ile 10 arasında bir puan seç.";
+			return;
+		}
+		const text = draftText.trim();
+		if (text.length < 10) {
+			reviewError = "İncelemen en az 10 karakter olsun.";
+			return;
+		}
+		myReviews[game.slug] = { text, spoiler: draftSpoiler };
+		reviewSheetOpen = false;
+		toast("İncelemen kaydedildi");
+	}
+	// Where the game is sold, by platform. Search links until real store ids exist.
+	const storeLinks = $derived.by(() => {
+		const q = encodeURIComponent(game.title);
+		const all = [
+			{ platform: "PC", name: "Steam", href: `https://store.steampowered.com/search/?term=${q}` },
+			{ platform: "PC", name: "Epic Games Store", href: `https://store.epicgames.com/browse?q=${q}` },
+			{ platform: "PlayStation", name: "PlayStation Store", href: `https://store.playstation.com/search/${q}` },
+			{ platform: "Xbox", name: "Xbox Store", href: `https://www.xbox.com/search?q=${q}` },
+			{ platform: "Switch", name: "Nintendo eShop", href: `https://www.nintendo.com/search/?q=${q}` },
+			{ platform: "iOS", name: "App Store", href: `https://apps.apple.com/search?term=${q}` },
+			{ platform: "Android", name: "Google Play", href: `https://play.google.com/store/search?q=${q}&c=apps` },
+		];
+		return all.filter((store) => (game.platforms as string[]).includes(store.platform));
+	});
+	const seriesGames = $derived(
+		(game.series ?? []).flatMap((slug) => {
+			const other = allGameDetails.find((g) => g.slug === slug);
+			return other ? [{ slug: other.slug, title: other.title, cover: other.cover, meta: "Aynı seriden" }] : [];
+		}),
+	);
 	const similar = $derived(trendingGames.filter((g) => g.slug !== game.slug).slice(0, 6));
 </script>
+
+{#snippet reviewCard(review: Review)}
+	<Card.Root size="sm">
+		<Card.Content>
+			<div class="flex items-center gap-3">
+				<Avatar.Root class="size-9">
+					<Avatar.Fallback class="bg-foreground text-background text-xs font-semibold">{review.initials}</Avatar.Fallback>
+				</Avatar.Root>
+				<div class="min-w-0 flex-1">
+					<p class="text-sm font-semibold">{review.name}</p>
+					<p class="text-muted-foreground text-[0.68rem]">{review.date}</p>
+				</div>
+				{#if review.score}
+					<Badge variant="secondary"><StarIcon data-icon="inline-start" class="fill-current" />{review.score}/10</Badge>
+				{/if}
+			</div>
+			{#if review.spoiler && !revealed[review.key]}
+				<Alert.Root role="note" class="mt-3">
+					<EyeOffIcon aria-hidden="true" />
+					<Alert.Title>Bu inceleme spoiler içeriyor</Alert.Title>
+					<Alert.Action>
+						<Button type="button" variant="outline" size="xs" class="cursor-pointer" onclick={() => (revealed[review.key] = true)}>Göster</Button>
+					</Alert.Action>
+				</Alert.Root>
+			{:else}
+				<p class="text-foreground/80 animate-in fade-in mt-3 text-sm leading-6 duration-300">{review.text}</p>
+			{/if}
+			<div class="mt-3 -ml-2 flex gap-1">
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					class="text-muted-foreground hover:text-foreground h-auto cursor-pointer rounded-full px-2.5 py-1 text-xs"
+					aria-pressed={!!voted[review.key]}
+					onclick={() => (voted[review.key] = !voted[review.key])}
+				>
+					<ThumbsUpIcon data-icon="inline-start" class={cn("size-3.5", voted[review.key] && "fill-current")} />
+					Faydalı · {votes(review)}
+				</Button>
+				{#if review.spoiler && revealed[review.key]}
+					<Button type="button" variant="ghost" size="sm" class="text-muted-foreground hover:text-foreground h-auto cursor-pointer rounded-full px-2.5 py-1 text-xs" onclick={() => (revealed[review.key] = false)}>
+						<EyeOffIcon data-icon="inline-start" class="size-3.5" />
+						Gizle
+					</Button>
+				{/if}
+			</div>
+		</Card.Content>
+	</Card.Root>
+{/snippet}
 
 <svelte:head>
 	<title>{game.title} | Playlog</title>
@@ -105,13 +257,11 @@
 		</div>
 
 		<div class="detail-intro grid min-w-0 w-full items-start px-4 md:px-8">
-			<img
-				src={game.cover}
-				alt="{game.title} kapağı"
-				width="1024"
-				height="1536"
-				class="detail-poster bg-muted aspect-2/3 w-full rounded-2xl object-cover shadow-[0_20px_50px_-18px_rgb(0_0_0/0.5)] ring-1 ring-white/20"
-			/>
+			<div class="detail-poster">
+				<AspectRatio ratio={2 / 3} class="bg-muted overflow-hidden rounded-2xl shadow-[0_20px_50px_-18px_rgb(0_0_0/0.5)] ring-1 ring-white/20">
+					<img src={game.cover} alt="{game.title} kapağı" width="1024" height="1536" class="size-full object-cover" />
+				</AspectRatio>
+			</div>
 
 			<div class="detail-heading min-w-0">
 				<h1 id="game-title" class="detail-title text-[2rem] font-medium tracking-[-0.025em] text-primary md:text-[2.5rem]">
@@ -119,7 +269,7 @@
 				</h1>
 				<ul class="mt-4 flex flex-wrap gap-2" aria-label="Türler">
 					{#each game.genres as genre (genre)}
-						<li class="bg-background text-primary rounded-full border px-3 py-1.5 text-[0.8125rem]">{genre}</li>
+						<li><Badge variant="outline" class="bg-background text-primary h-7 px-3 text-[0.8125rem]">{genre}</Badge></li>
 					{/each}
 				</ul>
 			</div>
@@ -129,27 +279,70 @@
 			</div>
 
 			<div class="detail-body @container min-w-0">
-				<div class="grid w-full max-w-md grid-cols-[1.4fr_1px_1fr_1px_1fr] items-center gap-2">
-					<div class="flex h-20 min-w-0 flex-col items-center justify-center gap-2 px-1">
-						<span class="flex h-8 items-center gap-2">
-							<span class="text-primary text-3xl font-semibold tracking-tight tabular-nums">{game.score.toFixed(1)}</span>
-							<StarIcon class="size-4 fill-amber-500 text-amber-500" aria-hidden="true" />
-						</span>
-						<span class="text-muted-foreground text-[0.65rem] @[28rem]:text-xs">{game.votes.toLocaleString("tr-TR")} oy</span>
-					</div>
-					<Separator orientation="vertical" class="bg-foreground/15 h-12 self-center" />
-					<div class="flex h-20 min-w-0 flex-col items-center justify-center gap-2 px-1">
-						<span class="flex h-8 items-center">
-							<span class="bg-background text-primary rounded-md border px-2.5 py-1 text-sm font-semibold">{game.ageRating}</span>
-						</span>
-						<span class="text-muted-foreground text-[0.65rem] @[28rem]:text-xs">Yaş sınırı</span>
-					</div>
-					<Separator orientation="vertical" class="bg-foreground/15 h-12 self-center" />
-					<div class="flex h-20 min-w-0 flex-col items-center justify-center gap-2 px-1">
-						<span class="text-primary flex h-8 items-center text-lg font-semibold tabular-nums">{new Date(game.releaseDate).getFullYear()}</span>
-						<span class="text-muted-foreground text-[0.65rem] @[28rem]:text-xs">Çıkış yılı</span>
-					</div>
-				</div>
+				<ButtonGroup.Root class="w-full max-w-md">
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									href="#reviews-title"
+									onclick={scrollToReviews}
+									variant="ghost"
+									class="h-20 min-w-0 flex-1 cursor-pointer flex-col gap-2 rounded-l-4xl px-1"
+									aria-label="{game.votes.toLocaleString('tr-TR')} oya göre 10 üzerinden {game.score.toFixed(1)}. Puanlama bölümüne git"
+								>
+									<span class="flex h-8 items-center gap-2">
+										<span class="text-primary text-3xl font-semibold tracking-tight tabular-nums">{game.score.toFixed(1)}</span>
+										<StarIcon class="size-4 fill-amber-500 text-amber-500" aria-hidden="true" />
+									</span>
+									<span class="text-muted-foreground text-[0.65rem] font-normal @[28rem]:text-xs">{game.votes.toLocaleString("tr-TR")} oy</span>
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>Puan ver ve incelemeleri gör</Tooltip.Content>
+					</Tooltip.Root>
+					<ButtonGroup.Separator class="bg-foreground/15" />
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button {...props} variant="ghost" class="h-20 min-w-0 flex-1 flex-col gap-2 px-1" aria-label={game.ageRating}>
+									<span class="flex h-8 items-center">
+										<Badge variant="outline" class="bg-background h-7 rounded-md px-2.5 font-semibold">{game.ageRating}</Badge>
+									</span>
+									<span class="text-muted-foreground text-[0.65rem] font-normal @[28rem]:text-xs">Yaş sınırı</span>
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content class="w-72 max-w-none items-start gap-3 rounded-xl p-3">
+							{@const info = ageDescription(game.ageRating)}
+							<span class="bg-background/15 flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold">{game.ageRating}</span>
+							<div class="min-w-0 space-y-0.5 text-left">
+								<p class="text-sm font-medium">{info?.title ?? "Yaş sınırı"}</p>
+								{#if info}<p class="text-xs leading-snug opacity-70">{info.text}</p>{/if}
+							</div>
+						</Tooltip.Content>
+					</Tooltip.Root>
+					<ButtonGroup.Separator class="bg-foreground/15" />
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									class="h-20 min-w-0 flex-1 cursor-pointer flex-col gap-2 px-1"
+									onclick={() => {
+										reportNotice = "";
+										reportOpen = true;
+									}}
+								>
+									<span class="flex h-8 items-center"><FlagIcon class="size-5" /></span>
+									<span class="text-muted-foreground text-[0.65rem] font-normal @[28rem]:text-xs">Sorun bildir</span>
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>Oyun bilgilerindeki bir sorunu bildir</Tooltip.Content>
+					</Tooltip.Root>
+				</ButtonGroup.Root>
 				<p class="text-muted-foreground mt-6 max-w-2xl text-sm leading-7 whitespace-pre-line">{game.description}</p>
 			</div>
 		</div>
@@ -157,37 +350,63 @@
 
 	<!-- Two columns from lg up: game info on the left (as wide as the poster above), the right column is left free for more sections. -->
 	<div class="grid w-full min-w-0 items-start gap-8 px-4 md:px-8 lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-x-10">
+		<div class="flex min-w-0 flex-col gap-8">
 		<section aria-labelledby="info-title" class="min-w-0">
-			<h2 id="info-title" class="text-primary mb-4 text-sm font-semibold tracking-wider uppercase">Oyun bilgileri</h2>
-			<Card.Root class="gap-0 px-5 py-2 sm:px-6 lg:px-4">
-				<dl class="game-info-grid text-sm">
-					{#each info as item (item.label)}
-						<div class="grid min-h-14 grid-cols-2 items-center gap-4 py-3 lg:grid-cols-1 lg:gap-1.5">
-							<dt class="text-muted-foreground grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-2.5">
-								<item.icon class="size-4" aria-hidden="true" />
-								{item.label}
-							</dt>
-							{#if item.values}
-								<dd class="flex flex-wrap justify-end gap-1.5 lg:justify-start lg:pl-[1.625rem]">
-									{#each item.values as value (value)}
-										<Badge variant="secondary">{value}</Badge>
-									{/each}
-								</dd>
-							{:else}
-								<dd class="text-primary text-right font-medium lg:text-left lg:pl-[1.625rem]">{item.value}</dd>
-							{/if}
-						</div>
+			<h2 id="info-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Oyun bilgileri</h2>
+			<Card.Root class="gap-0 p-1.5">
+				<Item.Group class="gap-0">
+					{#each info as row, index (row.label)}
+						{#if index > 0}<Item.Separator class="mx-3 my-0" />{/if}
+						<Item.Root size="xs">
+							<Item.Media variant="icon"><row.icon aria-hidden="true" /></Item.Media>
+							<Item.Content>
+								<Item.Description>{row.label}</Item.Description>
+								{#if row.values}
+									<div class="flex flex-wrap gap-1.5">
+										{#each row.values as value (value)}
+											<Badge variant="secondary">{value}</Badge>
+										{/each}
+									</div>
+								{:else}
+									<Item.Title class="line-clamp-none">{row.value}</Item.Title>
+								{/if}
+							</Item.Content>
+						</Item.Root>
 					{/each}
-				</dl>
+				</Item.Group>
 			</Card.Root>
 		</section>
+
+		{#if storeLinks.length}
+			<section aria-labelledby="stores-title" class="min-w-0">
+				<h2 id="stores-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Mağazalar</h2>
+				<Card.Root class="gap-0 p-1.5">
+					<Item.Group class="gap-0">
+						{#each storeLinks as store, index (store.name)}
+							{#if index > 0}<Item.Separator class="mx-3 my-0" />{/if}
+							<Item.Root size="xs">
+								{#snippet child({ props })}
+									<a {...props} href={store.href} target="_blank" rel="noreferrer">
+										<Item.Media variant="icon"><StoreIcon aria-hidden="true" /></Item.Media>
+										<Item.Content><Item.Title>{store.name}</Item.Title></Item.Content>
+										<Item.Actions><ExternalLinkIcon class="text-muted-foreground size-3.5" aria-hidden="true" /></Item.Actions>
+										<span class="sr-only">(yeni sekmede açılır)</span>
+									</a>
+								{/snippet}
+							</Item.Root>
+						{/each}
+					</Item.Group>
+				</Card.Root>
+			</section>
+		{/if}
+		</div>
 
 		<!-- Two equal columns: the trailer sits alone in its own row (left half), screenshots in one row, and the score and reviews card at the very bottom. -->
 		<div class="grid min-w-0 items-start gap-8 xl:grid-cols-2">
 			<section aria-labelledby="trailer-title" class="min-w-0 xl:col-span-2">
-				<h2 id="trailer-title" class="text-primary mb-3 text-sm font-semibold tracking-wider uppercase">Fragman</h2>
+				<h2 id="trailer-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Fragman</h2>
 				<div class="min-w-0 xl:w-1/2 xl:pr-4">
-					<div class="bg-muted relative aspect-video w-full overflow-hidden rounded-xl ring-1 ring-black/8 dark:ring-white/10">
+					<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl ring-1 ring-black/8 dark:ring-white/10">
 						<!-- The artwork sits behind the player, so the box is never empty while the video loads or when there is none. -->
 						<img src={game.backdrop} alt="" loading="lazy" class="absolute inset-0 size-full object-cover opacity-60" />
 						{#if game.trailer}
@@ -200,44 +419,41 @@
 								class="absolute inset-0 size-full"
 							></iframe>
 						{:else}
-							<div class="absolute inset-0 grid place-items-center">
-								<div class="flex flex-col items-center gap-3 text-center">
-									<span class="bg-background/90 grid size-14 place-items-center rounded-full shadow-sm">
-										<PlayIcon class="text-primary size-6 fill-current" aria-hidden="true" />
-									</span>
-									<p class="bg-background/90 text-primary rounded-full px-3 py-1 text-xs font-medium">Fragman yakında</p>
-								</div>
-							</div>
+							<Empty.Root class="bg-background/60 absolute inset-0 rounded-none border-0 backdrop-blur-sm">
+								<Empty.Header>
+									<Empty.Media variant="icon"><PlayIcon class="fill-current" /></Empty.Media>
+									<Empty.Title>Fragman yakında</Empty.Title>
+								</Empty.Header>
+							</Empty.Root>
 						{/if}
-					</div>
+					</AspectRatio>
 				</div>
 			</section>
 
 			<section aria-labelledby="shots-title" class="min-w-0 xl:col-span-2">
-				<h2 id="shots-title" class="text-primary mb-3 text-sm font-semibold tracking-wider uppercase">Ekran görüntüleri</h2>
-				<ul class="flex [scrollbar-width:none] gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-					{#each screenshots as shot, i (i)}
-						<li class="min-w-40 flex-1">
-							<button
-								type="button"
-								onclick={() => openGallery(i)}
-								aria-label="{game.title} ekran görüntüsü {i + 1}, büyüt"
-								class="focus-visible:ring-ring/50 block w-full cursor-pointer rounded-xl outline-none focus-visible:ring-[3px]"
-							>
-								<img
-									src={shot}
-									alt=""
-									loading="lazy"
-									class="bg-muted aspect-video w-full rounded-xl object-cover ring-1 ring-black/8 transition-opacity hover:opacity-90 dark:ring-white/10"
-								/>
-							</button>
-						</li>
-					{/each}
-				</ul>
+				<h2 id="shots-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Ekran görüntüleri</h2>
+				<ScrollArea orientation="horizontal" class="w-full">
+					<ul class="flex w-max min-w-full gap-3 pb-3">
+						{#each screenshots as shot, i (i)}
+							<li class="min-w-40 flex-1">
+								<button
+									type="button"
+									onclick={() => openGallery(i)}
+									aria-label="{game.title} ekran görüntüsü {i + 1}, büyüt"
+									class="focus-visible:ring-ring/50 block w-full cursor-pointer rounded-xl outline-none focus-visible:ring-[3px]"
+								>
+									<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl ring-1 ring-black/8 transition-opacity hover:opacity-90 dark:ring-white/10">
+										<img src={shot} alt="" loading="lazy" class="size-full object-cover" />
+									</AspectRatio>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</ScrollArea>
 			</section>
 
 			<section aria-labelledby="reviews-title" class="min-w-0 xl:col-span-2">
-				<h2 id="reviews-title" class="text-primary mb-3 text-sm font-semibold tracking-wider uppercase">Puanlar ve incelemeler</h2>
+				<h2 id="reviews-title" tabindex="-1" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight outline-none">Puanlar ve incelemeler</h2>
 				<Card.Root class="gap-0 py-0">
 					<Card.Content class="grid items-center gap-6 py-6 sm:grid-cols-[auto_1px_minmax(0,1fr)] sm:gap-8">
 						<div class="flex items-end gap-4">
@@ -268,9 +484,7 @@
 										<StarIcon class="size-3 fill-current" aria-hidden="true" />
 										{group.range}
 									</span>
-									<div class="bg-muted h-1.5 overflow-hidden rounded-full" role="img" aria-label="{group.range} puan: %{group.percent}">
-										<div class="bg-primary h-full rounded-full" style:width="{group.percent}%"></div>
-									</div>
+									<Progress value={group.percent} aria-label="{group.range} puan: %{group.percent}" />
 									<span class="text-muted-foreground text-right tabular-nums">%{group.percent}</span>
 								</div>
 							{/each}
@@ -280,27 +494,30 @@
 					<Separator />
 
 					<Card.Content class="py-6">
-						<figure>
-							<p class="text-muted-foreground mb-3 text-xs font-medium">En faydalı inceleme</p>
-							<blockquote class="text-primary text-lg leading-8 font-medium tracking-tight text-pretty sm:text-xl">
-								{featuredReview.text}
-							</blockquote>
-							<figcaption class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-								<span class="bg-primary text-primary-foreground grid size-7 place-items-center rounded-full text-[0.65rem] font-semibold">{featuredReview.initials}</span>
-								<span class="text-primary text-sm font-semibold">{featuredReview.name}</span>
-								<span class="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium">
-									<StarIcon class="size-3 fill-current" aria-hidden="true" />
-									{featuredReview.score}/10
-								</span>
-								<span class="text-muted-foreground">{featuredReview.date}</span>
-								<span class="text-muted-foreground">· {featuredReview.helpful} kişi faydalı buldu</span>
-							</figcaption>
-						</figure>
+						{#if featuredReview}
+							<Item.Root variant="muted" class="flex-col items-stretch gap-4 p-5 sm:p-6">
+								<p class="text-muted-foreground text-xs font-medium">En faydalı inceleme</p>
+								<Item.Content>
+									<Item.Description class="text-primary line-clamp-none text-lg leading-8 font-medium tracking-tight text-pretty sm:text-xl">{featuredReview.text}</Item.Description>
+								</Item.Content>
+								<Item.Header class="justify-start gap-3 text-xs">
+									<Avatar.Root class="size-7">
+										<Avatar.Fallback class="bg-primary text-primary-foreground text-[0.65rem] font-semibold">{featuredReview.initials}</Avatar.Fallback>
+									</Avatar.Root>
+									<span class="text-primary text-sm font-semibold">{featuredReview.name}</span>
+									{#if featuredReview.score}<Badge variant="secondary"><StarIcon data-icon="inline-start" class="fill-current" />{featuredReview.score}/10</Badge>{/if}
+									<span class="text-muted-foreground">{featuredReview.date}</span>
+									<span class="text-muted-foreground">· {votes(featuredReview)} kişi faydalı buldu</span>
+								</Item.Header>
+							</Item.Root>
+						{:else}
+							<p class="text-muted-foreground text-sm">Henüz inceleme yok. İlk incelemeyi sen yaz.</p>
+						{/if}
 					</Card.Content>
 
 					<Card.Footer class="bg-muted/30 flex-wrap gap-2 border-t py-4">
-						<Button type="button" class="cursor-pointer rounded-full px-5">İnceleme yaz</Button>
-						<Button type="button" variant="outline" class="cursor-pointer rounded-full px-5">Tüm incelemeler</Button>
+						<Button type="button" class="cursor-pointer rounded-full px-5" onclick={openReview}>{myReview ? "İncelemeni düzenle" : "İnceleme yaz"}</Button>
+						<Button type="button" variant="outline" class="cursor-pointer rounded-full px-5" onclick={() => (reviewsSheetOpen = true)}>Tüm incelemeler <span class="text-muted-foreground tabular-nums">({reviews.length})</span></Button>
 					</Card.Footer>
 				</Card.Root>
 			</section>
@@ -332,11 +549,9 @@
 				<Carousel.Content>
 					{#each screenshots as shot, i (i)}
 						<Carousel.Item>
-							<img
-								src={shot}
-								alt="{game.title} ekran görüntüsü {i + 1} / {screenshots.length}"
-								class="bg-muted aspect-video w-full rounded-xl object-cover shadow-2xl"
-							/>
+							<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl shadow-2xl">
+								<img src={shot} alt="{game.title} ekran görüntüsü {i + 1} / {screenshots.length}" class="size-full object-cover" />
+							</AspectRatio>
 						</Carousel.Item>
 					{/each}
 				</Carousel.Content>
@@ -383,6 +598,120 @@
 			</div>
 		</Dialog.Content>
 	</Dialog.Root>
+
+	<!-- All reviews, like the anime page: a side drawer with a sort tab and one card per review. -->
+	<Sheet.Root bind:open={reviewsSheetOpen}>
+		<Sheet.Content class="w-full gap-0 sm:max-w-md [&_[data-slot=sheet-close]]:cursor-pointer">
+			<Sheet.Header class="border-b">
+				<Sheet.Title class="text-primary text-lg font-medium tracking-tight">İncelemeler</Sheet.Title>
+				<Sheet.Description>{game.title} için {reviews.length} inceleme · Ortalama {game.score.toFixed(1).replace(".", ",")}</Sheet.Description>
+				<Tabs.Root bind:value={reviewSort} class="mt-2">
+					<Tabs.List class="rounded-xl" aria-label="İncelemeleri sırala">
+						<Tabs.Trigger value="helpful" class="cursor-pointer rounded-lg px-3 text-xs">En faydalı</Tabs.Trigger>
+						<Tabs.Trigger value="newest" class="cursor-pointer rounded-lg px-3 text-xs">En yeni</Tabs.Trigger>
+					</Tabs.List>
+				</Tabs.Root>
+			</Sheet.Header>
+			<ScrollArea class="min-h-0 flex-1">
+				<div class="space-y-3 p-4">
+					{#each sortedReviews as review (review.key)}
+						{@render reviewCard(review)}
+					{/each}
+				</div>
+			</ScrollArea>
+			<Sheet.Footer class="border-t">
+				<Button type="button" class="cursor-pointer rounded-full" onclick={openReview}>{myReview ? "İncelemeni düzenle" : "İnceleme yaz"}</Button>
+			</Sheet.Footer>
+		</Sheet.Content>
+	</Sheet.Root>
+
+	<Dialog.Root bind:open={reportOpen}>
+		<Dialog.Content class="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
+			<ScrollArea class="min-h-0">
+				<div class="grid gap-6 p-6">
+					<Dialog.Header>
+						<Dialog.Title class="text-primary text-lg font-medium tracking-tight">Sorun bildir</Dialog.Title>
+						<Dialog.Description>{game.title} bilgilerinde neyin düzeltilmesi gerektiğini bize anlat.</Dialog.Description>
+					</Dialog.Header>
+					<form class="space-y-4" onsubmit={submitReport}>
+						<div class="space-y-2">
+							<Label for="report-reason">Neden</Label>
+							<Select.Root type="single" bind:value={reportReason}>
+								<Select.Trigger id="report-reason" class="h-10 w-full">
+									<span data-slot="select-value">{reportReason || "Bir neden seç"}</span>
+								</Select.Trigger>
+								<Select.Content class="rounded-xl">
+									{#each ["Yanlış bilgi", "Yanlış görsel", "Eksik bilgi", "Diğer"] as reason (reason)}
+										<Select.Item value={reason} class="rounded-lg">{reason}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</div>
+						<div class="space-y-2">
+							<Label for="report-details">Ayrıntılar</Label>
+							<Textarea id="report-details" bind:value={reportDetails} placeholder="Sorunu anlat…" class="min-h-24 resize-y" />
+						</div>
+						{#if reportNotice}<p class="text-muted-foreground text-xs leading-5" role="status">{reportNotice}</p>{/if}
+						<Dialog.Footer>
+							<Button type="button" variant="outline" class="cursor-pointer" onclick={() => (reportOpen = false)}>Vazgeç</Button>
+							<Button type="submit" class="cursor-pointer">Bildirimi gönder</Button>
+						</Dialog.Footer>
+					</form>
+				</div>
+			</ScrollArea>
+		</Dialog.Content>
+	</Dialog.Root>
+
+	<Dialog.Root bind:open={reviewSheetOpen}>
+		<Dialog.Content class="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg [&_[data-slot=dialog-close]]:cursor-pointer">
+			<ScrollArea class="min-h-0">
+				<div class="grid gap-6 p-6">
+					<Dialog.Header>
+						<Dialog.Title class="text-primary text-lg font-medium tracking-tight">{game.title} için puan ver</Dialog.Title>
+						<Dialog.Description>Bir puan seç ve düşüncelerini paylaş.</Dialog.Description>
+					</Dialog.Header>
+					<form class="space-y-5" onsubmit={saveReview}>
+						<div class="space-y-2">
+							<div class="flex items-baseline justify-between">
+								<Label>Puanın</Label>
+								{#if rating}<span class="text-xl font-semibold tabular-nums">{rating}<span class="text-muted-foreground text-sm font-normal">/10</span></span>{/if}
+							</div>
+							<div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
+								{#each Array.from({ length: 10 }, (_, index) => index + 1) as n (n)}
+									<Button
+										type="button"
+										variant={rating === n ? "default" : "outline"}
+										class="aspect-square h-auto w-full cursor-pointer rounded-xl p-0 text-xs font-semibold {rating && n < rating ? 'border-foreground/30 bg-foreground/5' : ''}"
+										onclick={() => (gameRating[game.slug] = n)}
+										aria-pressed={rating === n}
+									>
+										{n}
+									</Button>
+								{/each}
+							</div>
+						</div>
+						<div class="space-y-2">
+							<Label for="review">İncelemen</Label>
+							<Textarea id="review" bind:value={draftText} placeholder="{game.title} hakkında ne düşünüyorsun?" class="min-h-28 resize-none rounded-xl" />
+						</div>
+						<div class="flex items-center gap-2">
+							<Checkbox id="spoiler" bind:checked={draftSpoiler} />
+							<Label for="spoiler" class="text-muted-foreground cursor-pointer text-xs">Spoiler içeriyor</Label>
+						</div>
+						{#if reviewError}<p class="text-muted-foreground text-xs leading-5" role="status">{reviewError}</p>{/if}
+						<Dialog.Footer>
+							<Button variant="outline" class="cursor-pointer" onclick={() => (reviewSheetOpen = false)}>Vazgeç</Button>
+							<Button type="submit" class="cursor-pointer">İncelemeyi gönder</Button>
+						</Dialog.Footer>
+					</form>
+				</div>
+			</ScrollArea>
+		</Dialog.Content>
+	</Dialog.Root>
+
+	{#if seriesGames.length}
+		<GameRow title="Aynı seriden" href="/oyunlar" games={seriesGames} />
+	{/if}
 
 	<GameRow title="Benzer oyunlar" href="/kesfet/populer" games={similar} />
 </div>
@@ -459,11 +788,5 @@
 		}
 	}
 
-	.game-info-grid > div {
-		border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-	}
 
-	.game-info-grid > div:last-child {
-		border-bottom: 0;
-	}
 </style>

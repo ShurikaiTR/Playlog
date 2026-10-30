@@ -15,6 +15,8 @@ export type UserList = {
 	name: string;
 	description: string;
 	visibility: "private" | "public";
+	// Set on lists made by other people; the viewer's own lists have no owner.
+	owner?: string;
 	image: string;
 	backdrop: string;
 	items: ListGame[];
@@ -58,6 +60,39 @@ export const userLists = $state<UserList[]>([
 		backdrop: backdrop(2),
 		items: seed([2, 4, 5, 1], 1),
 	},
+	{
+		id: "kis-gecesi",
+		kind: "custom",
+		name: "Kış gecesi oyunları",
+		description: "Battaniye, sıcak çay ve uzun bir oturum.",
+		visibility: "public",
+		owner: "Deniz Aksoy",
+		image: "",
+		backdrop: backdrop(3),
+		items: seed([0, 1, 2, 3], 5),
+	},
+	{
+		id: "hikayesi-guclu-olanlar",
+		kind: "custom",
+		name: "Hikâyesi güçlü olanlar",
+		description: "Bitirince bir süre düşündüren oyunlar.",
+		visibility: "public",
+		owner: "Elif Karaca",
+		image: "",
+		backdrop: backdrop(4),
+		items: seed([2, 3, 4, 5], 8),
+	},
+	{
+		id: "bir-aksamda-biten",
+		kind: "custom",
+		name: "Bir akşamda biten oyunlar",
+		description: "Kısa ama akılda kalıcı.",
+		visibility: "public",
+		owner: "Mert Yıldız",
+		image: "",
+		backdrop: backdrop(5),
+		items: seed([4, 5, 0, 1], 12),
+	},
 ]);
 
 export const listHref = (list: Pick<UserList, "id" | "kind">) =>
@@ -65,7 +100,9 @@ export const listHref = (list: Pick<UserList, "id" | "kind">) =>
 
 export const findList = (id: string) => userLists.find((list) => list.id === id);
 export const listByKind = (kind: "favorites" | "play_later") => userLists.find((list) => list.kind === kind)!;
-export const customLists = () => userLists.filter((list) => list.kind === "custom");
+export const customLists = () => userLists.filter((list) => list.kind === "custom" && !list.owner);
+export const ownLists = () => userLists.filter((list) => !list.owner);
+export const listsWithGame = (slug: string) => userLists.filter((list) => (list.owner ? list.visibility === "public" : true) && hasGame(list, slug));
 
 export const hasGame = (list: UserList, slug: string) => list.items.some((item) => item.slug === slug);
 
@@ -104,3 +141,8 @@ export function setStatus(game: GameSummary, next: string) {
 	gameStatus[game.slug] = (playStatuses as readonly string[]).includes(next) ? (next as PlayStatus) : undefined;
 	setGame(listByKind("play_later"), game, next === "Oynamayı planlıyorum");
 }
+
+// The viewer's own score (1-10) and review per game. Demo only, like the lists.
+export const gameRating = $state<Record<string, number | undefined>>({});
+export type MyReview = { text: string; spoiler: boolean };
+export const myReviews = $state<Record<string, MyReview | undefined>>({});
