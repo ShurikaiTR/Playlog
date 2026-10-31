@@ -26,6 +26,7 @@ const titles: [string, string, string][] = [
 	["golgeler-vadisi", "Gölgeler Vadisi", "RPG"],
 	["kirik-kilic", "Kırık Kılıç Efsanesi", "Macera"],
 	["son-istasyon", "Son İstasyon", "Korku"],
+	["call-of-duty-black-ops-6", "Call of Duty: Black Ops 6", "Nişancı"],
 ];
 
 // Placeholder data until games come from real data.
@@ -44,6 +45,16 @@ export const upcomingGames: Game[] = [...trendingGames].reverse().map((game, i) 
 	cover: covers[(i + 1) % covers.length],
 }));
 
+export type GameLanguage = { name: string; interface: boolean; audio: boolean; subtitles: boolean };
+
+// i = interface only, is = interface + subtitles, ias = interface + audio + subtitles.
+const lang = (name: string, parts: "i" | "is" | "ias" = "ias"): GameLanguage => ({
+	name,
+	interface: true,
+	audio: parts === "ias",
+	subtitles: parts !== "i",
+});
+
 export type GameDetail = Game & {
 	backdrop: string;
 	genres: string[];
@@ -58,6 +69,7 @@ export type GameDetail = Game & {
 	playtime: number;
 	platforms: Platform[];
 	modes: GameMode[];
+	languages: GameLanguage[];
 	// Free-form tags describing the setting, mood and feel of the game.
 	themes: string[];
 	// YouTube video id of the trailer.
@@ -74,9 +86,11 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 	"neon-surgun": {
 		platforms: ["PC", "macOS", "PlayStation", "Xbox"],
 		modes: ["Tek oyunculu", "Co-op"],
+		languages: [lang("İngilizce"), lang("Türkçe", "is"), lang("Almanca", "is"), lang("Japonca")],
 		themes: ["Distopya", "Cyberpunk", "Atmosferik", "Hikâye odaklı"],
 		series: ["golgeler-vadisi", "kirik-kilic"],
-		backdrop: covers[0],
+		logo: "/logos/silent-hill-townfall.png",
+		backdrop: "https://gmedia.playstation.com/is/image/SIEPDC/Silent-Hill-Townfall-hero-desktop-02-en-05jun26?$3200px$",
 		genres: ["Aksiyon", "Bilim kurgu", "Açık dünya"],
 		description:
 			"Işıkları hiç sönmeyen bir şehirde, kimsenin hatırlamadığı bir geçmişin izini sür. Seçimlerin şehrin kaderini değiştirir; her bölge kendi yasalarıyla yaşayan çetelere ev sahipliği yapar.",
@@ -91,6 +105,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 	"piksel-gecesi": {
 		platforms: ["Switch", "PC", "iOS", "Android"],
 		modes: ["Tek oyunculu", "Çok oyunculu"],
+		languages: [lang("İngilizce"), lang("Türkçe", "i"), lang("Fransızca", "is")],
 		themes: ["Retro", "Zorlayıcı", "Rahatlatıcı", "Bağımsız"],
 		backdrop: covers[1],
 		genres: ["Retro", "Platform"],
@@ -107,6 +122,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 	"derin-yorunge": {
 		platforms: ["PC", "macOS", "Linux"],
 		modes: ["Tek oyunculu", "Çevrimiçi"],
+		languages: [lang("İngilizce"), lang("Almanca", "is"), lang("İspanyolca", "is")],
 		themes: ["Uzay", "Taktiksel", "Derin sistemler", "Bağımsız"],
 		backdrop: covers[2],
 		genres: ["Strateji", "Uzay", "Simülasyon"],
@@ -123,6 +139,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 	"golgeler-vadisi": {
 		platforms: ["PC", "PlayStation", "Xbox"],
 		modes: ["Tek oyunculu", "Co-op"],
+		languages: [lang("İngilizce"), lang("Türkçe"), lang("Fransızca", "is"), lang("İtalyanca", "is")],
 		themes: ["Karanlık fantezi", "Atmosferik", "Hikâye odaklı", "Zorlayıcı"],
 		series: ["neon-surgun"],
 		backdrop: covers[0],
@@ -140,6 +157,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 	"kirik-kilic": {
 		platforms: ["Xbox", "PC", "Switch", "Android"],
 		modes: ["Tek oyunculu", "Çok oyunculu", "Rekabetçi"],
+		languages: [lang("İngilizce"), lang("Türkçe", "is"), lang("Portekizce", "i")],
 		themes: ["Efsane", "Macera", "Açık uçlu"],
 		backdrop: covers[1],
 		genres: ["Macera", "Aksiyon"],
@@ -155,6 +173,7 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 	"son-istasyon": {
 		platforms: ["PC", "PlayStation", "Linux"],
 		modes: ["Tek oyunculu"],
+		languages: [lang("İngilizce"), lang("Japonca", "is")],
 		themes: ["Uzay", "Gerilim", "Atmosferik", "Hayatta kalma"],
 		backdrop: covers[2],
 		genres: ["Korku", "Hayatta kalma"],
@@ -167,6 +186,23 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 		votes: 2988,
 		playtime: 8,
 	},
+	"call-of-duty-black-ops-6": {
+		platforms: ["PC", "PlayStation", "Xbox"],
+		modes: ["Tek oyunculu", "Çok oyunculu", "Co-op"],
+		languages: [lang("İngilizce"), lang("Türkçe", "is"), lang("Almanca"), lang("Fransızca"), lang("İspanyolca"), lang("Rusça", "is")],
+		themes: ["Soğuk Savaş", "Casusluk", "Zombiler", "Rekabetçi"],
+		backdrop: covers[2],
+		genres: ["Nişancı", "Aksiyon"],
+		description:
+			"1990'ların başında, Körfez Savaşı'nın hemen ardından geçen bir casusluk hikâyesi. Kendi ekibi tarafından hain ilan edilen bir ekibin peşindeki komplonun izini sürer. Tek oyunculu kampanyanın yanında çok oyunculu maçlar ve Zombiler modu aynı pakette.",
+		developer: "Treyarch, Raven Software",
+		publisher: "Activision",
+		releaseDate: "2024-10-25",
+		ageRating: "18+",
+		score: 7.4,
+		votes: 48210,
+		playtime: 9,
+	},
 };
 
 // Placeholder trailer shared by every game until real trailer ids exist.
@@ -177,7 +213,7 @@ const placeholderLogo = "/logos/placeholder.png";
 export const getGameDetail = (slug: string): GameDetail | undefined => {
 	const game = trendingGames.find((g) => g.slug === slug);
 	const extra = extras[slug];
-	return game && extra ? { ...game, ...extra, trailer: placeholderTrailer, logo: placeholderLogo } : undefined;
+	return game && extra ? { ...game, ...extra, trailer: placeholderTrailer, logo: extra.logo ?? placeholderLogo } : undefined;
 };
 
 // Moods for the discover page. Each one is a hand-picked group of genres.

@@ -25,7 +25,7 @@
 	import * as Carousel from "#lib/components/ui/carousel/index.js";
 	import type { CarouselAPI } from "#lib/components/ui/carousel/context.js";
 	import GameRow from "#lib/components/game-row.svelte";
-	import { ageDescription, allGameDetails, trendingGames } from "#lib/games.js";
+	import { ageDescription, allGameDetails, trendingGames, type GameLanguage } from "#lib/games.js";
 	import FlagIcon from "@lucide/svelte/icons/flag";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
 	import StoreIcon from "@lucide/svelte/icons/store";
@@ -39,6 +39,7 @@
 	import ShieldIcon from "@lucide/svelte/icons/shield";
 	import StarIcon from "@lucide/svelte/icons/star";
 	import TagIcon from "@lucide/svelte/icons/tag";
+	import LanguagesIcon from "@lucide/svelte/icons/languages";
 	import BuildingIcon from "@lucide/svelte/icons/building-2";
 	import PlayIcon from "@lucide/svelte/icons/play";
 	import { Button } from "#lib/components/ui/button/index.js";
@@ -72,12 +73,15 @@
 		return () => api.off("select", onSelect);
 	});
 
+	const languageParts = (language: GameLanguage) =>
+		[language.interface && "Arayüz", language.audio && "Seslendirme", language.subtitles && "Altyazı"].filter(Boolean).join(" · ");
 	const dateFormat = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 	const info = $derived([
 		{ label: "Geliştirici", value: game.developer, icon: CodeIcon },
 		{ label: "Yayıncı", value: game.publisher, icon: BuildingIcon },
 		{ label: "Çıkış tarihi", value: dateFormat.format(new Date(game.releaseDate)), icon: CalendarIcon },
 		{ label: "Platformlar", values: game.platforms, icon: MonitorIcon },
+		{ label: "Desteklenen diller", languages: game.languages, icon: LanguagesIcon },
 		{ label: "Oyun modları", values: game.modes, icon: GamepadIcon },
 		{ label: "Türler", value: game.genres.join(", "), icon: TagIcon },
 		{ label: "Yaş sınırı", value: game.ageRating, icon: ShieldIcon },
@@ -265,7 +269,11 @@
 
 			<div class="detail-heading min-w-0">
 				<h1 id="game-title" class="detail-title text-[2rem] font-medium tracking-[-0.025em] text-primary md:text-[2.5rem]">
-					{game.title}
+					{#if game.logo}
+						<img src={game.logo} alt={game.title} class="max-h-28 w-full max-w-md object-contain object-left" />
+					{:else}
+						{game.title}
+					{/if}
 				</h1>
 				<ul class="mt-4 flex flex-wrap gap-2" aria-label="Türler">
 					{#each game.genres as genre (genre)}
@@ -361,7 +369,20 @@
 							<Item.Media variant="icon"><row.icon aria-hidden="true" /></Item.Media>
 							<Item.Content>
 								<Item.Description>{row.label}</Item.Description>
-								{#if row.values}
+								{#if row.languages}
+									<div class="flex flex-wrap gap-1.5">
+										{#each row.languages as language (language.name)}
+											<Tooltip.Root>
+												<Tooltip.Trigger>
+													{#snippet child({ props })}
+														<Badge {...props} variant={language.name === "Türkçe" ? "default" : "secondary"}>{language.name}</Badge>
+													{/snippet}
+												</Tooltip.Trigger>
+												<Tooltip.Content>{languageParts(language)}</Tooltip.Content>
+											</Tooltip.Root>
+										{/each}
+									</div>
+								{:else if row.values}
 									<div class="flex flex-wrap gap-1.5">
 										{#each row.values as value (value)}
 											<Badge variant="secondary">{value}</Badge>
