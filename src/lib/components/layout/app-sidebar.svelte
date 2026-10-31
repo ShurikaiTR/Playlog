@@ -3,7 +3,6 @@
 	import * as Sidebar from "#lib/components/ui/sidebar/index.js";
 	import type { Component } from "svelte";
 	import CompassIcon from "@lucide/svelte/icons/compass";
-	import Gamepad2Icon from "@lucide/svelte/icons/gamepad-2";
 	import HeartIcon from "@lucide/svelte/icons/heart";
 	import HouseIcon from "@lucide/svelte/icons/house";
 	import LayoutGridIcon from "@lucide/svelte/icons/layout-grid";
@@ -69,17 +68,16 @@
 			<a
 				href="/"
 				class="text-primary focus-visible:ring-ring/50 flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-[3px] group-data-[collapsible=icon]:hidden"
-				aria-label="Playlog ana sayfa"
+				aria-label="Playthru ana sayfa"
 			>
-				<Gamepad2Icon class="size-5 shrink-0" aria-hidden="true" />
-				<span class="truncate text-base font-semibold">Playlog</span>
+				<img src="/logos/playthru.svg" alt="Playthru" width="282" height="56" class="h-8 w-auto dark:invert" />
 			</a>
 			<a
 				href="/"
 				class="text-primary hidden size-10 items-center justify-center transition-opacity group-hover/brand:opacity-0 group-data-[collapsible=icon]:flex"
-				aria-label="Playlog ana sayfa"
+				aria-label="Playthru ana sayfa"
 			>
-				<Gamepad2Icon class="size-5" aria-hidden="true" />
+				<img src="/logos/playthru-mascot.svg" alt="Playthru" width="100" height="100" class="size-8 object-contain dark:invert" />
 			</a>
 			<Sidebar.Trigger
 				class="shrink-0 group-hover/brand:!opacity-100 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:transition-opacity"
