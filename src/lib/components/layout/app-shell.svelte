@@ -10,7 +10,7 @@
 	let { children }: { children: Snippet } = $props();
 </script>
 
-<ModeWatcher />
+<ModeWatcher defaultMode="dark" />
 <Sidebar.Provider>
 	<AppSidebar />
 	<Sidebar.Inset
