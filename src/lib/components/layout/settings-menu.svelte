@@ -7,7 +7,9 @@
 	import * as Command from "#lib/components/ui/command/index.js";
 	import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
 	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
-	import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
+	import * as Select from "#lib/components/ui/select/index.js";
+	import * as Empty from "#lib/components/ui/empty/index.js";
+	import { Badge } from "#lib/components/ui/badge/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
 	import { Textarea } from "#lib/components/ui/textarea/index.js";
 	import { cn } from "#lib/utils.js";
@@ -17,6 +19,8 @@
 	import MonitorIcon from "@lucide/svelte/icons/monitor";
 	import LanguagesIcon from "@lucide/svelte/icons/languages";
 	import FlagIcon from "@lucide/svelte/icons/flag";
+	import UploadIcon from "@lucide/svelte/icons/upload";
+	import XIcon from "@lucide/svelte/icons/x";
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft = "focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground";
@@ -49,21 +53,34 @@
 		if (value !== "tr") toast("Dil desteği yakında");
 	}
 
-	const feedbackKinds = ["Hata", "Öneri", "Diğer"];
+	const feedbackReasons = ["Hata", "Öneri", "Diğer"];
+	const maxAttachments = 5;
 	let feedbackOpen = $state(false);
-	let feedbackKind = $state("Öneri");
+	let feedbackReason = $state("");
 	let feedbackText = $state("");
+	let attachments = $state<File[]>([]);
+	let fileInput = $state<HTMLInputElement | null>(null);
+	let dragging = $state(false);
+	const canSend = $derived(!!feedbackReason && !!feedbackText.trim());
 
 	function openFeedback() {
-		feedbackKind = "Öneri";
+		feedbackReason = "";
 		feedbackText = "";
+		attachments = [];
 		feedbackOpen = true;
+	}
+
+	function addFiles(files: FileList | null | undefined) {
+		if (!files) return;
+		const all = [...attachments, ...files];
+		if (all.length > maxAttachments) toast(`En fazla ${maxAttachments} dosya ekleyebilirsin`);
+		attachments = all.slice(0, maxAttachments);
 	}
 
 	function sendFeedback(event: SubmitEvent) {
 		event.preventDefault();
-		if (!feedbackText.trim()) return;
-		// TODO: placeholder, nothing is sent yet. Post { kind, text } to the server once there is a backend.
+		if (!canSend) return;
+		// TODO: placeholder, nothing is sent yet. Post { reason, text, attachments } to the server once there is a backend.
 		feedbackOpen = false;
 		toast("Geri bildirimin için teşekkürler");
 	}
@@ -139,34 +156,99 @@
 </Command.Dialog>
 
 <Dialog.Root bind:open={feedbackOpen}>
-	<Dialog.Content class="rounded-2xl sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
-		<Dialog.Header>
-			<Dialog.Title class="text-primary text-lg font-medium tracking-tight">Geri bildirim gönder</Dialog.Title>
-			<Dialog.Description>Bir hata mı buldun ya da bir fikrin mi var? Bize yaz.</Dialog.Description>
+	<Dialog.Content showCloseButton={false} class="max-h-[calc(100dvh-2rem)] w-[520px] max-w-[calc(100vw-2rem)] gap-4 overflow-y-auto rounded-2xl p-4 duration-200 sm:max-w-[520px]">
+		<Dialog.Header class="flex-row items-start justify-between">
+			<Dialog.Title class="px-0.5 text-lg leading-tight font-semibold">Geri bildirim</Dialog.Title>
+			<Dialog.Description class="sr-only">Bir sorunu bildir ya da fikrini paylaş.</Dialog.Description>
+			<Dialog.Close>
+				{#snippet child({ props })}
+					<Button {...props} variant="ghost" size="icon" class="text-muted-foreground hover:text-foreground -mt-2 -me-2 size-10 shrink-0 cursor-pointer rounded-xl" aria-label="Kapat">
+						<XIcon class="size-4" />
+					</Button>
+				{/snippet}
+			</Dialog.Close>
 		</Dialog.Header>
-		<form class="space-y-4" onsubmit={sendFeedback}>
-			<div class="space-y-2">
-				<Label id="feedback-kind-label">Tür</Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={() => feedbackKind, (value) => value && (feedbackKind = value)}
-					aria-labelledby="feedback-kind-label"
-					class="w-full"
+		<form class="flex flex-col gap-4" onsubmit={sendFeedback}>
+			<div>
+				<Label for="feedback-reason" class="mb-2 font-semibold">Tür</Label>
+				<Select.Root type="single" bind:value={feedbackReason}>
+					<Select.Trigger id="feedback-reason" class="h-10! w-full cursor-pointer rounded-xl px-4">
+						<span data-slot="select-value" class={cn(!feedbackReason && "text-muted-foreground")}>{feedbackReason || "Tür seç"}</span>
+					</Select.Trigger>
+					<Select.Content class="rounded-xl">
+						{#each feedbackReasons as reason (reason)}
+							<Select.Item value={reason} class={cn("data-highlighted:bg-muted data-highlighted:text-foreground cursor-pointer rounded-lg", soft)}>{reason}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</div>
+			<Textarea
+				bind:value={feedbackText}
+				rows={8}
+				aria-label="Mesajın"
+				placeholder="Bize neyin yanlış gittiğini ya da ne istediğini anlat"
+				class="hover:not-focus-visible:border-foreground/25 focus-visible:border-ring focus-visible:ring-ring min-h-40 resize-none rounded-2xl p-4 transition-[border-color,box-shadow] duration-150 focus-visible:ring-1"
+			/>
+			<div>
+				<p class="mb-2 text-sm font-semibold">Ekler<span class="text-muted-foreground ms-1 font-normal tabular-nums">({attachments.length}/{maxAttachments})</span></p>
+				<Empty.Root
+					role="button"
+					tabindex={0}
+					aria-label="Dosya ekle"
+					class={cn("hover:bg-muted/50 hover:border-foreground/25 cursor-pointer gap-2 rounded-2xl border border-dashed p-4 transition-colors md:p-4", dragging && "bg-muted/50 border-foreground/30")}
+					onclick={() => fileInput?.click()}
+					onkeydown={(event) => (event.key === "Enter" || event.key === " ") && (event.preventDefault(), fileInput?.click())}
+					ondragover={(event) => (event.preventDefault(), (dragging = true))}
+					ondragleave={() => (dragging = false)}
+					ondrop={(event) => {
+						event.preventDefault();
+						dragging = false;
+						addFiles(event.dataTransfer?.files);
+					}}
 				>
-					{#each feedbackKinds as kind (kind)}
-						<ToggleGroup.Item value={kind} class="flex-1 cursor-pointer">{kind}</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
+					<Empty.Header class="gap-2">
+						<Empty.Media class="text-muted-foreground mb-0 rounded-full p-2"><UploadIcon class="size-5" /></Empty.Media>
+						<Empty.Title class="text-sm font-medium">Sürükle bırak ya da seçmek için tıkla</Empty.Title>
+					</Empty.Header>
+				</Empty.Root>
+				<input
+					bind:this={fileInput}
+					type="file"
+					multiple
+					accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,application/json"
+					class="hidden"
+					aria-hidden="true"
+					tabindex={-1}
+					onchange={(event) => {
+						addFiles(event.currentTarget.files);
+						event.currentTarget.value = "";
+					}}
+				/>
+				{#if attachments.length}
+					<ul class="mt-2 flex flex-wrap gap-1.5" aria-label="Eklenen dosyalar">
+						{#each attachments as file, index (index)}
+							<li>
+								<Badge variant="secondary" class="max-w-56 pe-1">
+									<span class="truncate">{file.name}</span>
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-xs"
+										class="size-4 cursor-pointer rounded-full"
+										aria-label="{file.name} dosyasını kaldır"
+										onclick={() => (attachments = attachments.filter((_, i) => i !== index))}
+									>
+										<XIcon class="size-3" />
+									</Button>
+								</Badge>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</div>
-			<div class="space-y-2">
-				<Label for="feedback-text">Mesajın</Label>
-				<Textarea id="feedback-text" bind:value={feedbackText} placeholder="Neyi fark ettin, ne görmek istersin?" class="min-h-28 resize-none rounded-xl" />
+			<div class="flex justify-end">
+				<Button type="submit" size="sm" class="h-8 cursor-pointer rounded-full px-2.5 font-semibold" disabled={!canSend}>Gönder</Button>
 			</div>
-			<Dialog.Footer>
-				<Button type="button" variant="outline" class="cursor-pointer rounded-full" onclick={() => (feedbackOpen = false)}>Vazgeç</Button>
-				<Button type="submit" class="cursor-pointer rounded-full" disabled={!feedbackText.trim()}>Gönder</Button>
-			</Dialog.Footer>
 		</form>
 	</Dialog.Content>
 </Dialog.Root>
