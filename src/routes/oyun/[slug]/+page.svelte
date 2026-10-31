@@ -77,9 +77,6 @@
 		return () => api.off("select", onSelect);
 	});
 
-	// Turkish first, the rest in their given order.
-	const languages = $derived([...game.languages].sort((a, b) => Number(b.name === "Türkçe") - Number(a.name === "Türkçe")));
-	const turkish = $derived(game.languages.find((language) => language.name === "Türkçe"));
 	const languageColumns = [
 		{ key: "interface", label: "Arayüz", icon: MonitorIcon },
 		{ key: "audio", label: "Seslendirme", icon: Volume2Icon },
@@ -401,6 +398,49 @@
 			</Card.Root>
 		</section>
 
+		<section aria-labelledby="languages-title" class="min-w-0">
+			{@render heading("languages-title", "Desteklenen diller", `${game.languages.length} dil`)}
+			<Card.Root class="gap-0 py-0">
+				<Table.Root>
+					<Table.Header>
+						<Table.Row class="hover:bg-transparent">
+							<Table.Head class="text-muted-foreground h-9 pl-3 text-xs">Dil</Table.Head>
+							{#each languageColumns as column (column.key)}
+								<Table.Head class="h-9 w-7 px-0 text-center">
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											{#snippet child({ props })}
+												<span {...props} class="text-muted-foreground inline-flex"><column.icon class="size-3.5" aria-hidden="true" /><span class="sr-only">{column.label}</span></span>
+											{/snippet}
+										</Tooltip.Trigger>
+										<Tooltip.Content>{column.label}</Tooltip.Content>
+									</Tooltip.Root>
+								</Table.Head>
+							{/each}
+							<Table.Head class="w-2 p-0" aria-hidden="true"></Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each game.languages as language (language.name)}
+							<Table.Row>
+								<Table.Cell class="py-2 pl-3 text-[0.8125rem] font-medium">{language.name}</Table.Cell>
+								{#each languageColumns as column (column.key)}
+									<Table.Cell class="px-0 py-2 text-center">
+										{#if language[column.key]}
+											<CheckIcon class="text-primary mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} var</span>
+										{:else}
+											<MinusIcon class="text-muted-foreground/40 mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} yok</span>
+										{/if}
+									</Table.Cell>
+								{/each}
+								<Table.Cell class="p-0" aria-hidden="true"></Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+			</Card.Root>
+		</section>
+
 		{#if storeLinks.length}
 			<section aria-labelledby="stores-title" class="min-w-0">
 				{@render heading("stores-title", "Mağazalar", `${storeLinks.length} mağaza`)}
@@ -474,67 +514,6 @@
 						{/each}
 					</ul>
 				</ScrollArea>
-			</section>
-
-			<section aria-labelledby="languages-title" class="min-w-0 xl:col-span-2">
-				{@render heading("languages-title", "Desteklenen diller", `${languages.length} dil`)}
-				<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
-					<Card.Root class="gap-0 py-0">
-						<Table.Root>
-							<Table.Header>
-								<Table.Row class="hover:bg-transparent">
-									<Table.Head class="text-muted-foreground h-10 pl-4 text-xs">Dil</Table.Head>
-									{#each languageColumns as column (column.key)}
-										<Table.Head class="text-muted-foreground h-10 w-24 text-center text-xs">{column.label}</Table.Head>
-									{/each}
-								</Table.Row>
-							</Table.Header>
-							<Table.Body>
-								{#each languages as language (language.name)}
-									<Table.Row class={cn(language.name === "Türkçe" && "bg-muted/50")}>
-										<Table.Cell class="py-2.5 pl-4 font-medium">
-											{#if language.name === "Türkçe"}<Badge>{language.name}</Badge>{:else}{language.name}{/if}
-										</Table.Cell>
-										{#each languageColumns as column (column.key)}
-											<Table.Cell class="py-2.5 text-center">
-												{#if language[column.key]}
-													<CheckIcon class="text-primary mx-auto size-4" aria-hidden="true" /><span class="sr-only">Var</span>
-												{:else}
-													<MinusIcon class="text-muted-foreground/40 mx-auto size-4" aria-hidden="true" /><span class="sr-only">Yok</span>
-												{/if}
-											</Table.Cell>
-										{/each}
-									</Table.Row>
-								{/each}
-							</Table.Body>
-						</Table.Root>
-					</Card.Root>
-
-					<Card.Root size="sm">
-						<Card.Header>
-							<Card.Title class="text-primary">{turkish ? "Türkçe destekleniyor" : "Türkçe desteği yok"}</Card.Title>
-							<Card.Description>
-								{#if turkish}
-									{languageColumns.filter((column) => turkish[column.key]).map((column) => column.label).join(" · ")}
-								{:else}
-									Oyun Türkçe arayüz, ses ya da altyazı sunmuyor.
-								{/if}
-							</Card.Description>
-						</Card.Header>
-						<Card.Content>
-							<Item.Group class="gap-0">
-								{#each languageColumns as column, index (column.key)}
-									{#if index > 0}<Item.Separator class="my-0" />{/if}
-									<Item.Root size="xs" class="px-0">
-										<Item.Media variant="icon"><column.icon aria-hidden="true" /></Item.Media>
-										<Item.Content><Item.Title>{column.label}</Item.Title></Item.Content>
-										<Item.Actions><span class="text-muted-foreground text-xs tabular-nums">{languages.filter((language) => language[column.key]).length} dil</span></Item.Actions>
-									</Item.Root>
-								{/each}
-							</Item.Group>
-						</Card.Content>
-					</Card.Root>
-				</div>
 			</section>
 
 			<section aria-labelledby="reviews-title" class="min-w-0 xl:col-span-2">
