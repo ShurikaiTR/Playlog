@@ -42,6 +42,8 @@
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import CheckIcon from "@lucide/svelte/icons/check";
 	import MinusIcon from "@lucide/svelte/icons/minus";
+	import Volume2Icon from "@lucide/svelte/icons/volume-2";
+	import CaptionsIcon from "@lucide/svelte/icons/captions";
 	import BuildingIcon from "@lucide/svelte/icons/building-2";
 	import PlayIcon from "@lucide/svelte/icons/play";
 	import { Button } from "#lib/components/ui/button/index.js";
@@ -77,11 +79,11 @@
 
 	// Turkish first, the rest in their given order.
 	const languages = $derived([...game.languages].sort((a, b) => Number(b.name === "Türkçe") - Number(a.name === "Türkçe")));
-	const hasTurkish = $derived(game.languages.some((language) => language.name === "Türkçe"));
+	const turkish = $derived(game.languages.find((language) => language.name === "Türkçe"));
 	const languageColumns = [
-		{ key: "interface", label: "Arayüz" },
-		{ key: "audio", label: "Ses" },
-		{ key: "subtitles", label: "Altyazı" },
+		{ key: "interface", label: "Arayüz", icon: MonitorIcon },
+		{ key: "audio", label: "Seslendirme", icon: Volume2Icon },
+		{ key: "subtitles", label: "Altyazı", icon: CaptionsIcon },
 	] as const;
 	const dateFormat = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 	const info = $derived([
@@ -423,11 +425,11 @@
 		{/if}
 		</div>
 
-		<!-- Two equal columns: trailer and languages side by side, screenshots in one row, and the score and reviews card at the very bottom. -->
+		<!-- Two equal columns: the trailer sits alone in its own row (left half), screenshots in one row, and the score and reviews card at the very bottom. -->
 		<div class="grid min-w-0 items-start gap-x-6 gap-y-10 xl:grid-cols-2">
-			<section aria-labelledby="trailer-title" class="min-w-0">
+			<section aria-labelledby="trailer-title" class="min-w-0 xl:col-span-2">
 				{@render heading("trailer-title", "Fragman")}
-				<div class="min-w-0">
+				<div class="min-w-0 xl:w-1/2 xl:pr-3">
 					<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-2xl ring-1 ring-black/8 dark:ring-white/10">
 						<!-- The artwork sits behind the player, so the box is never empty while the video loads or when there is none. -->
 						<img src={game.backdrop} alt="" loading="lazy" class="absolute inset-0 size-full object-cover opacity-60" />
@@ -452,43 +454,6 @@
 				</div>
 			</section>
 
-			<section aria-labelledby="languages-title" class="min-w-0">
-				{@render heading("languages-title", "Desteklenen diller", `${languages.length} dil`)}
-				<Card.Root class="gap-0 py-0">
-					<Table.Root>
-						<Table.Header>
-							<Table.Row class="hover:bg-transparent">
-								<Table.Head class="text-muted-foreground h-10 pl-4 text-xs">Dil</Table.Head>
-								{#each languageColumns as column (column.key)}
-									<Table.Head class="text-muted-foreground h-10 w-20 text-center text-xs">{column.label}</Table.Head>
-								{/each}
-							</Table.Row>
-						</Table.Header>
-						<Table.Body>
-							{#each languages as language (language.name)}
-								<Table.Row class={cn(language.name === "Türkçe" && "bg-muted/50")}>
-									<Table.Cell class="py-2.5 pl-4 font-medium">
-										{#if language.name === "Türkçe"}<Badge>{language.name}</Badge>{:else}{language.name}{/if}
-									</Table.Cell>
-									{#each languageColumns as column (column.key)}
-										<Table.Cell class="py-2.5 text-center">
-											{#if language[column.key]}
-												<CheckIcon class="text-primary mx-auto size-4" aria-hidden="true" /><span class="sr-only">Var</span>
-											{:else}
-												<MinusIcon class="text-muted-foreground/40 mx-auto size-4" aria-hidden="true" /><span class="sr-only">Yok</span>
-											{/if}
-										</Table.Cell>
-									{/each}
-								</Table.Row>
-							{/each}
-						</Table.Body>
-					</Table.Root>
-					{#if !hasTurkish}
-						<Card.Footer class="bg-muted/30 border-t py-3 text-xs text-muted-foreground">Bu oyunda Türkçe dil desteği yok.</Card.Footer>
-					{/if}
-				</Card.Root>
-			</section>
-
 			<section aria-labelledby="shots-title" class="min-w-0 xl:col-span-2">
 				{@render heading("shots-title", "Ekran görüntüleri", `${screenshots.length} görsel`)}
 				<ScrollArea orientation="horizontal" class="w-full">
@@ -509,6 +474,67 @@
 						{/each}
 					</ul>
 				</ScrollArea>
+			</section>
+
+			<section aria-labelledby="languages-title" class="min-w-0 xl:col-span-2">
+				{@render heading("languages-title", "Desteklenen diller", `${languages.length} dil`)}
+				<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+					<Card.Root class="gap-0 py-0">
+						<Table.Root>
+							<Table.Header>
+								<Table.Row class="hover:bg-transparent">
+									<Table.Head class="text-muted-foreground h-10 pl-4 text-xs">Dil</Table.Head>
+									{#each languageColumns as column (column.key)}
+										<Table.Head class="text-muted-foreground h-10 w-24 text-center text-xs">{column.label}</Table.Head>
+									{/each}
+								</Table.Row>
+							</Table.Header>
+							<Table.Body>
+								{#each languages as language (language.name)}
+									<Table.Row class={cn(language.name === "Türkçe" && "bg-muted/50")}>
+										<Table.Cell class="py-2.5 pl-4 font-medium">
+											{#if language.name === "Türkçe"}<Badge>{language.name}</Badge>{:else}{language.name}{/if}
+										</Table.Cell>
+										{#each languageColumns as column (column.key)}
+											<Table.Cell class="py-2.5 text-center">
+												{#if language[column.key]}
+													<CheckIcon class="text-primary mx-auto size-4" aria-hidden="true" /><span class="sr-only">Var</span>
+												{:else}
+													<MinusIcon class="text-muted-foreground/40 mx-auto size-4" aria-hidden="true" /><span class="sr-only">Yok</span>
+												{/if}
+											</Table.Cell>
+										{/each}
+									</Table.Row>
+								{/each}
+							</Table.Body>
+						</Table.Root>
+					</Card.Root>
+
+					<Card.Root size="sm">
+						<Card.Header>
+							<Card.Title class="text-primary">{turkish ? "Türkçe destekleniyor" : "Türkçe desteği yok"}</Card.Title>
+							<Card.Description>
+								{#if turkish}
+									{languageColumns.filter((column) => turkish[column.key]).map((column) => column.label).join(" · ")}
+								{:else}
+									Oyun Türkçe arayüz, ses ya da altyazı sunmuyor.
+								{/if}
+							</Card.Description>
+						</Card.Header>
+						<Card.Content>
+							<Item.Group class="gap-0">
+								{#each languageColumns as column, index (column.key)}
+									{#if index > 0}<Item.Separator class="my-0" />{/if}
+									<Item.Root size="xs" class="px-0">
+										<Item.Media variant="icon"><column.icon aria-hidden="true" /></Item.Media>
+										<Item.Content><Item.Title>{column.label}</Item.Title></Item.Content>
+										<Item.Actions><span class="text-muted-foreground text-xs tabular-nums">{languages.filter((language) => language[column.key]).length} dil</span></Item.Actions>
+									</Item.Root>
+								{/each}
+							</Item.Group>
+						</Card.Content>
+					</Card.Root>
+				</div>
 			</section>
 
 			<section aria-labelledby="reviews-title" class="min-w-0 xl:col-span-2">
