@@ -5,6 +5,7 @@
 	import { Button, buttonVariants } from "#lib/components/ui/button/index.js";
 	import * as Dialog from "#lib/components/ui/dialog/index.js";
 	import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
+	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
 	import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
 	import { Textarea } from "#lib/components/ui/textarea/index.js";
@@ -66,24 +67,31 @@
 </script>
 
 <DropdownMenu.Root>
-	<DropdownMenu.Trigger class={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), "cursor-pointer rounded-full")} aria-label="Ayarlar" title="Ayarlar">
+	<DropdownMenu.Trigger class={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), "cursor-pointer rounded-full")} aria-label="Ayarlar">
 		<SettingsIcon class="size-5" strokeWidth={1.8} />
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="end" sideOffset={10} class="w-56 rounded-2xl p-2">
 		<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
 			{#each themes as theme (theme.value)}
-				<DropdownMenu.Item
-					aria-label={theme.label}
-					title={theme.label}
-					class={cn(
-						"h-10 cursor-pointer justify-center rounded-xl p-0",
-						soft,
-						userPrefersMode.current === theme.value && "bg-muted text-foreground",
-					)}
-					onclick={() => setMode(theme.value)}
-				>
-					<theme.icon class="size-[18px]" strokeWidth={1.7} />
-				</DropdownMenu.Item>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<DropdownMenu.Item
+								{...props}
+								aria-label={theme.label}
+								class={cn(
+									"h-10 cursor-pointer justify-center rounded-xl p-0",
+									soft,
+									userPrefersMode.current === theme.value && "bg-muted text-foreground",
+								)}
+								onclick={() => setMode(theme.value)}
+							>
+								<theme.icon class="size-[18px]" strokeWidth={1.7} />
+							</DropdownMenu.Item>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="bottom" class="z-60">{theme.label}</Tooltip.Content>
+				</Tooltip.Root>
 			{/each}
 		</div>
 		<DropdownMenu.Group class="mt-1">
