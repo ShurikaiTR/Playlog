@@ -4,6 +4,7 @@
 	import { toast } from "svelte-sonner";
 	import { Button, buttonVariants } from "#lib/components/ui/button/index.js";
 	import * as Dialog from "#lib/components/ui/dialog/index.js";
+	import * as Command from "#lib/components/ui/command/index.js";
 	import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
 	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
 	import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
@@ -16,6 +17,7 @@
 	import MonitorIcon from "@lucide/svelte/icons/monitor";
 	import LanguagesIcon from "@lucide/svelte/icons/languages";
 	import FlagIcon from "@lucide/svelte/icons/flag";
+	import CheckIcon from "@lucide/svelte/icons/check";
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft = "focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground";
@@ -28,10 +30,11 @@
 
 	// TODO: placeholder, the app is Turkish only for now. The choice is just remembered until translations exist.
 	const languages = [
-		{ value: "tr", label: "Türkçe" },
-		{ value: "en", label: "English" },
+		{ value: "tr", label: "Türkçe", turkish: "Türkçe" },
+		{ value: "en", label: "English", turkish: "İngilizce" },
 	];
 	let language = $state("tr");
+	let languageOpen = $state(false);
 	onMount(() => {
 		try {
 			language = localStorage.getItem("playlog-language") ?? "tr";
@@ -40,10 +43,11 @@
 
 	function chooseLanguage(value: string) {
 		language = value;
+		languageOpen = false;
 		try {
 			localStorage.setItem("playlog-language", value);
 		} catch {}
-		toast("Dil desteği yakında");
+		if (value !== "tr") toast("Dil desteği yakında");
 	}
 
 	const feedbackKinds = ["Hata", "Öneri", "Diğer"];
@@ -95,19 +99,10 @@
 			{/each}
 		</div>
 		<DropdownMenu.Group class="mt-1">
-			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger class={cn("data-open:bg-muted data-open:text-foreground data-open:**:text-foreground cursor-pointer rounded-xl py-2", soft)}>
-					<LanguagesIcon />
-					Dil
-				</DropdownMenu.SubTrigger>
-				<DropdownMenu.SubContent class="w-40 rounded-2xl p-1.5">
-					<DropdownMenu.RadioGroup bind:value={() => language, chooseLanguage}>
-						{#each languages as option (option.value)}
-							<DropdownMenu.RadioItem value={option.value} class={cn("cursor-pointer rounded-xl", soft)}>{option.label}</DropdownMenu.RadioItem>
-						{/each}
-					</DropdownMenu.RadioGroup>
-				</DropdownMenu.SubContent>
-			</DropdownMenu.Sub>
+			<DropdownMenu.Item class={cn("cursor-pointer rounded-xl py-2", soft)} onSelect={() => (languageOpen = true)}>
+				<LanguagesIcon />
+				Dil
+			</DropdownMenu.Item>
 			<DropdownMenu.Item class={cn("cursor-pointer rounded-xl py-2", soft)} onSelect={openFeedback}>
 				<FlagIcon />
 				Geri bildirim
@@ -115,6 +110,21 @@
 		</DropdownMenu.Group>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>
+
+<Command.Dialog bind:open={languageOpen} title="Dil" description="Sitenin dilini seç" class="sm:max-w-sm">
+	<Command.Input placeholder="Dil ara" />
+	<Command.List>
+		<Command.Empty>Dil bulunamadı</Command.Empty>
+		{#each languages as option (option.value)}
+			<Command.Item value="{option.label} {option.turkish}" class="cursor-pointer" onSelect={() => chooseLanguage(option.value)}>
+				<span class="font-medium">{option.label}</span>
+				<span class="text-muted-foreground ml-auto">{option.turkish}</span>
+				<CheckIcon class={cn("text-primary", option.value !== language && "invisible")} aria-hidden="true" />
+				{#if option.value === language}<span class="sr-only">(seçili)</span>{/if}
+			</Command.Item>
+		{/each}
+	</Command.List>
+</Command.Dialog>
 
 <Dialog.Root bind:open={feedbackOpen}>
 	<Dialog.Content class="rounded-2xl sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
