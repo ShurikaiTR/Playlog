@@ -19,13 +19,14 @@
 	import * as Dialog from "#lib/components/ui/dialog/index.js";
 	import { cn } from "#lib/utils.js";
 	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
+	import * as Table from "#lib/components/ui/table/index.js";
 	import { Separator } from "#lib/components/ui/separator/index.js";
 	import GameSaveMenu from "#lib/components/game-save-menu.svelte";
 	import { gameRating, myReviews, toListGame } from "#lib/user-lists.svelte.js";
 	import * as Carousel from "#lib/components/ui/carousel/index.js";
 	import type { CarouselAPI } from "#lib/components/ui/carousel/context.js";
 	import GameRow from "#lib/components/game-row.svelte";
-	import { ageDescription, allGameDetails, trendingGames, type GameLanguage } from "#lib/games.js";
+	import { ageDescription, allGameDetails, trendingGames } from "#lib/games.js";
 	import FlagIcon from "@lucide/svelte/icons/flag";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
 	import StoreIcon from "@lucide/svelte/icons/store";
@@ -39,7 +40,8 @@
 	import ShieldIcon from "@lucide/svelte/icons/shield";
 	import StarIcon from "@lucide/svelte/icons/star";
 	import TagIcon from "@lucide/svelte/icons/tag";
-	import LanguagesIcon from "@lucide/svelte/icons/languages";
+	import CheckIcon from "@lucide/svelte/icons/check";
+	import MinusIcon from "@lucide/svelte/icons/minus";
 	import BuildingIcon from "@lucide/svelte/icons/building-2";
 	import PlayIcon from "@lucide/svelte/icons/play";
 	import { Button } from "#lib/components/ui/button/index.js";
@@ -73,15 +75,20 @@
 		return () => api.off("select", onSelect);
 	});
 
-	const languageParts = (language: GameLanguage) =>
-		[language.interface && "Arayüz", language.audio && "Seslendirme", language.subtitles && "Altyazı"].filter(Boolean).join(" · ");
+	// Turkish first, the rest in their given order.
+	const languages = $derived([...game.languages].sort((a, b) => Number(b.name === "Türkçe") - Number(a.name === "Türkçe")));
+	const hasTurkish = $derived(game.languages.some((language) => language.name === "Türkçe"));
+	const languageColumns = [
+		{ key: "interface", label: "Arayüz" },
+		{ key: "audio", label: "Ses" },
+		{ key: "subtitles", label: "Altyazı" },
+	] as const;
 	const dateFormat = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 	const info = $derived([
 		{ label: "Geliştirici", value: game.developer, icon: CodeIcon },
 		{ label: "Yayıncı", value: game.publisher, icon: BuildingIcon },
 		{ label: "Çıkış tarihi", value: dateFormat.format(new Date(game.releaseDate)), icon: CalendarIcon },
 		{ label: "Platformlar", values: game.platforms, icon: MonitorIcon },
-		{ label: "Desteklenen diller", languages: game.languages, icon: LanguagesIcon },
 		{ label: "Oyun modları", values: game.modes, icon: GamepadIcon },
 		{ label: "Türler", value: game.genres.join(", "), icon: TagIcon },
 		{ label: "Yaş sınırı", value: game.ageRating, icon: ShieldIcon },
@@ -190,6 +197,13 @@
 	);
 	const similar = $derived(trendingGames.filter((g) => g.slug !== game.slug).slice(0, 6));
 </script>
+
+{#snippet heading(id: string, title: string, meta?: string)}
+	<div class="mb-3 flex items-baseline justify-between gap-3">
+		<h2 {id} tabindex="-1" class="text-primary scroll-m-20 text-xl font-semibold tracking-tight outline-none">{title}</h2>
+		{#if meta}<span class="text-muted-foreground text-xs tabular-nums">{meta}</span>{/if}
+	</div>
+{/snippet}
 
 {#snippet reviewCard(review: Review)}
 	<Card.Root size="sm">
@@ -358,9 +372,9 @@
 
 	<!-- Two columns from lg up: game info on the left (as wide as the poster above), the right column is left free for more sections. -->
 	<div class="grid w-full min-w-0 items-start gap-8 px-4 md:px-8 lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-x-10">
-		<div class="flex min-w-0 flex-col gap-8">
+		<div class="flex min-w-0 flex-col gap-10">
 		<section aria-labelledby="info-title" class="min-w-0">
-			<h2 id="info-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Oyun bilgileri</h2>
+			{@render heading("info-title", "Oyun bilgileri")}
 			<Card.Root class="gap-0 p-1.5">
 				<Item.Group class="gap-0">
 					{#each info as row, index (row.label)}
@@ -369,20 +383,7 @@
 							<Item.Media variant="icon"><row.icon aria-hidden="true" /></Item.Media>
 							<Item.Content>
 								<Item.Description>{row.label}</Item.Description>
-								{#if row.languages}
-									<div class="flex flex-wrap gap-1.5">
-										{#each row.languages as language (language.name)}
-											<Tooltip.Root>
-												<Tooltip.Trigger>
-													{#snippet child({ props })}
-														<Badge {...props} variant={language.name === "Türkçe" ? "default" : "secondary"}>{language.name}</Badge>
-													{/snippet}
-												</Tooltip.Trigger>
-												<Tooltip.Content>{languageParts(language)}</Tooltip.Content>
-											</Tooltip.Root>
-										{/each}
-									</div>
-								{:else if row.values}
+								{#if row.values}
 									<div class="flex flex-wrap gap-1.5">
 										{#each row.values as value (value)}
 											<Badge variant="secondary">{value}</Badge>
@@ -400,7 +401,7 @@
 
 		{#if storeLinks.length}
 			<section aria-labelledby="stores-title" class="min-w-0">
-				<h2 id="stores-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Mağazalar</h2>
+				{@render heading("stores-title", "Mağazalar", `${storeLinks.length} mağaza`)}
 				<Card.Root class="gap-0 p-1.5">
 					<Item.Group class="gap-0">
 						{#each storeLinks as store, index (store.name)}
@@ -422,12 +423,12 @@
 		{/if}
 		</div>
 
-		<!-- Two equal columns: the trailer sits alone in its own row (left half), screenshots in one row, and the score and reviews card at the very bottom. -->
-		<div class="grid min-w-0 items-start gap-8 xl:grid-cols-2">
-			<section aria-labelledby="trailer-title" class="min-w-0 xl:col-span-2">
-				<h2 id="trailer-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Fragman</h2>
-				<div class="min-w-0 xl:w-1/2 xl:pr-4">
-					<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl ring-1 ring-black/8 dark:ring-white/10">
+		<!-- Two equal columns: trailer and languages side by side, screenshots in one row, and the score and reviews card at the very bottom. -->
+		<div class="grid min-w-0 items-start gap-x-6 gap-y-10 xl:grid-cols-2">
+			<section aria-labelledby="trailer-title" class="min-w-0">
+				{@render heading("trailer-title", "Fragman")}
+				<div class="min-w-0">
+					<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-2xl ring-1 ring-black/8 dark:ring-white/10">
 						<!-- The artwork sits behind the player, so the box is never empty while the video loads or when there is none. -->
 						<img src={game.backdrop} alt="" loading="lazy" class="absolute inset-0 size-full object-cover opacity-60" />
 						{#if game.trailer}
@@ -451,8 +452,45 @@
 				</div>
 			</section>
 
+			<section aria-labelledby="languages-title" class="min-w-0">
+				{@render heading("languages-title", "Desteklenen diller", `${languages.length} dil`)}
+				<Card.Root class="gap-0 py-0">
+					<Table.Root>
+						<Table.Header>
+							<Table.Row class="hover:bg-transparent">
+								<Table.Head class="text-muted-foreground h-10 pl-4 text-xs">Dil</Table.Head>
+								{#each languageColumns as column (column.key)}
+									<Table.Head class="text-muted-foreground h-10 w-20 text-center text-xs">{column.label}</Table.Head>
+								{/each}
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each languages as language (language.name)}
+								<Table.Row class={cn(language.name === "Türkçe" && "bg-muted/50")}>
+									<Table.Cell class="py-2.5 pl-4 font-medium">
+										{#if language.name === "Türkçe"}<Badge>{language.name}</Badge>{:else}{language.name}{/if}
+									</Table.Cell>
+									{#each languageColumns as column (column.key)}
+										<Table.Cell class="py-2.5 text-center">
+											{#if language[column.key]}
+												<CheckIcon class="text-primary mx-auto size-4" aria-hidden="true" /><span class="sr-only">Var</span>
+											{:else}
+												<MinusIcon class="text-muted-foreground/40 mx-auto size-4" aria-hidden="true" /><span class="sr-only">Yok</span>
+											{/if}
+										</Table.Cell>
+									{/each}
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+					{#if !hasTurkish}
+						<Card.Footer class="bg-muted/30 border-t py-3 text-xs text-muted-foreground">Bu oyunda Türkçe dil desteği yok.</Card.Footer>
+					{/if}
+				</Card.Root>
+			</section>
+
 			<section aria-labelledby="shots-title" class="min-w-0 xl:col-span-2">
-				<h2 id="shots-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Ekran görüntüleri</h2>
+				{@render heading("shots-title", "Ekran görüntüleri", `${screenshots.length} görsel`)}
 				<ScrollArea orientation="horizontal" class="w-full">
 					<ul class="flex w-max min-w-full gap-3 pb-3">
 						{#each screenshots as shot, i (i)}
@@ -461,9 +499,9 @@
 									type="button"
 									onclick={() => openGallery(i)}
 									aria-label="{game.title} ekran görüntüsü {i + 1}, büyüt"
-									class="focus-visible:ring-ring/50 block w-full cursor-pointer rounded-xl outline-none focus-visible:ring-[3px]"
+									class="focus-visible:ring-ring/50 block w-full cursor-pointer rounded-2xl outline-none focus-visible:ring-[3px]"
 								>
-									<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl ring-1 ring-black/8 transition-opacity hover:opacity-90 dark:ring-white/10">
+									<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-2xl ring-1 ring-black/8 transition-opacity hover:opacity-90 dark:ring-white/10">
 										<img src={shot} alt="" loading="lazy" class="size-full object-cover" />
 									</AspectRatio>
 								</button>
@@ -474,7 +512,7 @@
 			</section>
 
 			<section aria-labelledby="reviews-title" class="min-w-0 xl:col-span-2">
-				<h2 id="reviews-title" tabindex="-1" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight outline-none">Puanlar ve incelemeler</h2>
+				{@render heading("reviews-title", "Puanlar ve incelemeler", `${reviews.length} inceleme`)}
 				<Card.Root class="gap-0 py-0">
 					<Card.Content class="grid items-center gap-6 py-6 sm:grid-cols-[auto_1px_minmax(0,1fr)] sm:gap-8">
 						<div class="flex items-end gap-4">
