@@ -17,7 +17,6 @@
 	import MonitorIcon from "@lucide/svelte/icons/monitor";
 	import LanguagesIcon from "@lucide/svelte/icons/languages";
 	import FlagIcon from "@lucide/svelte/icons/flag";
-	import CheckIcon from "@lucide/svelte/icons/check";
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft = "focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground";
@@ -111,16 +110,29 @@
 	</DropdownMenu.Content>
 </DropdownMenu.Root>
 
-<Command.Dialog bind:open={languageOpen} title="Dil" description="Sitenin dilini seç" class="sm:max-w-sm">
+<Command.Dialog
+	bind:open={languageOpen}
+	title="Dil seçici"
+	description="Sitenin dilini seç"
+	class="top-1/2 flex max-h-[min(85dvh,640px)] w-[400px] max-w-[calc(100vw-2rem)] -translate-y-1/2 flex-col gap-4 rounded-2xl! p-0 ring-0 duration-200 sm:max-w-[400px] dark:ring-1"
+>
 	<Command.Input placeholder="Dil ara" />
-	<Command.List>
+	<Command.List class="max-h-none p-1">
 		<Command.Empty>Dil bulunamadı</Command.Empty>
 		{#each languages as option (option.value)}
-			<Command.Item value="{option.label} {option.turkish}" class="cursor-pointer" onSelect={() => chooseLanguage(option.value)}>
-				<span class="font-medium">{option.label}</span>
-				<span class="text-muted-foreground ml-auto">{option.turkish}</span>
-				<CheckIcon class={cn("text-primary", option.value !== language && "invisible")} aria-hidden="true" />
-				{#if option.value === language}<span class="sr-only">(seçili)</span>{/if}
+			<!-- The highlight is an inset pill behind the row, not the row itself. -->
+			<Command.Item
+				value="{option.label} {option.turkish}"
+				data-checked={option.value === language}
+				class="not-data-[checked=true]:[&>svg]:hidden data-selected:bg-transparent after:bg-transparent data-selected:after:bg-muted relative isolate cursor-pointer gap-2 rounded-none px-3.5 py-3 after:absolute after:inset-x-1 after:inset-y-0 after:-z-10 after:rounded-lg after:transition-colors after:duration-75 in-data-[slot=dialog-content]:rounded-none"
+				onSelect={() => chooseLanguage(option.value)}
+			>
+				{option.label}
+				{#if option.value === language}
+					<span class="sr-only">(seçili)</span>
+				{:else}
+					<span class="text-muted-foreground ms-auto">{option.turkish}</span>
+				{/if}
 			</Command.Item>
 		{/each}
 	</Command.List>

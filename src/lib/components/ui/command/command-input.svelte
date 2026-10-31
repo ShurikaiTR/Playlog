@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Command as CommandPrimitive } from "bits-ui";
-	import * as InputGroup from "#lib/components/ui/input-group/index.js";
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import { cn } from "#lib/utils.js";
 
@@ -12,23 +11,16 @@
 	}: CommandPrimitive.InputProps = $props();
 </script>
 
-<div data-slot="command-input-wrapper" class="p-1 pb-0">
-	<InputGroup.Root class="bg-input/30 h-9">
-		<CommandPrimitive.Input
-			{value}
-			data-slot="command-input"
-			class={cn(
-				"w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
-				className
-			)}
-			{...restProps}
-		>
-			{#snippet child({ props })}
-				<InputGroup.Input {...props} bind:value bind:ref />
-			{/snippet}
-		</CommandPrimitive.Input>
-		<InputGroup.Addon>
-			<SearchIcon class="size-4 shrink-0 opacity-50" />
-		</InputGroup.Addon>
-	</InputGroup.Root>
+<div data-slot="command-input-wrapper" class="border-input flex items-center border-b-2 px-3">
+	<SearchIcon class="me-2 size-4 shrink-0 opacity-50" aria-hidden="true" />
+	<CommandPrimitive.Input
+		data-slot="command-input"
+		class={cn(
+			"placeholder:text-muted-foreground flex h-10 w-full bg-transparent text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+			className
+		)}
+		bind:ref
+		bind:value
+		{...restProps}
+	/>
 </div>
