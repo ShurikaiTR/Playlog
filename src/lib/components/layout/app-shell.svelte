@@ -16,10 +16,8 @@
 		<header class="relative z-20 flex h-16 shrink-0 items-center gap-3 px-4 md:px-6">
 			<Sidebar.Trigger class="md:hidden" />
 			<div class="ml-auto flex items-center gap-2">
-				<Button href="/giris" variant="secondary" size="lg" class="hidden h-11 px-5 text-[0.9375rem] sm:inline-flex">
-					Giriş yap
-				</Button>
-				<Button href="/basla" size="lg" class="h-11 px-5 text-[0.9375rem]">Başla</Button>
+				<Button href="/giris" variant="outline" size="lg">Giriş yap</Button>
+				<Button href="/kayit-ol" size="lg">Kayıt ol</Button>
 			</div>
 		</header>
 
