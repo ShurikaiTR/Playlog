@@ -7,7 +7,6 @@
 	import * as InputGroup from "#lib/components/ui/input-group/index.js";
 	import { Input } from "#lib/components/ui/input/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
-	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
 	import * as Select from "#lib/components/ui/select/index.js";
 	import { Textarea } from "#lib/components/ui/textarea/index.js";
 	import { setGame, type UserList } from "#lib/user-lists.svelte.js";
@@ -290,76 +289,72 @@
 </div>
 
 <Dialog.Root bind:open={editOpen}>
-	<Dialog.Content class="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
-		<ScrollArea class="min-h-0">
-			<div class="grid gap-6 p-6">
-				<Dialog.Header class="text-left">
-					<Dialog.Title class="text-primary text-lg font-medium tracking-tight">
-						{editMode === "details" ? "Listeyi düzenle" : editMode === "image" ? "Görseli değiştir" : "Kapağı değiştir"}
-					</Dialog.Title>
-					<Dialog.Description>
-						{editMode === "details" ? "Bu listeyi kendine göre ayarla." : editMode === "image" ? "Koleksiyonun için bir görsel seç." : "Koleksiyonunun arka planını belirle."}
-					</Dialog.Description>
-				</Dialog.Header>
-				<form class="space-y-5" onsubmit={saveSettings}>
-					{#if editMode !== "details"}
-						<div class="space-y-3">
-							<div class={editMode === "image" ? "bg-muted mx-auto flex size-36 items-center justify-center overflow-hidden rounded-xl border" : "bg-muted h-36 overflow-hidden rounded-xl border"}>
-								{#if editMode === "backdrop"}
-									<img src={draftBackdrop} alt="Kapak önizlemesi" class="size-full object-cover" />
-								{:else if draftImage}
-									<img src={draftImage} alt="Liste görseli önizlemesi" class="size-full object-cover" />
-								{:else}
-									{@render listIcon("size-8 text-muted-foreground")}
-								{/if}
-							</div>
-							<Label for="list-artwork">{editMode === "image" ? "Liste görseli" : "Kapak görseli"}</Label>
-							<Input
-								id="list-artwork"
-								type="file"
-								accept="image/jpeg,image/png,image/webp,image/gif"
-								disabled={pendingImages > 0}
-								onchange={(event) => selectImage(event, editMode === "image" ? "image" : "backdrop")}
-								aria-describedby="list-image-help"
-							/>
-							<p id="list-image-help" class="text-muted-foreground text-xs">JPG, PNG, WebP ya da GIF, en fazla 5 MB.</p>
-							{#if imageError}<p class="text-destructive text-sm" role="alert">{imageError}</p>{/if}
-						</div>
-					{:else}
-						<div class="space-y-2">
-							<Label for="list-name">Liste adı</Label>
-							<Input id="list-name" bind:value={draftName} maxlength={80} required aria-invalid={nameError ? true : undefined} />
-							{#if nameError}<p class="text-destructive text-sm" role="alert">{nameError}</p>{/if}
-						</div>
-						<div class="space-y-2">
-							<Label for="list-description">Açıklama <span class="text-muted-foreground font-normal">(isteğe bağlı)</span></Label>
-							<Textarea id="list-description" bind:value={draftDescription} maxlength={280} rows={3} placeholder="Bu koleksiyonu özel yapan ne?" class="max-h-40 resize-y" />
-						</div>
-						<div class="space-y-2">
-							<Label id="list-visibility-label">Görünürlük</Label>
-							<Select.Root type="single" bind:value={draftVisibility}>
-								<Select.Trigger class="h-10 w-full" aria-labelledby="list-visibility-label">
-									<span data-slot="select-value">
-										{#if draftVisibility === "private"}<LockIcon />Gizli{:else}<GlobeIcon />Herkese açık{/if}
-									</span>
-								</Select.Trigger>
-								<Select.Content class="rounded-xl">
-									<Select.Item value="private" class="rounded-lg"><LockIcon class="size-4" />Gizli</Select.Item>
-									<Select.Item value="public" class="rounded-lg"><GlobeIcon class="size-4" />Herkese açık</Select.Item>
-								</Select.Content>
-							</Select.Root>
-							<p class="text-muted-foreground text-xs leading-5">
-								{draftVisibility === "private" ? "Bu listeyi yalnızca sen görebilirsin." : "Bu liste profilinde herkese görünür."}
-							</p>
-						</div>
-					{/if}
-					<Dialog.Footer>
-						<Button type="button" variant="outline" class="cursor-pointer" onclick={() => (editOpen = false)}>Vazgeç</Button>
-						<Button type="submit" class="cursor-pointer" disabled={pendingImages > 0}>Değişiklikleri kaydet</Button>
-					</Dialog.Footer>
-				</form>
-			</div>
-		</ScrollArea>
+	<Dialog.Content>
+		<Dialog.Header class="text-left">
+			<Dialog.Title>
+				{editMode === "details" ? "Listeyi düzenle" : editMode === "image" ? "Görseli değiştir" : "Kapağı değiştir"}
+			</Dialog.Title>
+			<Dialog.Description>
+				{editMode === "details" ? "Bu listeyi kendine göre ayarla." : editMode === "image" ? "Koleksiyonun için bir görsel seç." : "Koleksiyonunun arka planını belirle."}
+			</Dialog.Description>
+		</Dialog.Header>
+		<form class="space-y-5" onsubmit={saveSettings}>
+			{#if editMode !== "details"}
+				<div class="space-y-3">
+					<div class={editMode === "image" ? "bg-muted mx-auto flex size-36 items-center justify-center overflow-hidden rounded-xl border" : "bg-muted h-36 overflow-hidden rounded-xl border"}>
+						{#if editMode === "backdrop"}
+							<img src={draftBackdrop} alt="Kapak önizlemesi" class="size-full object-cover" />
+						{:else if draftImage}
+							<img src={draftImage} alt="Liste görseli önizlemesi" class="size-full object-cover" />
+						{:else}
+							{@render listIcon("size-8 text-muted-foreground")}
+						{/if}
+					</div>
+					<Label for="list-artwork">{editMode === "image" ? "Liste görseli" : "Kapak görseli"}</Label>
+					<Input
+						id="list-artwork"
+						type="file"
+						accept="image/jpeg,image/png,image/webp,image/gif"
+						disabled={pendingImages > 0}
+						onchange={(event) => selectImage(event, editMode === "image" ? "image" : "backdrop")}
+						aria-describedby="list-image-help"
+					/>
+					<p id="list-image-help" class="text-muted-foreground text-xs">JPG, PNG, WebP ya da GIF, en fazla 5 MB.</p>
+					{#if imageError}<p class="text-destructive text-sm" role="alert">{imageError}</p>{/if}
+				</div>
+			{:else}
+				<div class="space-y-2">
+					<Label for="list-name">Liste adı</Label>
+					<Input id="list-name" bind:value={draftName} maxlength={80} required aria-invalid={nameError ? true : undefined} />
+					{#if nameError}<p class="text-destructive text-sm" role="alert">{nameError}</p>{/if}
+				</div>
+				<div class="space-y-2">
+					<Label for="list-description">Açıklama <span class="text-muted-foreground font-normal">(isteğe bağlı)</span></Label>
+					<Textarea id="list-description" bind:value={draftDescription} maxlength={280} rows={3} placeholder="Bu koleksiyonu özel yapan ne?" class="max-h-40 resize-y" />
+				</div>
+				<div class="space-y-2">
+					<Label id="list-visibility-label">Görünürlük</Label>
+					<Select.Root type="single" bind:value={draftVisibility}>
+						<Select.Trigger class="h-10 w-full" aria-labelledby="list-visibility-label">
+							<span data-slot="select-value">
+								{#if draftVisibility === "private"}<LockIcon />Gizli{:else}<GlobeIcon />Herkese açık{/if}
+							</span>
+						</Select.Trigger>
+						<Select.Content class="rounded-xl">
+							<Select.Item value="private" class="rounded-lg"><LockIcon class="size-4" />Gizli</Select.Item>
+							<Select.Item value="public" class="rounded-lg"><GlobeIcon class="size-4" />Herkese açık</Select.Item>
+						</Select.Content>
+					</Select.Root>
+					<p class="text-muted-foreground text-xs leading-5">
+						{draftVisibility === "private" ? "Bu listeyi yalnızca sen görebilirsin." : "Bu liste profilinde herkese görünür."}
+					</p>
+				</div>
+			{/if}
+			<Dialog.Footer>
+				<Button type="button" variant="outline" class="cursor-pointer" onclick={() => (editOpen = false)}>Vazgeç</Button>
+				<Button type="submit" class="cursor-pointer" disabled={pendingImages > 0}>Değişiklikleri kaydet</Button>
+			</Dialog.Footer>
+		</form>
 	</Dialog.Content>
 </Dialog.Root>
 

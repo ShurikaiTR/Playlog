@@ -88,9 +88,9 @@
 								</Button>
 							{/snippet}
 						</Dialog.Trigger>
-						<Dialog.Content class="gap-5 sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
+						<Dialog.Content>
 							<Dialog.Header class="text-left">
-								<Dialog.Title class="text-primary text-lg font-medium tracking-tight">
+								<Dialog.Title>
 									{connection.label}
 									<span class="text-muted-foreground ml-1 text-sm">{connection.people.length}</span>
 								</Dialog.Title>

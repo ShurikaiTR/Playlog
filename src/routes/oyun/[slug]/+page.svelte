@@ -591,7 +591,7 @@
 	<!-- Preview: the picture on the dimmed page, round arrows at the screen edges and a small bar underneath. Clicking the empty area closes it. -->
 	<Dialog.Root bind:open={galleryOpen}>
 		<Dialog.Content
-			class="top-0 left-0 grid h-svh w-screen max-w-none translate-x-0 translate-y-0 place-items-center rounded-none bg-transparent p-0 shadow-none ring-0 sm:max-w-none"
+			class="top-0 left-0 grid h-svh max-h-none w-screen max-w-none translate-x-0 translate-y-0 place-items-center overflow-visible rounded-none bg-transparent p-0 shadow-none ring-0 sm:max-w-none dark:ring-0"
 			overlayClass="bg-black/80 supports-backdrop-filter:backdrop-blur-md"
 			showCloseButton={false}
 			aria-describedby={undefined}
@@ -690,86 +690,78 @@
 	</Sheet.Root>
 
 	<Dialog.Root bind:open={reportOpen}>
-		<Dialog.Content class="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md [&_[data-slot=dialog-close]]:cursor-pointer">
-			<ScrollArea class="min-h-0">
-				<div class="grid gap-6 p-6">
-					<Dialog.Header>
-						<Dialog.Title class="text-primary text-lg font-medium tracking-tight">Sorun bildir</Dialog.Title>
-						<Dialog.Description>{game.title} bilgilerinde neyin düzeltilmesi gerektiğini bize anlat.</Dialog.Description>
-					</Dialog.Header>
-					<form class="space-y-4" onsubmit={submitReport}>
-						<div class="space-y-2">
-							<Label for="report-reason">Neden</Label>
-							<Select.Root type="single" bind:value={reportReason}>
-								<Select.Trigger id="report-reason" class="h-10 w-full">
-									<span data-slot="select-value">{reportReason || "Bir neden seç"}</span>
-								</Select.Trigger>
-								<Select.Content class="rounded-xl">
-									{#each ["Yanlış bilgi", "Yanlış görsel", "Eksik bilgi", "Diğer"] as reason (reason)}
-										<Select.Item value={reason} class="rounded-lg">{reason}</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						</div>
-						<div class="space-y-2">
-							<Label for="report-details">Ayrıntılar</Label>
-							<Textarea id="report-details" bind:value={reportDetails} placeholder="Sorunu anlat…" class="min-h-24 resize-y" />
-						</div>
-						{#if reportNotice}<p class="text-muted-foreground text-xs leading-5" role="status">{reportNotice}</p>{/if}
-						<Dialog.Footer>
-							<Button type="button" variant="outline" class="cursor-pointer" onclick={() => (reportOpen = false)}>Vazgeç</Button>
-							<Button type="submit" class="cursor-pointer">Bildirimi gönder</Button>
-						</Dialog.Footer>
-					</form>
+		<Dialog.Content>
+			<Dialog.Header>
+				<Dialog.Title>Sorun bildir</Dialog.Title>
+				<Dialog.Description>{game.title} bilgilerinde neyin düzeltilmesi gerektiğini bize anlat.</Dialog.Description>
+			</Dialog.Header>
+			<form class="space-y-4" onsubmit={submitReport}>
+				<div class="space-y-2">
+					<Label for="report-reason">Neden</Label>
+					<Select.Root type="single" bind:value={reportReason}>
+						<Select.Trigger id="report-reason" class="h-10 w-full">
+							<span data-slot="select-value">{reportReason || "Bir neden seç"}</span>
+						</Select.Trigger>
+						<Select.Content class="rounded-xl">
+							{#each ["Yanlış bilgi", "Yanlış görsel", "Eksik bilgi", "Diğer"] as reason (reason)}
+								<Select.Item value={reason} class="rounded-lg">{reason}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
-			</ScrollArea>
+				<div class="space-y-2">
+					<Label for="report-details">Ayrıntılar</Label>
+					<Textarea id="report-details" bind:value={reportDetails} placeholder="Sorunu anlat…" class="min-h-24 resize-y" />
+				</div>
+				{#if reportNotice}<p class="text-muted-foreground text-xs leading-5" role="status">{reportNotice}</p>{/if}
+				<Dialog.Footer>
+					<Button type="button" variant="outline" class="cursor-pointer" onclick={() => (reportOpen = false)}>Vazgeç</Button>
+					<Button type="submit" class="cursor-pointer">Bildirimi gönder</Button>
+				</Dialog.Footer>
+			</form>
 		</Dialog.Content>
 	</Dialog.Root>
 
 	<Dialog.Root bind:open={reviewSheetOpen}>
-		<Dialog.Content class="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg [&_[data-slot=dialog-close]]:cursor-pointer">
-			<ScrollArea class="min-h-0">
-				<div class="grid gap-6 p-6">
-					<Dialog.Header>
-						<Dialog.Title class="text-primary text-lg font-medium tracking-tight">{game.title} için puan ver</Dialog.Title>
-						<Dialog.Description>Bir puan seç ve düşüncelerini paylaş.</Dialog.Description>
-					</Dialog.Header>
-					<form class="space-y-5" onsubmit={saveReview}>
-						<div class="space-y-2">
-							<div class="flex items-baseline justify-between">
-								<Label>Puanın</Label>
-								{#if rating}<span class="text-xl font-semibold tabular-nums">{rating}<span class="text-muted-foreground text-sm font-normal">/10</span></span>{/if}
-							</div>
-							<div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
-								{#each Array.from({ length: 10 }, (_, index) => index + 1) as n (n)}
-									<Button
-										type="button"
-										variant={rating === n ? "default" : "outline"}
-										class="aspect-square h-auto w-full cursor-pointer rounded-xl p-0 text-xs font-semibold {rating && n < rating ? 'border-foreground/30 bg-foreground/5' : ''}"
-										onclick={() => (gameRating[game.slug] = n)}
-										aria-pressed={rating === n}
-									>
-										{n}
-									</Button>
-								{/each}
-							</div>
-						</div>
-						<div class="space-y-2">
-							<Label for="review">İncelemen</Label>
-							<Textarea id="review" bind:value={draftText} placeholder="{game.title} hakkında ne düşünüyorsun?" class="min-h-28 resize-none rounded-xl" />
-						</div>
-						<div class="flex items-center gap-2">
-							<Checkbox id="spoiler" bind:checked={draftSpoiler} />
-							<Label for="spoiler" class="text-muted-foreground cursor-pointer text-xs">Spoiler içeriyor</Label>
-						</div>
-						{#if reviewError}<p class="text-muted-foreground text-xs leading-5" role="status">{reviewError}</p>{/if}
-						<Dialog.Footer>
-							<Button variant="outline" class="cursor-pointer" onclick={() => (reviewSheetOpen = false)}>Vazgeç</Button>
-							<Button type="submit" class="cursor-pointer">İncelemeyi gönder</Button>
-						</Dialog.Footer>
-					</form>
+		<Dialog.Content>
+			<Dialog.Header>
+				<Dialog.Title>{game.title} için puan ver</Dialog.Title>
+				<Dialog.Description>Bir puan seç ve düşüncelerini paylaş.</Dialog.Description>
+			</Dialog.Header>
+			<form class="space-y-5" onsubmit={saveReview}>
+				<div class="space-y-2">
+					<div class="flex items-baseline justify-between">
+						<Label>Puanın</Label>
+						{#if rating}<span class="text-xl font-semibold tabular-nums">{rating}<span class="text-muted-foreground text-sm font-normal">/10</span></span>{/if}
+					</div>
+					<div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
+						{#each Array.from({ length: 10 }, (_, index) => index + 1) as n (n)}
+							<Button
+								type="button"
+								variant={rating === n ? "default" : "outline"}
+								class="aspect-square h-auto w-full cursor-pointer rounded-xl p-0 text-xs font-semibold {rating && n < rating ? 'border-foreground/30 bg-foreground/5' : ''}"
+								onclick={() => (gameRating[game.slug] = n)}
+								aria-pressed={rating === n}
+							>
+								{n}
+							</Button>
+						{/each}
+					</div>
 				</div>
-			</ScrollArea>
+				<div class="space-y-2">
+					<Label for="review">İncelemen</Label>
+					<Textarea id="review" bind:value={draftText} placeholder="{game.title} hakkında ne düşünüyorsun?" class="min-h-28 resize-none rounded-xl" />
+				</div>
+				<div class="flex items-center gap-2">
+					<Checkbox id="spoiler" bind:checked={draftSpoiler} />
+					<Label for="spoiler" class="text-muted-foreground cursor-pointer text-xs">Spoiler içeriyor</Label>
+				</div>
+				{#if reviewError}<p class="text-muted-foreground text-xs leading-5" role="status">{reviewError}</p>{/if}
+				<Dialog.Footer>
+					<Button variant="outline" class="cursor-pointer" onclick={() => (reviewSheetOpen = false)}>Vazgeç</Button>
+					<Button type="submit" class="cursor-pointer">İncelemeyi gönder</Button>
+				</Dialog.Footer>
+			</form>
 		</Dialog.Content>
 	</Dialog.Root>
 

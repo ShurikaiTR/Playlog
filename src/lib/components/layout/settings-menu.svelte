@@ -131,7 +131,6 @@
 	bind:open={languageOpen}
 	title="Dil seçici"
 	description="Sitenin dilini seç"
-	class="top-1/2 flex max-h-[min(85dvh,640px)] w-[400px] max-w-[calc(100vw-2rem)] -translate-y-1/2 flex-col gap-4 rounded-2xl! p-0 ring-0 duration-200 sm:max-w-[400px] dark:ring-1"
 >
 	<Command.Input placeholder="Dil ara" />
 	<Command.List class="max-h-none p-1">
@@ -156,17 +155,10 @@
 </Command.Dialog>
 
 <Dialog.Root bind:open={feedbackOpen}>
-	<Dialog.Content showCloseButton={false} class="max-h-[calc(100dvh-2rem)] w-[520px] max-w-[calc(100vw-2rem)] gap-4 overflow-y-auto rounded-2xl p-4 duration-200 sm:max-w-[520px]">
-		<Dialog.Header class="flex-row items-start justify-between">
-			<Dialog.Title class="px-0.5 text-lg leading-tight font-semibold">Geri bildirim</Dialog.Title>
+	<Dialog.Content class="w-[520px]">
+		<Dialog.Header>
+			<Dialog.Title>Geri bildirim</Dialog.Title>
 			<Dialog.Description class="sr-only">Bir sorunu bildir ya da fikrini paylaş.</Dialog.Description>
-			<Dialog.Close>
-				{#snippet child({ props })}
-					<Button {...props} variant="ghost" size="icon" class="text-muted-foreground hover:text-foreground -mt-2 -me-2 size-10 shrink-0 cursor-pointer rounded-xl" aria-label="Kapat">
-						<XIcon class="size-4" />
-					</Button>
-				{/snippet}
-			</Dialog.Close>
 		</Dialog.Header>
 		<form class="flex flex-col gap-4" onsubmit={sendFeedback}>
 			<div>
@@ -187,7 +179,7 @@
 				rows={8}
 				aria-label="Mesajın"
 				placeholder="Bize neyin yanlış gittiğini ya da ne istediğini anlat"
-				class="hover:not-focus-visible:border-foreground/25 focus-visible:border-ring focus-visible:ring-ring min-h-40 resize-none rounded-2xl p-4 transition-[border-color,box-shadow] duration-150 focus-visible:ring-1"
+				class="min-h-40"
 			/>
 			<div>
 				<p class="mb-2 text-sm font-semibold">Ekler<span class="text-muted-foreground ms-1 font-normal tabular-nums">({attachments.length}/{maxAttachments})</span></p>
