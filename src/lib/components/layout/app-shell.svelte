@@ -5,12 +5,10 @@
 	import AppSidebar from "./app-sidebar.svelte";
 	import Footer from "#lib/components/footer.svelte";
 	import SettingsMenu from "./settings-menu.svelte";
-	import { ModeWatcher } from "mode-watcher";
 
 	let { children }: { children: Snippet } = $props();
 </script>
 
-<ModeWatcher defaultMode="dark" />
 <Sidebar.Provider>
 	<AppSidebar />
 	<Sidebar.Inset
