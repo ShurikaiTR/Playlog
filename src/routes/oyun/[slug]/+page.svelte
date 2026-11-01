@@ -38,6 +38,11 @@
 	import CodeIcon from "@lucide/svelte/icons/code-xml";
 	import ShieldIcon from "@lucide/svelte/icons/shield";
 	import StarIcon from "@lucide/svelte/icons/star";
+	import CpuIcon from "@lucide/svelte/icons/cpu";
+	import MicrochipIcon from "@lucide/svelte/icons/microchip";
+	import MemoryStickIcon from "@lucide/svelte/icons/memory-stick";
+	import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
+	import LaptopIcon from "@lucide/svelte/icons/laptop";
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import BuildingIcon from "@lucide/svelte/icons/building-2";
 	import PlayIcon from "@lucide/svelte/icons/play";
@@ -82,6 +87,13 @@
 		{ label: "Türler", value: game.genres.join(", "), icon: TagIcon },
 		{ label: "Yaş sınırı", value: game.ageRating, icon: ShieldIcon },
 	]);
+	const requirementRows = [
+		{ key: "os", label: "İşletim sistemi", icon: LaptopIcon },
+		{ key: "cpu", label: "İşlemci", icon: CpuIcon },
+		{ key: "gpu", label: "Ekran kartı", icon: MicrochipIcon },
+		{ key: "ram", label: "Bellek", icon: MemoryStickIcon },
+		{ key: "storage", label: "Depolama", icon: HardDriveIcon },
+	] as const;
 	// Placeholder media and review data until games come from real data.
 	const screenshots = $derived(
 		game.screenshots?.length ? game.screenshots : trendingGames.slice(0, 5).map((g, i) => trendingGames[(i + 1) % trendingGames.length].cover),
@@ -376,6 +388,37 @@
 				</Item.Group>
 			</Card.Root>
 		</section>
+
+		{#if game.requirements}
+			{@const requirements = game.requirements}
+			<section aria-labelledby="requirements-title" class="min-w-0">
+				<h2 id="requirements-title" class="text-primary mb-4 scroll-m-20 text-2xl font-semibold tracking-tight">Gereksinimler</h2>
+				<Card.Root class="gap-0 p-1.5">
+					<Tabs.Root value="minimum">
+						<Tabs.List class="mx-1.5 mt-1.5 w-[calc(100%-0.75rem)]">
+							<Tabs.Trigger value="minimum" class="cursor-pointer">Minimum</Tabs.Trigger>
+							<Tabs.Trigger value="recommended" class="cursor-pointer">Önerilen</Tabs.Trigger>
+						</Tabs.List>
+						{#each ["minimum", "recommended"] as const as level (level)}
+							<Tabs.Content value={level}>
+								<Item.Group class="gap-0">
+									{#each requirementRows as row, index (row.key)}
+										{#if index > 0}<Item.Separator class="mx-3 my-0" />{/if}
+										<Item.Root size="xs">
+											<Item.Media variant="icon"><row.icon aria-hidden="true" /></Item.Media>
+											<Item.Content>
+												<Item.Description>{row.label}</Item.Description>
+												<Item.Title class="line-clamp-none">{requirements[level][row.key]}</Item.Title>
+											</Item.Content>
+										</Item.Root>
+									{/each}
+								</Item.Group>
+							</Tabs.Content>
+						{/each}
+					</Tabs.Root>
+				</Card.Root>
+			</section>
+		{/if}
 
 		{#if storeLinks.length}
 			<section aria-labelledby="stores-title" class="min-w-0">
