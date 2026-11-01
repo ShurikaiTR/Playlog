@@ -55,6 +55,9 @@ const lang = (name: string, parts: "i" | "is" | "ias" = "ias"): GameLanguage => 
 	subtitles: parts !== "i",
 });
 
+export type SystemRequirement = { os: string; cpu: string; gpu: string; ram: string; storage: string };
+export type SystemRequirements = { minimum: SystemRequirement; recommended: SystemRequirement };
+
 export type GameDetail = Game & {
 	backdrop: string;
 	genres: string[];
@@ -80,6 +83,8 @@ export type GameDetail = Game & {
 	logo?: string;
 	// Slugs of other games from the same series (sequels, spin-offs, DLC).
 	series?: string[];
+	// PC system requirements; left out for games that are not on PC.
+	requirements?: SystemRequirements;
 };
 
 const extras: Record<string, Omit<GameDetail, keyof Game>> = {
@@ -206,6 +211,35 @@ const extras: Record<string, Omit<GameDetail, keyof Game>> = {
 };
 
 // Placeholder trailer shared by every game until real trailer ids exist.
+// Placeholder PC requirements until they come from real data.
+const req = (os: string, cpu: string, gpu: string, ram: string, storage: string): SystemRequirement => ({ os, cpu, gpu, ram, storage });
+const requirements: Record<string, SystemRequirements> = {
+	"neon-surgun": {
+		minimum: req("Windows 10 64-bit", "Intel Core i5-8400", "GTX 1060 6 GB", "12 GB", "70 GB SSD"),
+		recommended: req("Windows 11 64-bit", "Intel Core i7-10700", "RTX 3070 8 GB", "16 GB", "70 GB SSD"),
+	},
+	"piksel-gecesi": {
+		minimum: req("Windows 10 64-bit", "Intel Core i3-6100", "Intel HD 530", "4 GB", "2 GB"),
+		recommended: req("Windows 10 64-bit", "Intel Core i5-8400", "GTX 960", "8 GB", "2 GB"),
+	},
+	"derin-yorunge": {
+		minimum: req("Windows 10 64-bit", "Intel Core i5-7500", "GTX 970", "8 GB", "40 GB"),
+		recommended: req("Windows 11 64-bit", "Intel Core i7-9700", "RTX 2060", "16 GB", "40 GB SSD"),
+	},
+	"golgeler-vadisi": {
+		minimum: req("Windows 10 64-bit", "Intel Core i5-9400F", "GTX 1660 6 GB", "16 GB", "90 GB SSD"),
+		recommended: req("Windows 11 64-bit", "Intel Core i7-11700", "RTX 3070 8 GB", "32 GB", "90 GB SSD"),
+	},
+	"kirik-kilic": {
+		minimum: req("Windows 10 64-bit", "Intel Core i5-8400", "GTX 1050 Ti", "8 GB", "45 GB"),
+		recommended: req("Windows 10 64-bit", "Intel Core i7-8700", "GTX 1070", "16 GB", "45 GB SSD"),
+	},
+	"son-istasyon": {
+		minimum: req("Windows 10 64-bit", "Intel Core i5-6600", "GTX 960 4 GB", "8 GB", "30 GB"),
+		recommended: req("Windows 10 64-bit", "Intel Core i7-7700", "GTX 1070", "16 GB", "30 GB SSD"),
+	},
+};
+
 const placeholderTrailer = "aqz-KE-bpKQ";
 const placeholderLogo = "/logos/placeholder.png";
 
@@ -213,7 +247,7 @@ const placeholderLogo = "/logos/placeholder.png";
 export const getGameDetail = (slug: string): GameDetail | undefined => {
 	const game = trendingGames.find((g) => g.slug === slug);
 	const extra = extras[slug];
-	return game && extra ? { ...game, ...extra, trailer: placeholderTrailer, logo: extra.logo ?? placeholderLogo } : undefined;
+	return game && extra ? { ...game, ...extra, requirements: extra.platforms.includes("PC") ? requirements[slug] : undefined, trailer: placeholderTrailer, logo: extra.logo ?? placeholderLogo } : undefined;
 };
 
 // Moods for the discover page. Each one is a hand-picked group of genres.
