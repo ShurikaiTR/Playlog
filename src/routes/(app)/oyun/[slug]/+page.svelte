@@ -29,7 +29,6 @@
 	import { ageDescription, allGameDetails, trendingGames } from "#lib/games.js";
 	import FlagIcon from "@lucide/svelte/icons/flag";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
-	import StoreIcon from "@lucide/svelte/icons/store";
 	import XIcon from "@lucide/svelte/icons/x";
 	import ThumbsUpIcon from "@lucide/svelte/icons/thumbs-up";
 	import EyeOffIcon from "@lucide/svelte/icons/eye-off";
@@ -39,11 +38,6 @@
 	import CodeIcon from "@lucide/svelte/icons/code-xml";
 	import ShieldIcon from "@lucide/svelte/icons/shield";
 	import StarIcon from "@lucide/svelte/icons/star";
-	import CpuIcon from "@lucide/svelte/icons/cpu";
-	import MicrochipIcon from "@lucide/svelte/icons/microchip";
-	import MemoryStickIcon from "@lucide/svelte/icons/memory-stick";
-	import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
-	import LaptopIcon from "@lucide/svelte/icons/laptop";
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import CheckIcon from "@lucide/svelte/icons/check";
 	import MinusIcon from "@lucide/svelte/icons/minus";
@@ -98,11 +92,11 @@
 		{ label: "Yaş sınırı", value: game.ageRating, icon: ShieldIcon },
 	]);
 	const requirementRows = [
-		{ key: "os", label: "İşletim sistemi", icon: LaptopIcon },
-		{ key: "cpu", label: "İşlemci", icon: CpuIcon },
-		{ key: "gpu", label: "Ekran kartı", icon: MicrochipIcon },
-		{ key: "ram", label: "Bellek", icon: MemoryStickIcon },
-		{ key: "storage", label: "Depolama", icon: HardDriveIcon },
+		{ key: "os", label: "İşletim sistemi" },
+		{ key: "cpu", label: "İşlemci" },
+		{ key: "gpu", label: "Ekran kartı" },
+		{ key: "ram", label: "Bellek" },
+		{ key: "storage", label: "Depolama" },
 	] as const;
 	// Placeholder media and review data until games come from real data.
 	const screenshots = $derived(
@@ -386,124 +380,30 @@
 		<div class="flex min-w-0 flex-col gap-10">
 		<section aria-labelledby="info-title" class="min-w-0">
 			{@render heading("info-title", "Oyun bilgileri")}
-			<Card.Root class="gap-0 p-1.5">
-				<Item.Group class="gap-0">
-					{#each info as row, index (row.label)}
-						{#if index > 0}<Item.Separator class="mx-3 my-0" />{/if}
-						<Item.Root size="xs">
-							<Item.Media variant="icon"><row.icon aria-hidden="true" /></Item.Media>
-							<Item.Content>
-								<Item.Description>{row.label}</Item.Description>
-								{#if row.values}
-									<div class="flex flex-wrap gap-1.5">
-										{#each row.values as value (value)}
-											<Badge variant="secondary">{value}</Badge>
-										{/each}
-									</div>
-								{:else}
-									<Item.Title class="line-clamp-none">{row.value}</Item.Title>
-								{/if}
-							</Item.Content>
-						</Item.Root>
-					{/each}
-				</Item.Group>
-			</Card.Root>
+			<dl class="divide-y">
+				{#each info as row (row.label)}
+					<div class="py-3 first:pt-0">
+						<dt class="text-muted-foreground text-xs">{row.label}</dt>
+						<dd class="text-primary mt-0.5 text-sm font-medium">{row.values ? row.values.join(", ") : row.value}</dd>
+					</div>
+				{/each}
+			</dl>
 		</section>
-
-		<section aria-labelledby="languages-title" class="min-w-0">
-			{@render heading("languages-title", "Desteklenen diller", `${game.languages.length} dil`)}
-			<Card.Root class="gap-0 py-0">
-				<Table.Root>
-					<Table.Header>
-						<Table.Row class="hover:bg-transparent">
-							<Table.Head class="text-muted-foreground h-9 pl-3 text-xs">Dil</Table.Head>
-							{#each languageColumns as column (column.key)}
-								<Table.Head class="h-9 w-7 px-0 text-center">
-									<Tooltip.Root>
-										<Tooltip.Trigger>
-											{#snippet child({ props })}
-												<span {...props} class="text-muted-foreground inline-flex"><column.icon class="size-3.5" aria-hidden="true" /><span class="sr-only">{column.label}</span></span>
-											{/snippet}
-										</Tooltip.Trigger>
-										<Tooltip.Content>{column.label}</Tooltip.Content>
-									</Tooltip.Root>
-								</Table.Head>
-							{/each}
-							<Table.Head class="w-2 p-0" aria-hidden="true"></Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each game.languages as language (language.name)}
-							<Table.Row>
-								<Table.Cell class="py-2 pl-3 text-[0.8125rem] font-medium">{language.name}</Table.Cell>
-								{#each languageColumns as column (column.key)}
-									<Table.Cell class="px-0 py-2 text-center">
-										{#if language[column.key]}
-											<CheckIcon class="text-primary mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} var</span>
-										{:else}
-											<MinusIcon class="text-muted-foreground/40 mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} yok</span>
-										{/if}
-									</Table.Cell>
-								{/each}
-								<Table.Cell class="p-0" aria-hidden="true"></Table.Cell>
-							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
-			</Card.Root>
-		</section>
-
-		{#if game.requirements}
-			{@const requirements = game.requirements}
-			<section aria-labelledby="requirements-title" class="min-w-0">
-				{@render heading("requirements-title", "Gereksinimler")}
-				<Card.Root class="gap-0 p-1.5">
-					<Tabs.Root value="minimum">
-						<Tabs.List class="mx-1.5 mt-1.5 w-[calc(100%-0.75rem)]">
-							<Tabs.Trigger value="minimum" class="cursor-pointer">Minimum</Tabs.Trigger>
-							<Tabs.Trigger value="recommended" class="cursor-pointer">Önerilen</Tabs.Trigger>
-						</Tabs.List>
-						{#each ["minimum", "recommended"] as const as level (level)}
-							<Tabs.Content value={level}>
-								<Item.Group class="gap-0">
-									{#each requirementRows as row, index (row.key)}
-										{#if index > 0}<Item.Separator class="mx-3 my-0" />{/if}
-										<Item.Root size="xs">
-											<Item.Media variant="icon"><row.icon aria-hidden="true" /></Item.Media>
-											<Item.Content>
-												<Item.Description>{row.label}</Item.Description>
-												<Item.Title class="line-clamp-none">{requirements[level][row.key]}</Item.Title>
-											</Item.Content>
-										</Item.Root>
-									{/each}
-								</Item.Group>
-							</Tabs.Content>
-						{/each}
-					</Tabs.Root>
-				</Card.Root>
-			</section>
-		{/if}
 
 		{#if storeLinks.length}
 			<section aria-labelledby="stores-title" class="min-w-0">
-				{@render heading("stores-title", "Mağazalar", `${storeLinks.length} mağaza`)}
-				<Card.Root class="gap-0 p-1.5">
-					<Item.Group class="gap-0">
-						{#each storeLinks as store, index (store.name)}
-							{#if index > 0}<Item.Separator class="mx-3 my-0" />{/if}
-							<Item.Root size="xs">
-								{#snippet child({ props })}
-									<a {...props} href={store.href} target="_blank" rel="noreferrer">
-										<Item.Media variant="icon"><StoreIcon aria-hidden="true" /></Item.Media>
-										<Item.Content><Item.Title>{store.name}</Item.Title></Item.Content>
-										<Item.Actions><ExternalLinkIcon class="text-muted-foreground size-3.5" aria-hidden="true" /></Item.Actions>
-										<span class="sr-only">(yeni sekmede açılır)</span>
-									</a>
-								{/snippet}
-							</Item.Root>
-						{/each}
-					</Item.Group>
-				</Card.Root>
+				{@render heading("stores-title", "Mağazalar")}
+				<ul class="divide-y">
+					{#each storeLinks as store (store.name)}
+						<li>
+							<a href={store.href} target="_blank" rel="noreferrer" class="text-primary hover:text-muted-foreground flex items-center justify-between gap-2 py-2.5 text-sm font-medium transition-colors first:pt-0">
+								{store.name}
+								<ExternalLinkIcon class="text-muted-foreground size-3.5" aria-hidden="true" />
+								<span class="sr-only">(yeni sekmede açılır)</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
 			</section>
 		{/if}
 		</div>
@@ -557,6 +457,73 @@
 						{/each}
 					</ul>
 				</ScrollArea>
+			</section>
+
+			<section aria-label="Diller ve sistem gereksinimleri" class="grid min-w-0 gap-x-12 gap-y-10 sm:grid-cols-2 xl:col-span-2">
+				<div class="min-w-0">
+					{@render heading("languages-title", "Desteklenen diller", `${game.languages.length} dil`)}
+					<Table.Root>
+					<Table.Header>
+						<Table.Row class="hover:bg-transparent">
+							<Table.Head class="text-muted-foreground h-9 pl-0 text-xs font-normal">Dil</Table.Head>
+							{#each languageColumns as column (column.key)}
+								<Table.Head class="h-9 w-7 px-0 text-center">
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											{#snippet child({ props })}
+												<span {...props} class="text-muted-foreground inline-flex"><column.icon class="size-3.5" aria-hidden="true" /><span class="sr-only">{column.label}</span></span>
+											{/snippet}
+										</Tooltip.Trigger>
+										<Tooltip.Content>{column.label}</Tooltip.Content>
+									</Tooltip.Root>
+								</Table.Head>
+							{/each}
+							<Table.Head class="w-2 p-0" aria-hidden="true"></Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each game.languages as language (language.name)}
+							<Table.Row>
+								<Table.Cell class="py-2 pl-0 text-[0.8125rem] font-medium">{language.name}</Table.Cell>
+								{#each languageColumns as column (column.key)}
+									<Table.Cell class="px-0 py-2 text-center">
+										{#if language[column.key]}
+											<CheckIcon class="text-primary mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} var</span>
+										{:else}
+											<MinusIcon class="text-muted-foreground/40 mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} yok</span>
+										{/if}
+									</Table.Cell>
+								{/each}
+								<Table.Cell class="p-0" aria-hidden="true"></Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+				</div>
+				{#if game.requirements}
+					{@const requirements = game.requirements}
+					<div class="min-w-0">
+						{@render heading("requirements-title", "Sistem gereksinimleri")}
+						<Table.Root>
+							<Table.Header>
+								<Table.Row class="hover:bg-transparent">
+									<Table.Head class="h-9 pl-0"><span class="sr-only">Bileşen</span></Table.Head>
+									<Table.Head class="text-muted-foreground h-9 text-xs font-normal">Minimum</Table.Head>
+									<Table.Head class="text-muted-foreground h-9 pr-0 text-xs font-normal">Önerilen</Table.Head>
+								</Table.Row>
+							</Table.Header>
+							<Table.Body>
+								{#each requirementRows as row (row.key)}
+									<Table.Row>
+										<Table.Cell class="text-muted-foreground py-2.5 pl-0 text-xs">{row.label}</Table.Cell>
+										<Table.Cell class="py-2.5 text-[0.8125rem] font-medium whitespace-normal">{requirements.minimum[row.key]}</Table.Cell>
+										<Table.Cell class="py-2.5 pr-0 text-[0.8125rem] font-medium whitespace-normal">{requirements.recommended[row.key]}</Table.Cell>
+									</Table.Row>
+								{/each}
+							</Table.Body>
+						</Table.Root>
+					</div>
+				{/if}
 			</section>
 
 			<section aria-labelledby="reviews-title" class="min-w-0 xl:col-span-2">
