@@ -12,6 +12,12 @@ const messages: Record<string, string> = {
 	invalid_code: 'Kod hatalı veya süresi dolmuş. Yeni bir kod isteyebilirsin.',
 	code_cooldown: 'Yeni kod istemeden önce bir dakika bekle.',
 	rate_limited: 'Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.',
+	oauth_failed: 'Giriş tamamlanamadı. Lütfen tekrar dene.',
+	invalid_state: 'Giriş oturumunun süresi doldu. Lütfen tekrar dene.',
+	invalid_pending: 'Kaydın süresi doldu. Lütfen baştan başla.',
+	access_denied: 'Giriş iptal edildi.',
+	email_unverified: 'Bu e-posta ile zaten bir hesap var. Önce e-postan ve şifrenle giriş yap.',
+	unknown_provider: 'Bu giriş yöntemi şu an kullanılamıyor. E-posta ile devam edebilirsin.',
 	unavailable: 'Sunucuya şu an ulaşılamıyor. Biraz sonra tekrar dene.'
 };
 

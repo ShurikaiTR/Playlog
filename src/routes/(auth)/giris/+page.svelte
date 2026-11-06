@@ -14,12 +14,17 @@
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	// The page moves from the provider list to an email step, then a password step.
 	// "Şifreni mi unuttun?" mails a code and opens the reset step.
 	let step = $state<'providers' | 'email' | 'password' | 'reset'>('providers');
 	let showPassword = $state(false);
-	let statusMessage = $state('');
+	// A message from a Google/Discord attempt that sent the visitor back here.
+	// svelte-ignore state_referenced_locally
+	let statusMessage = $state(data.notice ?? '');
 	let email = $state('');
 	let password = $state('');
 	let resetCode = $state('');
@@ -57,13 +62,14 @@
 		}
 	}
 
-	// Google and Discord sign-in are not on the API yet.
 	async function chooseProvider(id: ProviderId) {
 		if (id === 'email') {
 			goTo('email');
 			return;
 		}
-		statusMessage = 'Bu giriş yöntemi henüz kullanılamıyor. E-posta ile devam edebilirsin.';
+		rememberProvider(id);
+		// A full page load: the server route sends the visitor on to the provider.
+		window.location.assign(`/auth/${id}/start`);
 	}
 
 	function goTo(next: typeof step) {

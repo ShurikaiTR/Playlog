@@ -30,9 +30,9 @@
 	let password = $state('');
 	let pending = $state(false);
 
-	// Google and Discord sign-up are not on the API yet.
-	function signUpWith() {
-		statusMessage = 'Bu kayıt yöntemi henüz kullanılamıyor. E-posta ile devam edebilirsin.';
+	// Google and Discord share the sign-in route; a new account then picks a username.
+	function signUpWith(provider: 'google' | 'discord') {
+		window.location.assign(`/auth/${provider}/start`);
 	}
 
 	function goTo(next: typeof step) {
@@ -135,7 +135,7 @@
 		<div in:fade={{ duration: 150 }}>
 			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabını oluştur</h1>
 
-			<Button class="h-11 w-full cursor-pointer rounded-full" onclick={() => signUpWith()}
+			<Button class="h-11 w-full cursor-pointer rounded-full" onclick={() => signUpWith('google')}
 				><GoogleIcon />Google ile kayıt ol</Button
 			>
 
@@ -150,7 +150,7 @@
 				<Button
 					variant="outline"
 					class="h-11 w-full cursor-pointer rounded-full"
-					onclick={() => signUpWith()}><DiscordIcon />Discord ile kayıt ol</Button
+					onclick={() => signUpWith('discord')}><DiscordIcon />Discord ile kayıt ol</Button
 				>
 			</div>
 		</div>

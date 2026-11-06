@@ -4,8 +4,10 @@ import { api, type ApiUser } from '#lib/server/api.js';
 import { setSessionCookie } from '#lib/server/session.js';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals }) => {
+export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.user) redirect(303, '/');
+	const notice = url.searchParams.get('hata');
+	return { notice: notice ? authErrorMessage(notice) : null };
 };
 
 const text = (data: FormData, key: string) => String(data.get(key) ?? '').trim();
