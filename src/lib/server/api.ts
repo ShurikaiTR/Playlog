@@ -1,7 +1,12 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { API_URL } from '$app/env/private';
 
-export type ApiUser = { id: string; username: string; email: string };
+export type ApiUser = {
+	id: string;
+	username: string;
+	email: string;
+	display_name: string | null;
+};
 
 export type ApiResult<T> =
 	{ ok: true; status: number; data: T } | { ok: false; status: number; error: string };

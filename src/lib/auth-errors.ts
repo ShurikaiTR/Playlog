@@ -6,6 +6,7 @@ const messages: Record<string, string> = {
 	invalid_username:
 		'Kullanıcı adı 3-30 karakter olmalı; harf, rakam, alt çizgi ve nokta kullanabilirsin.',
 	reserved_username: 'Bu kullanıcı adı kullanılamaz, başka bir tane dene.',
+	invalid_display_name: 'Görünen ad en fazla 40 karakter olabilir.',
 	username_taken: 'Bu kullanıcı adı alınmış, başka bir tane dene.',
 	email_taken: 'Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.',
 	invalid_code: 'Kod hatalı veya süresi dolmuş. Yeni bir kod isteyebilirsin.',

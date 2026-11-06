@@ -18,7 +18,9 @@ export const actions: Actions = {
 			body: {
 				email: text(data, 'email'),
 				username: text(data, 'username'),
-				password: String(data.get('password') ?? '')
+				password: String(data.get('password') ?? ''),
+				display_name: text(data, 'display_name') || undefined,
+				marketing_opt_in: data.get('marketing_opt_in') === 'true'
 			}
 		});
 		if (!result.ok) {

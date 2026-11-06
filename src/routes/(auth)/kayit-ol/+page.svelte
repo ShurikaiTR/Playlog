@@ -127,6 +127,8 @@
 		<input type="hidden" name="email" value={email} />
 		<input type="hidden" name="username" value={username} />
 		<input type="hidden" name="password" value={password} />
+		<input type="hidden" name="display_name" value={displayName} />
+		<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 	</form>
 
 	{#if step === 'providers'}
@@ -186,6 +188,7 @@
 			in:fade={{ duration: 150 }}
 		>
 			<input type="hidden" name="email" value={email} />
+			<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 			<div class="mb-8 text-center">
 				<h1 class="text-title-1 text-balance text-primary">Kaydını tamamla</h1>
 				<span
@@ -200,6 +203,7 @@
 					<Label for="signup-name">Görünen ad</Label>
 					<Input
 						id="signup-name"
+						name="display_name"
 						bind:value={displayName}
 						maxlength={40}
 						autocomplete="nickname"
