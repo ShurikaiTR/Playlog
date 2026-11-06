@@ -1,4 +1,7 @@
+mod auth;
 mod config;
+mod error;
+mod mail;
 mod routes;
 mod state;
 
@@ -9,7 +12,7 @@ use tokio::net::TcpListener;
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::EnvFilter;
 
-use crate::{config::Config, state::AppState};
+use crate::{auth::password, config::Config, mail::Mailer, state::AppState};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -37,7 +40,12 @@ async fn main() -> anyhow::Result<()> {
             axum::http::StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(15),
         ))
-        .with_state(AppState { db: pool });
+        .with_state(AppState {
+            db: pool,
+            mailer: Mailer::new(config.resend_api_key, config.mail_from)?,
+            code_secret: config.code_secret.into(),
+            dummy_hash: password::dummy_hash().await?.into(),
+        });
 
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!("listening on {}", listener.local_addr()?);
