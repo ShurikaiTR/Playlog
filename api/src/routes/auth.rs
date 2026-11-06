@@ -41,6 +41,9 @@ struct SignupStart {
     email: String,
     username: String,
     password: String,
+    display_name: Option<String>,
+    #[serde(default)]
+    marketing_opt_in: bool,
 }
 
 #[derive(Deserialize)]
@@ -87,6 +90,7 @@ impl CodeSent {
 struct UserView {
     id: Uuid,
     username: String,
+    display_name: Option<String>,
     email: String,
 }
 
@@ -112,6 +116,7 @@ async fn signup_start(
     )?;
     let email = validate::email(&body.email)?;
     let username = validate::username(&body.username)?;
+    let display_name = validate::display_name(body.display_name.as_deref())?;
     validate::password(&body.password)?;
 
     let username_taken: bool =
@@ -145,7 +150,12 @@ async fn signup_start(
     }
 
     let password_hash = password::hash(body.password).await?;
-    let pending = serde_json::json!({ "username": username, "password_hash": password_hash });
+    let pending = serde_json::json!({
+        "username": username,
+        "display_name": display_name,
+        "marketing_opt_in": body.marketing_opt_in,
+        "password_hash": password_hash,
+    });
     issue_code(&state, SIGNUP, &email, Some(pending)).await?;
     Ok((StatusCode::ACCEPTED, CodeSent::new()))
 }
@@ -174,14 +184,18 @@ async fn signup_verify(
     let pending: serde_json::Value = pending.ok_or(AppError::Unauthorized("invalid_code"))?;
     let username = pending["username"].as_str().ok_or_else(corrupt)?.to_owned();
     let password_hash = pending["password_hash"].as_str().ok_or_else(corrupt)?;
+    let display_name = pending["display_name"].as_str().map(str::to_owned);
+    let marketing_opt_in = pending["marketing_opt_in"].as_bool().unwrap_or(false);
 
     let user_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO users (username, email, email_verified_at)
-         VALUES ($1, $2, now())
+        "INSERT INTO users (username, email, email_verified_at, display_name, marketing_opt_in_at)
+         VALUES ($1, $2, now(), $3, CASE WHEN $4 THEN now() END)
          RETURNING id",
     )
     .bind(&username)
     .bind(&email)
+    .bind(&display_name)
+    .bind(marketing_opt_in)
     .fetch_one(&mut *tx)
     .await
     .map_err(map_unique_violation)?;
@@ -200,6 +214,7 @@ async fn signup_verify(
         user: UserView {
             id: user_id,
             username,
+            display_name,
             email,
         },
     }))
@@ -211,6 +226,7 @@ async fn signup_verify(
 struct LoginRow {
     id: Uuid,
     username: String,
+    display_name: Option<String>,
     email: String,
     password_hash: Option<String>,
 }
@@ -228,11 +244,11 @@ async fn login(
     rate_limit(&state, &id_key, 8, FIFTEEN_MINUTES)?;
     // Sabit sorgular: dinamik SQL kullanılmaz, her ikisi de benzersiz indeksten çalışır.
     let query = if identifier.contains('@') {
-        "SELECT u.id, u.username, u.email, c.password_hash
+        "SELECT u.id, u.username, u.display_name, u.email, c.password_hash
            FROM users u LEFT JOIN credentials c ON c.user_id = u.id
           WHERE u.email = $1"
     } else {
-        "SELECT u.id, u.username, u.email, c.password_hash
+        "SELECT u.id, u.username, u.display_name, u.email, c.password_hash
            FROM users u LEFT JOIN credentials c ON c.user_id = u.id
           WHERE u.username = $1"
     };
@@ -261,6 +277,7 @@ async fn login(
         user: UserView {
             id: row.id,
             username: row.username,
+            display_name: row.display_name,
             email: row.email,
         },
     }))
@@ -278,6 +295,7 @@ async fn me(user: CurrentUser) -> Json<UserView> {
     Json(UserView {
         id: user.user_id,
         username: user.username,
+        display_name: user.display_name,
         email: user.email,
     })
 }

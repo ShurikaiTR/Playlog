@@ -80,3 +80,14 @@ pub fn code(raw: &str) -> Result<&str, AppError> {
         Err(AppError::Validation("invalid_code"))
     }
 }
+
+/// Görünen ad isteğe bağlıdır: boşsa `None`, en fazla 40 karakter, kontrol karakteri yok.
+pub fn display_name(raw: Option<&str>) -> Result<Option<String>, AppError> {
+    let Some(raw) = raw.map(str::trim).filter(|v| !v.is_empty()) else {
+        return Ok(None);
+    };
+    if raw.chars().count() > 40 || raw.chars().any(char::is_control) {
+        return Err(AppError::Validation("invalid_display_name"));
+    }
+    Ok(Some(raw.to_owned()))
+}
