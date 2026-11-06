@@ -1,0 +1,52 @@
+# Tüm sistem: web (SvelteKit) + api (Rust) + db (PostgreSQL 18).
+# Yalnızca web dışarı açılır; api ve db yalnızca iç ağdadır.
+# Sırlar .env dosyasından ya da panelden gelir (depoya yazılmaz).
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: playthru
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}
+      POSTGRES_DB: playthru
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U playthru"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://playthru:${POSTGRES_PASSWORD}@db:5432/playthru
+      BIND_ADDR: 0.0.0.0:8080
+      CODE_SECRET: ${CODE_SECRET:?CODE_SECRET gerekli (en az 32 karakter)}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-Playthru <onboarding@resend.dev>}
+      RUST_LOG: info
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      API_URL: http://api:8080
+      # Güvenilir ters vekil (Openship/Caddy) arkasında: asıl adres ve IP başlıklardan okunur.
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+      ADDRESS_HEADER: x-forwarded-for
+      XFF_DEPTH: 1
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
