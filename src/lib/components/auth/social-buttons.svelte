@@ -8,11 +8,11 @@
 
 <div class="grid gap-3">
 	<Button variant="outline" size="lg" class="h-11 w-full" onclick={() => onselect('Google')}>
-		<GoogleIcon class="size-4.5" />
+		<GoogleIcon class="size-4" />
 		Google ile devam et
 	</Button>
 	<Button variant="outline" size="lg" class="h-11 w-full" onclick={() => onselect('Discord')}>
-		<DiscordIcon class="size-4.5" />
+		<DiscordIcon class="size-4" />
 		Discord ile devam et
 	</Button>
 </div>

@@ -301,7 +301,7 @@
 						class="inline-flex min-h-9 cursor-pointer items-center gap-1.5 bg-muted pr-2.5 pl-3.5 text-[0.8125rem] font-medium text-primary outline-none hover:bg-muted/70 focus-visible:ring-[3px] focus-visible:ring-ring/50"
 					>
 						{item.label}
-						<XIcon class="size-3.5" aria-hidden="true" />
+						<XIcon class="size-3.5.5" aria-hidden="true" />
 					</button>
 				</li>
 			{/each}
@@ -331,7 +331,7 @@
 			<span
 				class="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground"
 			>
-				<SearchXIcon class="size-6" aria-hidden="true" />
+				<SearchXIcon class="size-5" aria-hidden="true" />
 			</span>
 			<p class="text-[0.9375rem] font-medium text-primary">Bu filtrelere uyan oyun bulamadık</p>
 			<p class="text-sm text-muted-foreground">Birkaç filtreyi kaldırmayı dene.</p>

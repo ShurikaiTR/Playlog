@@ -143,9 +143,9 @@
 </script>
 
 {#snippet listIcon(className: string)}
-	{#if list.kind === "favorites"}<HeartIcon class={className} strokeWidth={1.5} />
-	{:else if list.kind === "play_later"}<ClockIcon class={className} strokeWidth={1.5} />
-	{:else}<GamepadIcon class={className} strokeWidth={1.5} />{/if}
+	{#if list.kind === "favorites"}<HeartIcon class={className} />
+	{:else if list.kind === "play_later"}<ClockIcon class={className} />
+	{:else}<GamepadIcon class={className} />{/if}
 {/snippet}
 
 <svelte:head>
@@ -168,7 +168,7 @@
 			</div>
 			<div class="min-w-0 flex-1 pb-1">
 				<Badge variant="secondary" class="mb-3 gap-1.5">
-					{#if list.visibility === "private"}<LockIcon class="size-3" />Gizli liste{:else}<GlobeIcon class="size-3" />Herkese açık liste{/if}
+					{#if list.visibility === "private"}<LockIcon class="size-3.5" />Gizli liste{:else}<GlobeIcon class="size-3.5" />Herkese açık liste{/if}
 				</Badge>
 				<div class="flex items-center gap-2">
 					<h1 id="list-title" class="text-primary min-w-0 text-[2rem] leading-tight font-medium tracking-[-0.025em] wrap-break-word md:text-[2.5rem]">{list.name}</h1>
@@ -246,7 +246,7 @@
 										class="flip-face flip-back bg-card text-card-foreground ring-foreground/10 absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl p-4 text-center ring-1"
 										inert={flippedSlug !== game.slug}
 									>
-										{@render listIcon("size-6 text-muted-foreground")}
+										{@render listIcon("size-5 text-muted-foreground")}
 										<p class="line-clamp-2 text-sm font-medium">{game.title}</p>
 										<Button variant="default" size="sm" href="/oyun/{game.slug}" class="w-full cursor-pointer rounded-full text-xs">Oyuna git</Button>
 										<Button variant="outline" size="sm" class="w-full cursor-pointer rounded-full text-xs" onclick={() => removeItem(game)}>{text.removeLabel}</Button>
@@ -255,7 +255,7 @@
 							</div>
 							<h3 class="text-primary truncate px-0.5 pt-3 text-sm font-medium md:text-[15px]">{game.title}</h3>
 							<p class="text-muted-foreground mt-0.5 flex items-center gap-1.5 px-0.5 text-xs">
-								<StarIcon class="fill-current text-foreground size-3" aria-hidden="true" />
+								<StarIcon class="fill-current text-foreground size-3.5" aria-hidden="true" />
 								<span class="text-foreground font-medium tabular-nums">{game.score.toFixed(1).replace(".", ",")}</span>
 								<span>· {game.year}</span>
 							</p>

@@ -25,8 +25,8 @@
 		<div class="w-full max-w-sm">{@render children()}</div>
 	</main>
 
-	<footer class="text-center text-xs leading-5 text-muted-foreground">
-		Devam ederek Playlog'un
+	<footer class="text-center text-footnote text-muted-foreground">
+		Devam ederek Playthru'nun
 		<a href="/kullanim-sartlari" class="underline underline-offset-4 hover:text-primary"
 			>Kullanım Şartları</a
 		>'nı ve

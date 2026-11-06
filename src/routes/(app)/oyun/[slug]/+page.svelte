@@ -1,17 +1,19 @@
 <script lang="ts">
+	import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
 	import * as Card from "#lib/components/ui/card/index.js";
-	import * as ButtonGroup from "#lib/components/ui/button-group/index.js";
 	import * as Alert from "#lib/components/ui/alert/index.js";
 	import * as Avatar from "#lib/components/ui/avatar/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
 	import { Progress } from "#lib/components/ui/progress/index.js";
-	import { Checkbox } from "#lib/components/ui/checkbox/index.js";
+	import { Switch } from "#lib/components/ui/switch/index.js";
 	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
 	import * as Select from "#lib/components/ui/select/index.js";
 	import { AspectRatio } from "#lib/components/ui/aspect-ratio/index.js";
 	import * as Empty from "#lib/components/ui/empty/index.js";
+	import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
 	import * as Item from "#lib/components/ui/item/index.js";
 	import * as Sheet from "#lib/components/ui/sheet/index.js";
+	import * as Collapsible from "#lib/components/ui/collapsible/index.js";
 	import * as Tabs from "#lib/components/ui/tabs/index.js";
 	import { Textarea } from "#lib/components/ui/textarea/index.js";
 	import { toast } from "svelte-sonner";
@@ -28,15 +30,13 @@
 	import GameRow from "#lib/components/game-row.svelte";
 	import { ageDescription, allGameDetails, trendingGames } from "#lib/games.js";
 	import FlagIcon from "@lucide/svelte/icons/flag";
-	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
-	import XIcon from "@lucide/svelte/icons/x";
 	import ThumbsUpIcon from "@lucide/svelte/icons/thumbs-up";
 	import EyeOffIcon from "@lucide/svelte/icons/eye-off";
 	import CalendarIcon from "@lucide/svelte/icons/calendar";
 	import GamepadIcon from "@lucide/svelte/icons/gamepad-2";
 	import MonitorIcon from "@lucide/svelte/icons/monitor";
 	import CodeIcon from "@lucide/svelte/icons/code-xml";
-	import ShieldIcon from "@lucide/svelte/icons/shield";
+	import UsersRoundIcon from "@lucide/svelte/icons/users-round";
 	import StarIcon from "@lucide/svelte/icons/star";
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import CheckIcon from "@lucide/svelte/icons/check";
@@ -44,7 +44,11 @@
 	import Volume2Icon from "@lucide/svelte/icons/volume-2";
 	import CaptionsIcon from "@lucide/svelte/icons/captions";
 	import BuildingIcon from "@lucide/svelte/icons/building-2";
-	import PlayIcon from "@lucide/svelte/icons/play";
+	import CpuIcon from "@lucide/svelte/icons/cpu";
+	import LanguagesIcon from "@lucide/svelte/icons/languages";
+	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+	import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
+import PlayIcon from "@lucide/svelte/icons/play";
 	import { Button } from "#lib/components/ui/button/index.js";
 
 	let { data } = $props();
@@ -89,7 +93,7 @@
 		{ label: "Platformlar", values: game.platforms, icon: MonitorIcon },
 		{ label: "Oyun modları", values: game.modes, icon: GamepadIcon },
 		{ label: "Türler", value: game.genres.join(", "), icon: TagIcon },
-		{ label: "Yaş sınırı", value: game.ageRating, icon: ShieldIcon },
+		{ label: "Yaş sınırı", value: game.ageRating, icon: UsersRoundIcon },
 	]);
 	const requirementRows = [
 		{ key: "os", label: "İşletim sistemi" },
@@ -102,6 +106,12 @@
 	const screenshots = $derived(
 		game.screenshots?.length ? game.screenshots : trendingGames.slice(0, 5).map((g, i) => trendingGames[(i + 1) % trendingGames.length].cover),
 	);
+	// The gallery shows the trailer first (when there is one), then the screenshots.
+	const trailerCount = $derived(game.trailer ? 1 : 0);
+	const galleryItems = $derived<{ kind: "video" | "image"; src: string }[]>([
+		...(game.trailer ? [{ kind: "video" as const, src: game.trailer }] : []),
+		...screenshots.map((src) => ({ kind: "image" as const, src })),
+	]);
 	// Spreads the votes over five score bands around the game's score.
 	const distribution = $derived.by(() => {
 		const weights = [9.5, 7.5, 5.5, 3.5, 1.5].map((mid) => Math.exp(-((mid - game.score) ** 2) / 6));
@@ -118,6 +128,7 @@
 	];
 
 	const rating = $derived(gameRating[game.slug]);
+	const scoreWords = ["Berbat", "Çok kötü", "Kötü", "Zayıf", "Vasat", "Fena değil", "İyi", "Çok iyi", "Harika", "Başyapıt"];
 	const myReview = $derived(myReviews[game.slug]);
 	const reviews = $derived<Review[]>([
 		...(myReview ? [{ key: "mine", name: "Sen", initials: "S", score: rating, date: "Az önce", helpful: 0, spoiler: myReview.spoiler, text: myReview.text, mine: true }] : []),
@@ -132,15 +143,17 @@
 	const featuredReview = $derived([...reviews].filter((review) => !review.spoiler).sort((a, b) => votes(b) - votes(a))[0]);
 
 
-	function scrollToReviews(event: MouseEvent) {
+	function scrollToSection(event: MouseEvent, id: string) {
 		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-		const heading = document.getElementById("reviews-title");
+		const heading = document.getElementById(id);
 		if (!heading) return;
 		event.preventDefault();
 		heading.focus({ preventScroll: true });
 		heading.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
 	}
 
+	let languagesOpen = $state(false);
+	let requirementsOpen = $state(false);
 	let reportOpen = $state(false);
 	let reportReason = $state("");
 	let reportDetails = $state("");
@@ -157,9 +170,17 @@
 	let draftSpoiler = $state(false);
 	let reviewError = $state("");
 
+	// Unsent writing survives closing the dialog by accident, per game, until it is sent.
+	let drafts = $state<Record<string, { text: string; spoiler: boolean }>>({});
+	$effect(() => {
+		if (!reviewSheetOpen) return;
+		drafts[game.slug] = { text: draftText, spoiler: draftSpoiler };
+	});
+
 	function openReview() {
-		draftText = myReview?.text ?? "";
-		draftSpoiler = myReview?.spoiler ?? false;
+		const draft = drafts[game.slug];
+		draftText = draft?.text ?? myReview?.text ?? "";
+		draftSpoiler = draft?.spoiler ?? myReview?.spoiler ?? false;
 		reviewError = "";
 		reviewsSheetOpen = false;
 		reviewSheetOpen = true;
@@ -172,28 +193,21 @@
 			return;
 		}
 		const text = draftText.trim();
-		if (text.length < 10) {
-			reviewError = "İncelemen en az 10 karakter olsun.";
+		const slug = game.slug;
+		if (text && text.length < 10) {
+			reviewError = "İncelemen en az 10 karakter olsun ya da boş bırak.";
 			return;
 		}
-		myReviews[game.slug] = { text, spoiler: draftSpoiler };
 		reviewSheetOpen = false;
-		toast("İncelemen kaydedildi");
+		delete drafts[slug];
+		if (!text) {
+			toast("Puanın kaydedildi");
+			return;
+		}
+		const previous = myReviews[slug];
+		myReviews[slug] = { text, spoiler: draftSpoiler };
+		toast("İncelemen kaydedildi", { action: { label: "Geri al", onClick: () => (myReviews[slug] = previous) } });
 	}
-	// Where the game is sold, by platform. Search links until real store ids exist.
-	const storeLinks = $derived.by(() => {
-		const q = encodeURIComponent(game.title);
-		const all = [
-			{ platform: "PC", name: "Steam", href: `https://store.steampowered.com/search/?term=${q}` },
-			{ platform: "PC", name: "Epic Games Store", href: `https://store.epicgames.com/browse?q=${q}` },
-			{ platform: "PlayStation", name: "PlayStation Store", href: `https://store.playstation.com/search/${q}` },
-			{ platform: "Xbox", name: "Xbox Store", href: `https://www.xbox.com/search?q=${q}` },
-			{ platform: "Switch", name: "Nintendo eShop", href: `https://www.nintendo.com/search/?q=${q}` },
-			{ platform: "iOS", name: "App Store", href: `https://apps.apple.com/search?term=${q}` },
-			{ platform: "Android", name: "Google Play", href: `https://play.google.com/store/search?q=${q}&c=apps` },
-		];
-		return all.filter((store) => (game.platforms as string[]).includes(store.platform));
-	});
 	const seriesGames = $derived(
 		(game.series ?? []).flatMap((slug) => {
 			const other = allGameDetails.find((g) => g.slug === slug);
@@ -205,7 +219,7 @@
 
 {#snippet heading(id: string, title: string, meta?: string)}
 	<div class="mb-3 flex items-baseline justify-between gap-3">
-		<h2 {id} tabindex="-1" class="text-primary scroll-m-20 text-xl font-semibold tracking-tight outline-none">{title}</h2>
+		<h2 {id} tabindex="-1" class="text-primary text-title-3 scroll-m-20 outline-none">{title}</h2>
 		{#if meta}<span class="text-muted-foreground text-xs tabular-nums">{meta}</span>{/if}
 	</div>
 {/snippet}
@@ -245,12 +259,12 @@
 					aria-pressed={!!voted[review.key]}
 					onclick={() => (voted[review.key] = !voted[review.key])}
 				>
-					<ThumbsUpIcon data-icon="inline-start" class={cn("size-3.5", voted[review.key] && "fill-current")} />
+					<ThumbsUpIcon data-icon="inline-start" class={cn("size-3.5.5", voted[review.key] && "fill-current")} />
 					Faydalı · {votes(review)}
 				</Button>
 				{#if review.spoiler && revealed[review.key]}
 					<Button type="button" variant="ghost" size="sm" class="text-muted-foreground hover:text-foreground h-auto cursor-pointer rounded-full px-2.5 py-1 text-xs" onclick={() => (revealed[review.key] = false)}>
-						<EyeOffIcon data-icon="inline-start" class="size-3.5" />
+						<EyeOffIcon data-icon="inline-start" class="size-3.5.5" />
 						Gizle
 					</Button>
 				{/if}
@@ -279,232 +293,113 @@
 			<div class="detail-scrim absolute inset-0"></div>
 		</div>
 
-		<div class="detail-intro grid min-w-0 w-full items-start px-4 md:px-8">
-			<div class="detail-poster">
-				<AspectRatio ratio={2 / 3} class="bg-muted overflow-hidden rounded-2xl shadow-[0_20px_50px_-18px_rgb(0_0_0/0.5)] ring-1 ring-white/20">
-					<img src={game.cover} alt="{game.title} kapağı" width="1024" height="1536" class="size-full object-cover" />
-				</AspectRatio>
-			</div>
+		<div class="detail-intro min-w-0 w-full px-4 md:px-8">
+			<div class="flex items-start gap-4 sm:gap-6">
+				<div class="w-28 shrink-0 sm:w-36 lg:w-40">
+					<AspectRatio ratio={2 / 3} class="bg-muted overflow-hidden rounded-2xl shadow-[0_20px_50px_-18px_rgb(0_0_0/0.5)] ring-1 ring-white/20">
+						<img src={game.cover} alt="{game.title} kapağı" width="1024" height="1536" class="size-full object-cover" />
+					</AspectRatio>
+				</div>
 
-			<div class="detail-heading min-w-0">
-				<h1 id="game-title" class="detail-title text-[2rem] font-medium tracking-[-0.025em] text-primary md:text-[2.5rem]">
-					{#if game.logo}
-						<img src={game.logo} alt={game.title} class="max-h-28 w-full max-w-md object-contain object-left" />
-					{:else}
-						{game.title}
-					{/if}
-				</h1>
-				<ul class="mt-4 flex flex-wrap gap-2" aria-label="Türler">
-					{#each game.genres as genre (genre)}
-						<li><Badge variant="outline" class="bg-background text-primary h-7 px-3 text-[0.8125rem]">{genre}</Badge></li>
-					{/each}
-				</ul>
-			</div>
-
-			<div class="detail-actions">
-				<GameSaveMenu game={toListGame(game)} class="w-full min-w-0" />
-			</div>
-
-			<div class="detail-body @container min-w-0">
-				<ButtonGroup.Root class="w-full max-w-md">
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									href="#reviews-title"
-									onclick={scrollToReviews}
-									variant="ghost"
-									class="h-20 min-w-0 flex-1 cursor-pointer flex-col gap-2 rounded-l-4xl px-1"
-									aria-label="{game.votes.toLocaleString('tr-TR')} oya göre 10 üzerinden {game.score.toFixed(1)}. Puanlama bölümüne git"
-								>
-									<span class="flex h-8 items-center gap-2">
-										<span class="text-primary text-3xl font-semibold tracking-tight tabular-nums">{game.score.toFixed(1)}</span>
-										<StarIcon class="size-4 fill-amber-500 text-amber-500" aria-hidden="true" />
-									</span>
-									<span class="text-muted-foreground text-[0.65rem] font-normal @[28rem]:text-xs">{game.votes.toLocaleString("tr-TR")} oy</span>
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>Puan ver ve incelemeleri gör</Tooltip.Content>
-					</Tooltip.Root>
-					<ButtonGroup.Separator class="bg-foreground/15" />
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button {...props} variant="ghost" class="h-20 min-w-0 flex-1 flex-col gap-2 px-1" aria-label={game.ageRating}>
-									<span class="flex h-8 items-center">
-										<Badge variant="outline" class="bg-background h-7 rounded-md px-2.5 font-semibold">{game.ageRating}</Badge>
-									</span>
-									<span class="text-muted-foreground text-[0.65rem] font-normal @[28rem]:text-xs">Yaş sınırı</span>
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content class="w-72 max-w-none items-start gap-3 rounded-xl p-3">
-							{@const info = ageDescription(game.ageRating)}
-							<span class="bg-background/15 flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold">{game.ageRating}</span>
-							<div class="min-w-0 space-y-0.5 text-left">
-								<p class="text-sm font-medium">{info?.title ?? "Yaş sınırı"}</p>
-								{#if info}<p class="text-xs leading-snug opacity-70">{info.text}</p>{/if}
-							</div>
-						</Tooltip.Content>
-					</Tooltip.Root>
-					<ButtonGroup.Separator class="bg-foreground/15" />
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									variant="ghost"
-									class="h-20 min-w-0 flex-1 cursor-pointer flex-col gap-2 px-1"
-									onclick={() => {
+				<div class="flex min-w-0 flex-1 flex-col justify-end gap-5 self-stretch">
+					<div class="min-w-0">
+						<h1 id="game-title" class="detail-title text-large-title text-primary">
+							{#if game.logo}
+								<img src={game.logo} alt={game.title} class="h-auto max-h-24 w-auto max-w-full object-contain object-left-bottom drop-shadow-[0_4px_18px_rgb(0_0_0/0.55)] sm:max-h-28 sm:max-w-[26rem]" />
+							{:else}
+								{game.title}
+							{/if}
+						</h1>
+						<ul class="mt-4 flex flex-wrap gap-1.5" aria-label="Türler">
+							{#each game.genres as genre (genre)}
+								<li><Badge variant="secondary" class="px-2.5 py-1">{genre}</Badge></li>
+							{/each}
+						</ul>
+					</div>
+					<div class="flex items-center gap-2">
+						<GameSaveMenu game={toListGame(game)} class="min-w-0 sm:w-64" />
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger>
+								{#snippet child({ props })}
+									<Button {...props} variant="ghost" size="icon" class="cursor-pointer rounded-full" aria-label="Diğer işlemler">
+										<EllipsisIcon />
+									</Button>
+								{/snippet}
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Content align="start">
+								<DropdownMenu.Item
+									onSelect={() => {
 										reportNotice = "";
 										reportOpen = true;
 									}}
 								>
-									<span class="flex h-8 items-center"><FlagIcon class="size-5" /></span>
-									<span class="text-muted-foreground text-[0.65rem] font-normal @[28rem]:text-xs">Sorun bildir</span>
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>Oyun bilgilerindeki bir sorunu bildir</Tooltip.Content>
-					</Tooltip.Root>
-				</ButtonGroup.Root>
-				<p class="text-muted-foreground mt-6 max-w-2xl text-sm leading-7 whitespace-pre-line">{game.description}</p>
-			</div>
-		</div>
-	</section>
-
-	<!-- Two columns from lg up: game info on the left (as wide as the poster above), the right column is left free for more sections. -->
-	<div class="grid w-full min-w-0 items-start gap-8 px-4 md:px-8 lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-x-10">
-		<div class="flex min-w-0 flex-col gap-10">
-		<section aria-labelledby="info-title" class="min-w-0">
-			{@render heading("info-title", "Oyun bilgileri")}
-			<dl class="divide-y">
-				{#each info as row (row.label)}
-					<div class="py-3 first:pt-0">
-						<dt class="text-muted-foreground text-xs">{row.label}</dt>
-						<dd class="text-primary mt-0.5 text-sm font-medium">{row.values ? row.values.join(", ") : row.value}</dd>
+									<FlagIcon /> Sorun bildir
+								</DropdownMenu.Item>
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
 					</div>
-				{/each}
-			</dl>
-		</section>
-
-		{#if storeLinks.length}
-			<section aria-labelledby="stores-title" class="min-w-0">
-				{@render heading("stores-title", "Mağazalar")}
-				<ul class="divide-y">
-					{#each storeLinks as store (store.name)}
-						<li>
-							<a href={store.href} target="_blank" rel="noreferrer" class="text-primary hover:text-muted-foreground flex items-center justify-between gap-2 py-2.5 text-sm font-medium transition-colors first:pt-0">
-								{store.name}
-								<ExternalLinkIcon class="text-muted-foreground size-3.5" aria-hidden="true" />
-								<span class="sr-only">(yeni sekmede açılır)</span>
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/if}
-		</div>
-
-		<!-- Two equal columns: the trailer sits alone in its own row (left half), screenshots in one row, and the score and reviews card at the very bottom. -->
-		<div class="grid min-w-0 items-start gap-x-6 gap-y-10 xl:grid-cols-2">
-			<section aria-labelledby="trailer-title" class="min-w-0 xl:col-span-2">
-				{@render heading("trailer-title", "Fragman")}
-				<div class="min-w-0 xl:w-1/2 xl:pr-3">
-					<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-2xl ring-1 ring-black/8 dark:ring-white/10">
-						<!-- The artwork sits behind the player, so the box is never empty while the video loads or when there is none. -->
-						<img src={game.backdrop} alt="" loading="lazy" class="absolute inset-0 size-full object-cover opacity-60" />
-						{#if game.trailer}
-							<iframe
-								title="{game.title} fragmanı"
-								src="https://www.youtube-nocookie.com/embed/{game.trailer}"
-								loading="lazy"
-								allow="accelerometer; encrypted-media; picture-in-picture"
-								allowfullscreen
-								class="absolute inset-0 size-full"
-							></iframe>
-						{:else}
-							<Empty.Root class="bg-background/60 absolute inset-0 rounded-none border-0 backdrop-blur-sm">
-								<Empty.Header>
-									<Empty.Media variant="icon"><PlayIcon class="fill-current" /></Empty.Media>
-									<Empty.Title>Fragman yakında</Empty.Title>
-								</Empty.Header>
-							</Empty.Root>
-						{/if}
-					</AspectRatio>
 				</div>
-			</section>
+			</div>
 
-			<section aria-labelledby="shots-title" class="min-w-0 xl:col-span-2">
-				{@render heading("shots-title", "Ekran görüntüleri", `${screenshots.length} görsel`)}
-				<ScrollArea orientation="horizontal" class="w-full">
-					<ul class="flex w-max min-w-full gap-3 pb-3">
-						{#each screenshots as shot, i (i)}
-							<li class="min-w-40 flex-1">
-								<button
-									type="button"
-									onclick={() => openGallery(i)}
-									aria-label="{game.title} ekran görüntüsü {i + 1}, büyüt"
-									class="focus-visible:ring-ring/50 block w-full cursor-pointer rounded-2xl outline-none focus-visible:ring-[3px]"
-								>
-									<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-2xl ring-1 ring-black/8 transition-opacity hover:opacity-90 dark:ring-white/10">
-										<img src={shot} alt="" loading="lazy" class="size-full object-cover" />
-									</AspectRatio>
-								</button>
-							</li>
-						{/each}
-					</ul>
-				</ScrollArea>
-			</section>
-
-			<section aria-label="Diller ve sistem gereksinimleri" class="grid min-w-0 gap-x-12 gap-y-10 sm:grid-cols-2 xl:col-span-2">
-				<div class="min-w-0">
-					{@render heading("languages-title", "Desteklenen diller", `${game.languages.length} dil`)}
-					<Table.Root>
-					<Table.Header>
-						<Table.Row class="hover:bg-transparent">
-							<Table.Head class="text-muted-foreground h-9 pl-0 text-xs font-normal">Dil</Table.Head>
-							{#each languageColumns as column (column.key)}
-								<Table.Head class="h-9 w-7 px-0 text-center">
-									<Tooltip.Root>
-										<Tooltip.Trigger>
-											{#snippet child({ props })}
-												<span {...props} class="text-muted-foreground inline-flex"><column.icon class="size-3.5" aria-hidden="true" /><span class="sr-only">{column.label}</span></span>
-											{/snippet}
-										</Tooltip.Trigger>
-										<Tooltip.Content>{column.label}</Tooltip.Content>
-									</Tooltip.Root>
-								</Table.Head>
+			<!-- Stat strip: one fact per tile, label above, value large, caption below. -->
+			<dl class="stat-strip -mx-4 mt-6 flex snap-x overflow-x-auto px-4 py-4 md:mx-0 md:px-0">
+				<div class="stat stat-wrap">
+					<Button href="#reviews-title" onclick={(event) => scrollToSection(event, "reviews-title")} variant="ghost" class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal" aria-label="10 üzerinden {game.score.toFixed(1)}, {game.votes.toLocaleString('tr-TR')} oy. Puanlar bölümüne git">
+						<span class="stat-label text-muted-foreground">{game.votes.toLocaleString("tr-TR")} oy</span>
+						<span class="stat-value tabular-nums">{game.score.toFixed(1)}</span>
+						<span class="stat-caption text-muted-foreground flex gap-px" aria-hidden="true">
+							{#each [0, 1, 2, 3, 4] as i (i)}
+								<StarIcon class={cn("size-3", i < Math.round(game.score / 2) ? "fill-current" : "opacity-30")} />
 							{/each}
-							<Table.Head class="w-2 p-0" aria-hidden="true"></Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each game.languages as language (language.name)}
-							<Table.Row>
-								<Table.Cell class="py-2 pl-0 text-[0.8125rem] font-medium">{language.name}</Table.Cell>
-								{#each languageColumns as column (column.key)}
-									<Table.Cell class="px-0 py-2 text-center">
-										{#if language[column.key]}
-											<CheckIcon class="text-primary mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} var</span>
-										{:else}
-											<MinusIcon class="text-muted-foreground/40 mx-auto size-3.5" aria-hidden="true" /><span class="sr-only">{column.label} yok</span>
-										{/if}
-									</Table.Cell>
-								{/each}
-								<Table.Cell class="p-0" aria-hidden="true"></Table.Cell>
-							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
+						</span>
+					</Button>
 				</div>
-				{#if game.requirements}
-					{@const requirements = game.requirements}
-					<div class="min-w-0">
-						{@render heading("requirements-title", "Sistem gereksinimleri")}
-						<Table.Root>
+				<Separator orientation="vertical" class="my-1 h-auto self-stretch" />
+				<div class="stat stat-wrap">
+					<Button href="#info-title" onclick={(event) => scrollToSection(event, "info-title")} variant="ghost" class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal" aria-label="Yaş sınırı {game.ageRating}. Bilgi bölümüne git">
+						<span class="stat-label text-muted-foreground">Yaş</span>
+						<span class="stat-value">{game.ageRating}</span>
+						<span class="stat-caption text-muted-foreground">{ageDescription(game.ageRating)?.title ?? "Yaş sınırı"}</span>
+					</Button>
+				</div>
+				<Separator orientation="vertical" class="my-1 h-auto self-stretch" />
+				<div class="stat stat-wrap">
+					<Button href="#info-title" onclick={(event) => scrollToSection(event, "info-title")} variant="ghost" class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal" aria-label="Oyun modları: {game.modes.join(', ')}. Bilgi bölümüne git">
+						<span class="stat-label text-muted-foreground">Mod</span>
+						<span class="stat-value"><GamepadIcon aria-hidden="true" /></span>
+						<span class="stat-caption text-muted-foreground">{game.modes.join(" · ")}</span>
+					</Button>
+				</div>
+				<Separator orientation="vertical" class="my-1 h-auto self-stretch" />
+				<div class="stat">
+					<dt>Çıkış</dt>
+					<dd class="stat-value tabular-nums">{new Date(game.releaseDate).getFullYear()}</dd>
+					<dd class="stat-caption">{new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }).format(new Date(game.releaseDate))}</dd>
+				</div>
+				<Separator orientation="vertical" class="my-1 h-auto self-stretch" />
+				<div class="stat">
+					<dt>Geliştirici</dt>
+					<dd class="stat-value"><CodeIcon aria-hidden="true" /></dd>
+					<dd class="stat-caption">{game.developer}</dd>
+				</div>
+				<Separator orientation="vertical" class="my-1 h-auto self-stretch" />
+				<div class="stat stat-wrap">
+					<Button type="button" variant="ghost" class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal" onclick={() => (languagesOpen = true)} aria-haspopup="dialog">
+						<span class="stat-label text-muted-foreground">Dil</span>
+						<span class="stat-value tabular-nums">{game.languages.length}</span>
+						<span class="stat-caption text-muted-foreground">Dil desteği</span>
+					</Button>
+				</div>
+			</dl>
+		{#if game.requirements}
+			{@const requirements = game.requirements}
+			<Dialog.Root bind:open={requirementsOpen}>
+				<Dialog.Content class="max-h-[85svh] overflow-y-auto sm:max-w-xl" onOpenAutoFocus={(event) => event.preventDefault()}>
+					<Dialog.Header>
+						<Dialog.Title>Sistem gereksinimleri</Dialog.Title>
+						<Dialog.Description>{game.title} için PC'de en az ve önerilen donanım.</Dialog.Description>
+					</Dialog.Header>
+					<Table.Root>
 							<Table.Header>
 								<Table.Row class="hover:bg-transparent">
 									<Table.Head class="h-9 pl-0"><span class="sr-only">Bileşen</span></Table.Head>
@@ -522,11 +417,113 @@
 								{/each}
 							</Table.Body>
 						</Table.Root>
-					</div>
-				{/if}
+				</Dialog.Content>
+			</Dialog.Root>
+		{/if}
+
+		<Dialog.Root bind:open={languagesOpen}>
+			<Dialog.Content class="max-h-[85svh] overflow-y-auto" onOpenAutoFocus={(event) => event.preventDefault()}>
+				<Dialog.Header>
+					<Dialog.Title>Desteklenen diller</Dialog.Title>
+					<Dialog.Description>{game.title} için {game.languages.length} dil: arayüz, seslendirme ve altyazı.</Dialog.Description>
+				</Dialog.Header>
+				<Table.Root>
+					<Table.Header>
+						<Table.Row class="hover:bg-transparent">
+							<Table.Head class="text-muted-foreground h-9 pl-0 text-xs font-normal">Dil</Table.Head>
+							{#each languageColumns as column (column.key)}
+								<Table.Head class="h-9 w-7 px-0 text-center">
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											{#snippet child({ props })}
+												<span {...props} class="text-muted-foreground inline-flex"><column.icon class="size-3.5.5" aria-hidden="true" /><span class="sr-only">{column.label}</span></span>
+											{/snippet}
+										</Tooltip.Trigger>
+										<Tooltip.Content>{column.label}</Tooltip.Content>
+									</Tooltip.Root>
+								</Table.Head>
+							{/each}
+							<Table.Head class="w-2 p-0" aria-hidden="true"></Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each game.languages as language (language.name)}
+							<Table.Row>
+								<Table.Cell class="py-2 pl-0 text-[0.8125rem] font-medium">{language.name}</Table.Cell>
+								{#each languageColumns as column (column.key)}
+									<Table.Cell class="px-0 py-2 text-center">
+										{#if language[column.key]}
+											<CheckIcon class="text-primary mx-auto size-3.5.5" aria-hidden="true" /><span class="sr-only">{column.label} var</span>
+										{:else}
+											<MinusIcon class="text-muted-foreground/40 mx-auto size-3.5.5" aria-hidden="true" /><span class="sr-only">{column.label} yok</span>
+										{/if}
+									</Table.Cell>
+								{/each}
+								<Table.Cell class="p-0" aria-hidden="true"></Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+			</Dialog.Content>
+		</Dialog.Root>
+		</div>
+	</section>
+
+	<!-- Two columns from lg up: game info on the left (as wide as the poster above), the right column is left free for more sections. -->
+	<div class="grid w-full min-w-0 items-start gap-8 px-4 md:px-8">
+		<!-- Two equal columns: the trailer sits alone in its own row (left half), screenshots in one row, and the score and reviews card at the very bottom. -->
+		<div class="grid min-w-0 items-start gap-x-6 gap-y-10 xl:grid-cols-2">
+			<!-- Like the App Store preview row: trailer first, then the screenshots, one height, one scrolling row that runs to the edge of the screen. -->
+			<section aria-label="Önizleme" class="min-w-0 xl:col-span-2">
+				<ScrollArea orientation="horizontal" class="-mx-4 w-[calc(100%+2rem)] md:-mx-8 md:w-[calc(100%+4rem)]">
+					<ul class="flex w-max gap-3 px-4 pb-3 md:px-8">
+						<li class="aspect-video w-[clamp(16rem,24vw,22rem)] shrink-0">
+							{#if game.trailer}
+								<button
+									type="button"
+									onclick={() => openGallery(0)}
+									aria-label="{game.title} fragmanını oynat"
+									class="focus-visible:ring-ring/50 bg-muted group relative block size-full cursor-pointer overflow-hidden rounded-2xl ring-1 ring-black/8 outline-none focus-visible:ring-[3px] dark:ring-white/10"
+								>
+									<img src={game.backdrop} alt="" loading="lazy" class="size-full object-cover transition-opacity group-hover:opacity-90" />
+									<span class="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+										<span class="flex size-12 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-transform group-hover:scale-105"><PlayIcon class="size-5 fill-current" /></span>
+									</span>
+								</button>
+							{:else}
+								<div class="bg-muted relative size-full overflow-hidden rounded-2xl ring-1 ring-black/8 dark:ring-white/10">
+									<img src={game.backdrop} alt="" loading="lazy" class="absolute inset-0 size-full object-cover opacity-60" />
+									<Empty.Root class="bg-background/60 absolute inset-0 rounded-none border-0 backdrop-blur-sm">
+										<Empty.Header>
+											<Empty.Media variant="icon"><PlayIcon class="fill-current" /></Empty.Media>
+											<Empty.Title>Fragman yakında</Empty.Title>
+										</Empty.Header>
+									</Empty.Root>
+								</div>
+							{/if}
+						</li>
+						{#each screenshots as shot, i (i)}
+							<li class="aspect-video w-[clamp(16rem,24vw,22rem)] shrink-0">
+								<button
+									type="button"
+									onclick={() => openGallery(i + trailerCount)}
+									aria-label="{game.title} ekran görüntüsü {i + 1}, büyüt"
+									class="focus-visible:ring-ring/50 bg-muted block size-full cursor-pointer overflow-hidden rounded-2xl ring-1 ring-black/8 outline-none transition-opacity hover:opacity-90 focus-visible:ring-[3px] dark:ring-white/10"
+								>
+									<img src={shot} alt="" loading="lazy" class="size-full object-cover" />
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</ScrollArea>
+			</section>
+
+			<section aria-label="Açıklama" class="min-w-0 xl:col-span-2">
+				<p class="text-callout measure whitespace-pre-line">{game.description}</p>
 			</section>
 
 			<section aria-labelledby="reviews-title" class="min-w-0 xl:col-span-2">
+				<Separator class="mb-8" />
 				{@render heading("reviews-title", "Puanlar ve incelemeler", `${reviews.length} inceleme`)}
 				<Card.Root class="gap-0 py-0">
 					<Card.Content class="grid items-center gap-6 py-6 sm:grid-cols-[auto_1px_minmax(0,1fr)] sm:gap-8">
@@ -538,9 +535,9 @@
 								<span class="flex items-center gap-0.5" aria-hidden="true">
 									{#each [1, 2, 3, 4, 5] as star (star)}
 										<span class="relative inline-flex size-5">
-											<StarIcon class="text-primary size-5" strokeWidth={1.5} />
+											<StarIcon class="text-primary size-5" />
 											<span class="absolute inset-y-0 left-0 overflow-hidden" style:width="{Math.min(Math.max(game.score / 2 - (star - 1), 0), 1) * 100}%">
-												<StarIcon class="fill-primary text-primary size-5" strokeWidth={1.5} />
+												<StarIcon class="fill-primary text-primary size-5" />
 											</span>
 										</span>
 									{/each}
@@ -555,7 +552,7 @@
 							{#each distribution as group (group.range)}
 								<div class="grid grid-cols-[3.25rem_1fr_2.25rem] items-center gap-3 text-xs">
 									<span class="text-primary flex items-center gap-1.5 font-medium tabular-nums">
-										<StarIcon class="size-3 fill-current" aria-hidden="true" />
+										<StarIcon class="size-3.5 fill-current" aria-hidden="true" />
 										{group.range}
 									</span>
 									<Progress value={group.percent} aria-label="{group.range} puan: %{group.percent}" />
@@ -595,10 +592,63 @@
 					</Card.Footer>
 				</Card.Root>
 			</section>
+
+			<section aria-labelledby="info-title" class="min-w-0 xl:col-span-2">
+				<Separator class="mb-8" />
+				{@render heading("info-title", "Bilgi")}
+				<dl class="grid items-start gap-x-8 gap-y-6 text-sm sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+					{#each info as row (row.label)}
+						<div class="min-w-0">
+							<dt class="text-muted-foreground text-footnote flex items-center gap-1.5"><row.icon class="size-4 shrink-0" aria-hidden="true" />{row.label}</dt>
+							{#if row.label === "Yaş sınırı"}
+								{@const age = ageDescription(game.ageRating)}
+								<!-- Opens in place, like a disclosure row: the age label stays, the explanation unfolds under it. -->
+								<Collapsible.Root>
+									<dd class="mt-1">
+										<Collapsible.Trigger class="hover:bg-muted -mx-2 inline-flex max-w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-0.5 text-left font-medium transition-colors [&[data-state=open]>svg]:rotate-90">
+											<span class="truncate">{game.ageRating}</span>
+											<ChevronRightIcon class="text-muted-foreground size-4 shrink-0 transition-transform" aria-hidden="true" />
+										</Collapsible.Trigger>
+									</dd>
+									{#if age}
+										<Collapsible.Content>
+											<dd class="text-muted-foreground text-footnote mt-1 max-w-xs">{age.text}</dd>
+										</Collapsible.Content>
+									{/if}
+								</Collapsible.Root>
+							{:else}
+								<dd class="mt-1 font-medium">{row.values ? row.values.join(", ") : row.value}</dd>
+							{/if}
+						</div>
+					{/each}
+					<div class="min-w-0">
+						<dt class="text-muted-foreground text-footnote flex items-center gap-1.5"><LanguagesIcon class="size-4 shrink-0" aria-hidden="true" />Diller</dt>
+						<dd class="mt-1">
+							<button type="button" onclick={() => (languagesOpen = true)} aria-haspopup="dialog" class="hover:bg-muted -mx-2 inline-flex max-w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-0.5 text-left font-medium transition-colors">
+								<span class="truncate">{game.languages[0]?.name}{game.languages.length > 1 ? ` ve ${game.languages.length - 1} tane daha` : ""}</span>
+								<ChevronRightIcon class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+							</button>
+						</dd>
+					</div>
+					{#if game.requirements}
+						<div class="min-w-0">
+							<dt class="text-muted-foreground text-footnote flex items-center gap-1.5"><CpuIcon class="size-4 shrink-0" aria-hidden="true" />Sistem gereksinimleri</dt>
+							<dd class="mt-1">
+								<button type="button" onclick={() => (requirementsOpen = true)} aria-haspopup="dialog" class="hover:bg-muted -mx-2 inline-flex max-w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-0.5 text-left font-medium transition-colors">
+									<span class="truncate">Minimum ve önerilen</span>
+									<ChevronRightIcon class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+								</button>
+							</dd>
+						</div>
+					{/if}
+				</dl>
+			</section>
+
+
 		</div>
 	</div>
 
-	<!-- Preview: the picture on the dimmed page, round arrows at the screen edges and a small bar underneath. Clicking the empty area closes it. -->
+	<!-- Preview: the picture on the dimmed page, round arrows at the screen edges. Clicking the empty area or pressing Esc closes it. -->
 	<Dialog.Root bind:open={galleryOpen}>
 		<Dialog.Content
 			class="top-0 left-0 grid h-svh max-h-none w-screen max-w-none translate-x-0 translate-y-0 place-items-center overflow-visible rounded-none bg-transparent p-0 shadow-none ring-0 sm:max-w-none dark:ring-0"
@@ -621,10 +671,23 @@
 				class="w-[min(92vw,calc(78svh*16/9))]"
 			>
 				<Carousel.Content>
-					{#each screenshots as shot, i (i)}
+					{#each galleryItems as item, i (i)}
 						<Carousel.Item>
 							<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl shadow-2xl">
-								<img src={shot} alt="{game.title} ekran görüntüsü {i + 1} / {screenshots.length}" class="size-full object-cover" />
+								{#if item.kind === "video"}
+									<!-- Only the slide that is showing holds the player, so leaving it stops the sound. -->
+									{#if galleryOpen && galleryIndex === i}
+										<iframe
+											title="{game.title} fragmanı"
+											src="https://www.youtube-nocookie.com/embed/{item.src}?autoplay=1&rel=0"
+											allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+											allowfullscreen
+											class="size-full"
+										></iframe>
+									{/if}
+								{:else}
+									<img src={item.src} alt="{game.title} ekran görüntüsü {i + 1 - trailerCount} / {screenshots.length}" class="size-full object-cover" />
+								{/if}
 							</AspectRatio>
 						</Carousel.Item>
 					{/each}
@@ -645,31 +708,6 @@
 					</svg>
 				</Button>
 			{/each}
-			<div class="bg-popover text-popover-foreground ring-foreground/10 fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl p-1 pl-3 shadow-lg ring-1">
-				<span class="text-muted-foreground pr-2 text-xs tabular-nums">{galleryIndex + 1} / {screenshots.length}</span>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button {...props} variant="ghost" size="icon-sm" class="hover:bg-foreground/10 cursor-pointer rounded-xl" href={screenshots[galleryIndex]} target="_blank" rel="noreferrer" aria-label="Görseli yeni sekmede aç">
-								<ExternalLinkIcon />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content side="top">Yeni sekmede aç</Tooltip.Content>
-				</Tooltip.Root>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props: triggerProps })}
-							<Dialog.Close>
-								{#snippet child({ props })}
-									<Button {...props} {...triggerProps} variant="ghost" size="icon-sm" class="hover:bg-foreground/10 cursor-pointer rounded-xl" aria-label="Önizlemeyi kapat"><XIcon /></Button>
-								{/snippet}
-							</Dialog.Close>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content side="top">Önizlemeyi kapat</Tooltip.Content>
-				</Tooltip.Root>
-			</div>
 		</Dialog.Content>
 	</Dialog.Root>
 
@@ -733,43 +771,57 @@
 	</Dialog.Root>
 
 	<Dialog.Root bind:open={reviewSheetOpen}>
-		<Dialog.Content>
-			<Dialog.Header>
-				<Dialog.Title>{game.title} için puan ver</Dialog.Title>
-				<Dialog.Description>Bir puan seç ve düşüncelerini paylaş.</Dialog.Description>
+		<Dialog.Content onOpenAutoFocus={(event) => event.preventDefault()}>
+			<Dialog.Header class="flex-row items-center gap-3 pe-10">
+				<img src={game.cover} alt="" width="40" height="60" class="bg-muted h-[3.75rem] w-10 shrink-0 rounded-lg object-cover ring-1 ring-black/10 dark:ring-white/15" />
+				<div class="min-w-0">
+					<Dialog.Title>İncelemeni yaz</Dialog.Title>
+					<Dialog.Description class="truncate">{game.title}</Dialog.Description>
+				</div>
 			</Dialog.Header>
-			<form class="space-y-5" onsubmit={saveReview}>
-				<div class="space-y-2">
-					<div class="flex items-baseline justify-between">
-						<Label>Puanın</Label>
-						{#if rating}<span class="text-xl font-semibold tabular-nums">{rating}<span class="text-muted-foreground text-sm font-normal">/10</span></span>{/if}
+			<form class="space-y-4" onsubmit={saveReview}>
+				<div class="bg-muted/50 space-y-4 rounded-2xl p-4">
+					<div class="text-center" aria-live="polite">
+						<p class="text-large-title tabular-nums">
+							{rating ?? "–"}<span class="text-muted-foreground text-title-3 font-normal">/10</span>
+						</p>
+						<p class="text-muted-foreground text-callout mt-1">{rating ? scoreWords[rating - 1] : "Bir puan seç"}</p>
 					</div>
-					<div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
+					<ToggleGroup.Root
+						type="single"
+						variant="outline"
+						spacing={1}
+						value={rating ? String(rating) : ""}
+						onValueChange={(value) => value && (gameRating[game.slug] = Number(value))}
+						aria-label="Puanın, 1 ile 10 arasında"
+						class="grid w-full grid-cols-5 gap-1.5 sm:grid-cols-10"
+					>
 						{#each Array.from({ length: 10 }, (_, index) => index + 1) as n (n)}
-							<Button
-								type="button"
-								variant={rating === n ? "default" : "outline"}
-								class="aspect-square h-auto w-full cursor-pointer rounded-xl p-0 text-xs font-semibold {rating && n < rating ? 'border-foreground/30 bg-foreground/5' : ''}"
-								onclick={() => (gameRating[game.slug] = n)}
-								aria-pressed={rating === n}
+							<ToggleGroup.Item
+								value={String(n)}
+								aria-label="{n} puan"
+								class="bg-background data-[state=on]:bg-primary data-[state=on]:text-primary-foreground aspect-square h-auto w-full cursor-pointer rounded-xl p-0 text-xs font-semibold"
 							>
 								{n}
-							</Button>
+							</ToggleGroup.Item>
 						{/each}
-					</div>
+					</ToggleGroup.Root>
 				</div>
 				<div class="space-y-2">
-					<Label for="review">İncelemen</Label>
+					<Label for="review">Düşüncelerin <span class="text-muted-foreground font-normal">(isteğe bağlı)</span></Label>
 					<Textarea id="review" bind:value={draftText} placeholder="{game.title} hakkında ne düşünüyorsun?" class="min-h-28 resize-none rounded-xl" />
 				</div>
-				<div class="flex items-center gap-2">
-					<Checkbox id="spoiler" bind:checked={draftSpoiler} />
-					<Label for="spoiler" class="text-muted-foreground cursor-pointer text-xs">Spoiler içeriyor</Label>
+				<div class="flex items-center justify-between gap-4">
+					<div class="min-w-0">
+						<Label for="spoiler" class="cursor-pointer">Spoiler içeriyor</Label>
+						<p class="text-muted-foreground text-footnote">Yazın varsayılan olarak gizli gösterilir.</p>
+					</div>
+					<Switch id="spoiler" bind:checked={draftSpoiler} />
 				</div>
-				{#if reviewError}<p class="text-muted-foreground text-xs leading-5" role="status">{reviewError}</p>{/if}
+				{#if reviewError}<p class="text-destructive text-footnote" role="alert">{reviewError}</p>{/if}
 				<Dialog.Footer>
 					<Button variant="outline" class="cursor-pointer" onclick={() => (reviewSheetOpen = false)}>Vazgeç</Button>
-					<Button type="submit" class="cursor-pointer">İncelemeyi gönder</Button>
+					<Button type="submit" class="cursor-pointer">{draftText.trim() ? "İncelemeyi gönder" : "Puanı kaydet"}</Button>
 				</Dialog.Footer>
 			</form>
 		</Dialog.Content>
@@ -804,9 +856,8 @@
 	}
 
 	.detail-intro {
-		grid-template-columns: 6.5rem minmax(0, 1fr);
-		gap: 1.5rem 1rem;
-		padding-top: 9rem;
+		padding-top: 7rem;
+		padding-bottom: 1rem;
 	}
 
 	.detail-title {
@@ -814,45 +865,52 @@
 		overflow-wrap: anywhere;
 	}
 
-	.detail-heading {
-		padding-top: 0.5rem;
+	.stat {
+		display: flex;
+		flex: 1 0 6.5rem;
+		scroll-snap-align: start;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		padding-inline: 0.75rem;
+		text-align: center;
+		color: var(--muted-foreground);
+	}
+	.stat dt {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.stat-value {
+		display: flex;
+		height: 2rem;
+		align-items: center;
+		font-size: 1.375rem;
+		font-weight: 650;
+		color: var(--foreground);
+	}
+	.stat-value :global(svg) {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+	.stat-wrap {
+		padding-inline: 0.25rem;
+	}
+	.stat-label {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 	}
 
-	.detail-actions,
-	.detail-body {
-		grid-column: 1 / -1;
+	.stat-link:hover {
+		text-decoration: underline;
 	}
-
-	@media (min-width: 640px) {
-		.detail-intro {
-			grid-template-columns: 10rem minmax(0, 1fr);
-			column-gap: 1.75rem;
-		}
+	.stat-caption {
+		font-size: 0.8125rem;
+		line-height: 1.2;
+		max-width: 9rem;
+		overflow-wrap: anywhere;
 	}
-
-	@media (min-width: 1024px) {
-		.detail-intro {
-			grid-template-columns: 13.5rem minmax(0, 1fr);
-			gap: 1.5rem 2.5rem;
-			padding-top: 8rem;
-			padding-bottom: 2rem;
-		}
-
-		.detail-poster {
-			grid-row: span 2;
-		}
-
-		.detail-actions {
-			grid-column: 1;
-			grid-row: 3;
-			grid-template-columns: minmax(0, 1fr);
-		}
-
-		.detail-body {
-			grid-column: 2;
-			grid-row: 2 / 4;
-		}
-	}
-
-
 </style>

@@ -88,7 +88,7 @@
 
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger class={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), "cursor-pointer rounded-full")} aria-label="Ayarlar">
-		<SettingsIcon class="size-5" strokeWidth={1.8} />
+		<SettingsIcon class="size-5" />
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="end" sideOffset={10} class="w-56 rounded-2xl p-2">
 		<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
@@ -106,7 +106,7 @@
 								)}
 								onclick={() => setMode(theme.value)}
 							>
-								<theme.icon class="size-[18px]" strokeWidth={1.7} />
+								<theme.icon class="size-4" />
 							</DropdownMenu.Item>
 						{/snippet}
 					</Tooltip.Trigger>
@@ -230,7 +230,7 @@
 										aria-label="{file.name} dosyasını kaldır"
 										onclick={() => (attachments = attachments.filter((_, i) => i !== index))}
 									>
-										<XIcon class="size-3" />
+										<XIcon class="size-3.5" />
 									</Button>
 								</Badge>
 							</li>

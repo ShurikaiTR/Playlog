@@ -161,7 +161,7 @@
 								<img src={list.cover} alt="" width="1600" height="560" loading="lazy" class="size-full object-cover" />
 							</AspectRatio>
 							<Avatar.Root class="ring-card absolute -bottom-7 left-(--card-spacing) size-16 rounded-xl ring-4">
-								<Avatar.Fallback class="rounded-xl"><Icon class="text-muted-foreground size-6" strokeWidth={1.5} /></Avatar.Fallback>
+								<Avatar.Fallback class="rounded-xl"><Icon class="text-muted-foreground size-5" /></Avatar.Fallback>
 							</Avatar.Root>
 						</div>
 						<Card.Header class="pt-10">

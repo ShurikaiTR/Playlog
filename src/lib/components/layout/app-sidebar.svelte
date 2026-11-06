@@ -12,7 +12,6 @@
 	import NewspaperIcon from "@lucide/svelte/icons/newspaper";
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
-	import UserRoundIcon from "@lucide/svelte/icons/user-round";
 	import UsersIcon from "@lucide/svelte/icons/users";
 
 	interface Item {
@@ -110,7 +109,7 @@
 												class="flex size-6 shrink-0 items-center justify-center"
 												aria-hidden="true"
 											>
-												<item.icon class="size-[18px]!" />
+												<item.icon class="size-4!" />
 											</div>
 											<span>{item.label}</span>
 										</a>
@@ -123,27 +122,6 @@
 			</Sidebar.Group>
 		{/each}
 	</Sidebar.Content>
-
-	<Sidebar.Footer class="p-3">
-		<Sidebar.Menu>
-			<Sidebar.MenuItem>
-				<Sidebar.MenuButton
-					size="lg"
-					tooltipContent="Giriş yap"
-					class="h-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0!"
-				>
-					{#snippet child({ props })}
-						<a {...props} href="/giris">
-							<div class="bg-secondary flex size-7 shrink-0 items-center justify-center rounded-full">
-								<UserRoundIcon class="size-4!" aria-hidden="true" />
-							</div>
-							<span class="truncate font-[550] group-data-[collapsible=icon]:hidden">Giriş yap</span>
-						</a>
-					{/snippet}
-				</Sidebar.MenuButton>
-			</Sidebar.MenuItem>
-		</Sidebar.Menu>
-	</Sidebar.Footer>
 
 	<Sidebar.Rail />
 </Sidebar.Root>

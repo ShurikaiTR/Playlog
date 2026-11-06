@@ -120,7 +120,7 @@
 				<div class="actions">
 					<Button href={current.href} size="lg" class="h-12 px-6 text-base">
 						İncele
-						<ArrowRightIcon data-icon="inline-end" class="size-4.5" />
+						<ArrowRightIcon data-icon="inline-end" class="size-4" />
 					</Button>
 				</div>
 			</div>
@@ -243,9 +243,9 @@
 		align-items: center;
 		gap: 0.65rem;
 		margin-top: 1rem;
-		font-size: 0.75rem;
+		font-size: var(--text-footnote);
+		line-height: var(--text-footnote--line-height);
 		font-weight: 500;
-		letter-spacing: 0.04em;
 		color: color-mix(in oklch, var(--foreground) 72%, transparent);
 	}
 
@@ -271,13 +271,13 @@
 	.description {
 		display: -webkit-box;
 		overflow: hidden;
-		-webkit-line-clamp: 4;
-		line-clamp: 4;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
 		-webkit-box-orient: vertical;
 		max-width: 32rem;
 		margin-top: 1.5rem;
-		font-size: clamp(0.875rem, 0.8rem + 0.3vw, 1rem);
-		line-height: 1.7;
+		font-size: var(--text-callout);
+		line-height: var(--text-callout--line-height);
 		color: color-mix(in oklch, var(--foreground) 78%, transparent);
 	}
 
@@ -303,9 +303,9 @@
 		display: flex;
 		align-items: baseline;
 		gap: 0.35rem;
-		font-size: 0.8125rem;
+		font-size: var(--text-footnote);
 		font-weight: 600;
-		letter-spacing: 0.08em;
+		letter-spacing: 0.04em;
 	}
 
 	.counter-total {

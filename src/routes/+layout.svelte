@@ -3,6 +3,7 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { Toaster } from '#lib/components/ui/sonner/index.js';
 	import { ModeWatcher } from 'mode-watcher';
+	import AuthTransitionScreen from '#lib/components/auth-transition-screen.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -14,5 +15,6 @@
 </svelte:head>
 
 <ModeWatcher defaultMode="dark" />
+<AuthTransitionScreen />
 {@render children()}
 <Toaster />
