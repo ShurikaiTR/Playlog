@@ -1,0 +1,20 @@
+# Yerel geliştirme veritabanı: docker compose up -d
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: playthru
+      POSTGRES_PASSWORD: playthru
+      POSTGRES_DB: playthru
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U playthru"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
