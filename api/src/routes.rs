@@ -1,4 +1,5 @@
 mod auth;
+mod oauth;
 
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 use serde::Serialize;
@@ -9,6 +10,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/health", get(health))
         .nest("/v1/auth", auth::router())
+        .nest("/v1/auth/oauth", oauth::router())
 }
 
 #[derive(Serialize)]

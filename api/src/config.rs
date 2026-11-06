@@ -2,6 +2,8 @@ use std::net::SocketAddr;
 
 use anyhow::{Context, bail};
 
+use crate::oauth::Credentials;
+
 pub struct Config {
     pub database_url: String,
     pub bind_addr: SocketAddr,
@@ -11,6 +13,10 @@ pub struct Config {
     /// Verilmezse e-postalar gönderilmez, kodlar günlüğe yazılır (yalnızca geliştirme).
     pub resend_api_key: Option<String>,
     pub mail_from: String,
+    /// Sitenin dışarıdan görünen adresi (örn. https://playthru.app); OAuth callback adresi buradan kurulur.
+    pub public_url: Option<String>,
+    pub google: Option<Credentials>,
+    pub discord: Option<Credentials>,
 }
 
 impl Config {
@@ -40,6 +46,27 @@ impl Config {
                 .filter(|v| !v.is_empty()),
             mail_from: std::env::var("MAIL_FROM")
                 .unwrap_or_else(|_| "Playthru <onboarding@resend.dev>".into()),
+            public_url: env_non_empty("PUBLIC_URL"),
+            google: credentials("GOOGLE")?,
+            discord: credentials("DISCORD")?,
         })
+    }
+}
+
+fn env_non_empty(name: &str) -> Option<String> {
+    std::env::var(name).ok().filter(|v| !v.is_empty())
+}
+
+/// `<PREFIX>_CLIENT_ID` ve `<PREFIX>_CLIENT_SECRET`: ikisi de varsa etkin, hiçbiri yoksa kapalı.
+fn credentials(prefix: &str) -> anyhow::Result<Option<Credentials>> {
+    let id = env_non_empty(&format!("{prefix}_CLIENT_ID"));
+    let secret = env_non_empty(&format!("{prefix}_CLIENT_SECRET"));
+    match (id, secret) {
+        (Some(client_id), Some(client_secret)) => Ok(Some(Credentials {
+            client_id,
+            client_secret,
+        })),
+        (None, None) => Ok(None),
+        _ => bail!("{prefix}_CLIENT_ID ve {prefix}_CLIENT_SECRET birlikte tanımlanmalı"),
     }
 }

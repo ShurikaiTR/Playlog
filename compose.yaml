@@ -29,6 +29,12 @@ services:
       CODE_SECRET: ${CODE_SECRET:?CODE_SECRET gerekli (en az 32 karakter)}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-Playthru <onboarding@resend.dev>}
+      # OAuth callback adresi buradan kurulur: ${PUBLIC_URL}/auth/google/callback
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
       RUST_LOG: info
 
   web:

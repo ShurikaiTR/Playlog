@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod error;
 mod mail;
+mod oauth;
 mod ratelimit;
 mod routes;
 mod state;
@@ -13,7 +14,7 @@ use tokio::net::TcpListener;
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::EnvFilter;
 
-use crate::{auth::password, config::Config, mail::Mailer, state::AppState};
+use crate::{auth::password, config::Config, mail::Mailer, oauth::OAuth, state::AppState};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -44,9 +45,16 @@ async fn main() -> anyhow::Result<()> {
         .with_state(AppState {
             db: pool,
             mailer: Mailer::new(config.resend_api_key, config.mail_from)?,
-            code_secret: config.code_secret.into(),
+            code_secret: std::sync::Arc::from(config.code_secret.as_slice()),
             dummy_hash: password::dummy_hash().await?.into(),
             limiter: Default::default(),
+            oauth: OAuth::new(
+                config.public_url,
+                config.google,
+                config.discord,
+                &config.code_secret,
+            )?
+            .into(),
         });
 
     let listener = TcpListener::bind(config.bind_addr).await?;

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use sqlx::PgPool;
 
-use crate::{mail::Mailer, ratelimit::RateLimiter};
+use crate::{mail::Mailer, oauth::OAuth, ratelimit::RateLimiter};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -12,4 +12,5 @@ pub struct AppState {
     /// Var olmayan kullanıcıda da Argon2 çalıştırmak için (zamanlama sızıntısını önler).
     pub dummy_hash: Arc<str>,
     pub limiter: Arc<RateLimiter>,
+    pub oauth: Arc<OAuth>,
 }

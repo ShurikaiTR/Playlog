@@ -19,7 +19,7 @@ use crate::{
 };
 
 const SIGNUP: &str = "signup";
-const TEN_MINUTES: Duration = Duration::from_secs(600);
+pub(super) const TEN_MINUTES: Duration = Duration::from_secs(600);
 const FIFTEEN_MINUTES: Duration = Duration::from_secs(900);
 const PASSWORD_RESET: &str = "password_reset";
 
@@ -87,18 +87,18 @@ impl CodeSent {
 }
 
 #[derive(Serialize)]
-struct UserView {
-    id: Uuid,
-    username: String,
-    display_name: Option<String>,
-    email: String,
+pub(super) struct UserView {
+    pub(super) id: Uuid,
+    pub(super) username: String,
+    pub(super) display_name: Option<String>,
+    pub(super) email: String,
 }
 
 #[derive(Serialize)]
-struct SessionResponse {
+pub(super) struct SessionResponse {
     /// SvelteKit bunu `__Host-` önekli, HttpOnly çereze yazar.
-    token: String,
-    user: UserView,
+    pub(super) token: String,
+    pub(super) user: UserView,
 }
 
 // ---------- Kayıt ----------
@@ -382,7 +382,7 @@ async fn password_reset_confirm(
 
 /// SvelteKit'in ilettiği gerçek istemci IP'si (API yalnızca iç ağdadır, başlığa güvenilir).
 /// Başlık yoksa ortak bir "unknown" kovasına düşer; bu daha sıkı sınırlanır, güvenli taraf.
-fn client_ip(headers: &HeaderMap) -> String {
+pub(super) fn client_ip(headers: &HeaderMap) -> String {
     headers
         .get("x-client-ip")
         .and_then(|v| v.to_str().ok())
@@ -391,7 +391,12 @@ fn client_ip(headers: &HeaderMap) -> String {
         .to_owned()
 }
 
-fn rate_limit(state: &AppState, key: &str, max: u32, window: Duration) -> Result<(), AppError> {
+pub(super) fn rate_limit(
+    state: &AppState,
+    key: &str,
+    max: u32,
+    window: Duration,
+) -> Result<(), AppError> {
     state
         .limiter
         .hit(key, max, window)
@@ -403,7 +408,7 @@ fn corrupt() -> AppError {
 }
 
 /// Kullanıcı adı/e-posta benzersizlik ihlalini (yarış durumu) 409'a çevirir.
-fn map_unique_violation(err: sqlx::Error) -> AppError {
+pub(super) fn map_unique_violation(err: sqlx::Error) -> AppError {
     if let sqlx::Error::Database(db) = &err
         && db.is_unique_violation()
     {
@@ -551,7 +556,7 @@ async fn consume_code(
 
 /// Yeni oturum açar, istemciye verilecek belirteci döner.
 /// IP ve tarayıcı bilgisi SvelteKit'in ilettiği başlıklardan gelir (API yalnızca iç ağdadır).
-async fn create_session(
+pub(super) async fn create_session(
     conn: &mut PgConnection,
     user_id: Uuid,
     headers: &HeaderMap,
