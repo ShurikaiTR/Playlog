@@ -13,6 +13,9 @@ use crate::{config::Config, state::AppState};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Geliştirmede .env dosyasını yükler; üretimde değişkenler ortamdan gelir ve dosya yoktur.
+    dotenvy::dotenv().ok();
+
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .init();
