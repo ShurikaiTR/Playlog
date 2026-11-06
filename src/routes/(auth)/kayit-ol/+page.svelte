@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { hideAuthTransition, withAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { hideAuthTransition, showAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import EyeIcon from '@lucide/svelte/icons/eye';
@@ -15,8 +16,9 @@
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 
-	// Sign-up options, then email, then the emailed code, then the account details.
-	let step = $state<'providers' | 'email' | 'verify' | 'details'>('providers');
+	// Sign-up options, then email, then the account details (which mails the code), then the code.
+	// The right code creates the account and signs in.
+	let step = $state<'providers' | 'email' | 'details' | 'verify'>('providers');
 	let code = $state('');
 	let resendIn = $state(0);
 	let showPassword = $state(false);
@@ -28,7 +30,7 @@
 	let password = $state('');
 	let pending = $state(false);
 
-	// There is no account service behind these pages yet; they only collect and validate input.
+	// Google and Discord sign-up are not on the API yet.
 	function signUpWith() {
 		statusMessage = 'Bu kayıt yöntemi henüz kullanılamıyor. E-posta ile devam edebilirsin.';
 	}
@@ -38,28 +40,16 @@
 		step = next;
 	}
 
-	// Placeholder: no e-mail is sent until the account service exists.
-	async function requestCode() {
-		return true;
-	}
-
-	async function submitEmail(event: SubmitEvent) {
+	function submitEmail(event: SubmitEvent) {
 		event.preventDefault();
-		pending = true;
-		statusMessage = '';
-		const sent = await requestCode();
-		pending = false;
-		if (!sent) return;
-		code = '';
-		startResendCountdown();
-		goTo('verify');
+		goTo('details');
 	}
 
-	// Counts down the "resend code" wait; a new countdown replaces the old one.
+	// Counts down the "resend code" wait; the API allows a new code once a minute.
 	let countdown: ReturnType<typeof setInterval> | undefined;
 	function startResendCountdown() {
 		clearInterval(countdown);
-		resendIn = 30;
+		resendIn = 60;
 		countdown = setInterval(() => {
 			resendIn -= 1;
 			if (resendIn <= 0) clearInterval(countdown);
@@ -67,35 +57,63 @@
 	}
 	onDestroy(() => clearInterval(countdown));
 
-	async function resendCode() {
-		statusMessage = '';
-		if (await requestCode()) {
-			startResendCountdown();
-			statusMessage = 'Yeni kod gönderildi.';
-		}
-	}
+	const failure = (data: Record<string, unknown> | undefined) =>
+		typeof data?.error === 'string' ? data.error : 'Bir şeyler ters gitti. Lütfen tekrar dene.';
 
-	function submitCode(event: SubmitEvent) {
-		event.preventDefault();
-		if (code.length < 6) {
-			statusMessage = 'E-postana gelen 6 haneli kodu gir.';
-			return;
-		}
-		goTo('details');
-	}
+	// Errors that belong to the email step send the visitor back there.
+	const EMAIL_ERRORS = new Set(['invalid_email', 'email_taken']);
 
-	async function handleSubmit(event: SubmitEvent) {
-		event.preventDefault();
+	// Details step and "Tekrar gönder": checks the details and mails the code.
+	const submitStart: SubmitFunction = () => {
 		pending = true;
 		statusMessage = '';
-		await withAuthTransition(
-			{ title: 'Hesabın oluşturuluyor', description: 'Her şeyi hazırlıyoruz, lütfen bekle…' },
-			() => new Promise((done) => setTimeout(done, 0))
-		);
-		pending = false;
-		hideAuthTransition();
-		statusMessage = 'Hesap sistemi henüz hazır değil. Kayıt yakında burada olacak.';
-	}
+		return async ({ result }) => {
+			pending = false;
+			if (result.type === 'success') {
+				startResendCountdown();
+				if (step === 'verify') {
+					statusMessage = 'Yeni kod gönderildi.';
+				} else {
+					code = '';
+					goTo('verify');
+				}
+				return;
+			}
+			const data = result.type === 'failure' ? result.data : undefined;
+			if (typeof data?.code === 'string' && EMAIL_ERRORS.has(data.code)) step = 'email';
+			else if (step === 'verify' && data?.code !== 'code_cooldown') step = 'details';
+			statusMessage = failure(data);
+		};
+	};
+
+	// Verify step: the right code creates the account.
+	const submitVerify: SubmitFunction = ({ cancel }) => {
+		if (code.length < 6) {
+			statusMessage = 'E-postana gelen 6 haneli kodu gir.';
+			cancel();
+			return;
+		}
+		pending = true;
+		statusMessage = '';
+		showAuthTransition({
+			title: 'Hesabın oluşturuluyor',
+			description: 'Her şeyi hazırlıyoruz, lütfen bekle…'
+		});
+		return async ({ result }) => {
+			pending = false;
+			if (result.type === 'redirect') {
+				await applyAction(result);
+				hideAuthTransition();
+				return;
+			}
+			hideAuthTransition();
+			const data = result.type === 'failure' ? result.data : undefined;
+			if (data?.code === 'invalid_code') code = '';
+			else if (data?.code === 'username_taken') step = 'details';
+			else if (data?.code === 'email_taken') step = 'email';
+			statusMessage = failure(data);
+		};
+	};
 </script>
 
 <svelte:head>
@@ -104,17 +122,19 @@
 </svelte:head>
 
 <div lang="tr">
-			{#if step === 'providers'}
-		<div in:fade={{ duration: 150 }}>
-			<h1
-				class="mb-6 text-center text-title-1 text-balance text-primary"
-			>
-				Hesabını oluştur
-			</h1>
+	<!-- "Tekrar gönder" posts the same details again; kept outside the code form so Enter there verifies. -->
+	<form id="signup-resend" method="POST" action="?/start" hidden use:enhance={submitStart}>
+		<input type="hidden" name="email" value={email} />
+		<input type="hidden" name="username" value={username} />
+		<input type="hidden" name="password" value={password} />
+	</form>
 
-			<Button
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => signUpWith()}><GoogleIcon />Google ile kayıt ol</Button
+	{#if step === 'providers'}
+		<div in:fade={{ duration: 150 }}>
+			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabını oluştur</h1>
+
+			<Button class="h-11 w-full cursor-pointer rounded-full" onclick={() => signUpWith()}
+				><GoogleIcon />Google ile kayıt ol</Button
 			>
 
 			<Separator class="mx-auto my-6 w-3/4!" />
@@ -134,11 +154,7 @@
 		</div>
 	{:else if step === 'email'}
 		<form class="space-y-4" onsubmit={submitEmail} in:fade={{ duration: 150 }}>
-			<h1
-				class="mb-6 text-center text-title-1 text-balance text-primary"
-			>
-				E-postanla kayıt ol
-			</h1>
+			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">E-postanla kayıt ol</h1>
 			<div class="space-y-2">
 				<Label for="signup-email">E-posta</Label>
 				<Input
@@ -153,9 +169,7 @@
 				/>
 			</div>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
-				>{pending ? 'Kod gönderiliyor…' : 'Kayıt ol'}</Button
-			>
+			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full">İleri</Button>
 
 			<Button
 				variant="outline"
@@ -164,11 +178,16 @@
 			>
 		</form>
 	{:else if step === 'details'}
-		<form class="space-y-4" onsubmit={handleSubmit} in:fade={{ duration: 150 }}>
+		<form
+			method="POST"
+			action="?/start"
+			class="space-y-4"
+			use:enhance={submitStart}
+			in:fade={{ duration: 150 }}
+		>
+			<input type="hidden" name="email" value={email} />
 			<div class="mb-8 text-center">
-				<h1 class="text-title-1 text-balance text-primary">
-					Kaydını tamamla
-				</h1>
+				<h1 class="text-title-1 text-balance text-primary">Kaydını tamamla</h1>
 				<span
 					class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
 				>
@@ -192,6 +211,7 @@
 					<Label for="signup-username">Kullanıcı adı</Label>
 					<Input
 						id="signup-username"
+						name="username"
 						bind:value={username}
 						minlength={3}
 						maxlength={30}
@@ -206,6 +226,7 @@
 				<InputGroup.Root class="h-12 rounded-full pl-2">
 					<InputGroup.Input
 						id="signup-password"
+						name="password"
 						type={showPassword ? 'text' : 'password'}
 						bind:value={password}
 						autocomplete="new-password"
@@ -231,40 +252,41 @@
 			</div>
 			<div class="flex items-center gap-2.5 py-1">
 				<Checkbox id="signup-updates" bind:checked={wantsUpdates} />
-				<Label for="signup-updates" class="text-callout cursor-pointer font-normal"
+				<Label for="signup-updates" class="cursor-pointer text-callout font-normal"
 					>Yeni özellikler ve duyurular hakkında e-posta almak istiyorum</Label
 				>
 			</div>
 
-
-			<Button
-				type="submit"
-				class="h-11 w-full cursor-pointer rounded-full"
-				disabled={pending}
-				>{pending ? 'Kayıt tamamlanıyor…' : 'Kaydı tamamla'}</Button
+			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
+				>{pending ? 'Kod gönderiliyor…' : 'Devam et'}</Button
 			>
 
 			<Button
 				variant="outline"
 				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('verify')}>Geri dön</Button
+				onclick={() => goTo('email')}>Geri dön</Button
 			>
 		</form>
 	{:else}
-		<form class="space-y-4" onsubmit={submitCode} in:fade={{ duration: 150 }}>
+		<form
+			method="POST"
+			action="?/verify"
+			class="space-y-4"
+			use:enhance={submitVerify}
+			in:fade={{ duration: 150 }}
+		>
+			<input type="hidden" name="email" value={email} />
 			<div class="text-center">
-				<h1 class="text-title-1 text-balance text-primary">
-					E-postanı doğrula
-				</h1>
+				<h1 class="text-title-1 text-balance text-primary">E-postanı doğrula</h1>
 				<p class="mt-3 text-callout text-pretty text-muted-foreground">
 					<span class="font-medium text-foreground">{email}</span> adresine tek kullanımlık bir güvenlik
-					kodu gönderdik. Birkaç dakika içinde gelmezse spam klasörünü de kontrol et. Kodu aşağıya
-					gir:
+					kodu gönderdik. Birkaç dakika içinde gelmezse spam klasörünü de kontrol et. Kodu aşağıya gir:
 				</p>
 			</div>
 
 			<div class="flex justify-center pt-4">
 				<InputOTP.Root
+					name="code"
 					maxlength={6}
 					bind:value={code}
 					pattern="^[0-9]*$"
@@ -290,11 +312,12 @@
 			<p class="text-center text-footnote text-muted-foreground">
 				Kod gelmedi mi?
 				<Button
-					type="button"
+					type="submit"
+					form="signup-resend"
 					variant="link"
 					class="h-auto cursor-pointer p-0 font-medium text-foreground disabled:font-normal disabled:text-muted-foreground disabled:no-underline"
-					disabled={resendIn > 0}
-					onclick={resendCode}>Tekrar gönder{resendIn > 0 ? ` (${resendIn})` : ''}</Button
+					disabled={resendIn > 0 || pending}
+					>Tekrar gönder{resendIn > 0 ? ` (${resendIn})` : ''}</Button
 				>
 			</p>
 
@@ -305,7 +328,7 @@
 			<Button
 				variant="outline"
 				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('email')}>Geri dön</Button
+				onclick={() => goTo('details')}>Geri dön</Button
 			>
 		</form>
 	{/if}
