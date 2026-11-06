@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod error;
 mod mail;
+mod ratelimit;
 mod routes;
 mod state;
 
@@ -45,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
             mailer: Mailer::new(config.resend_api_key, config.mail_from)?,
             code_secret: config.code_secret.into(),
             dummy_hash: password::dummy_hash().await?.into(),
+            limiter: Default::default(),
         });
 
     let listener = TcpListener::bind(config.bind_addr).await?;

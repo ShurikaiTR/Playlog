@@ -1,5 +1,7 @@
 //! Kimlik doğrulama uçları. Tarayıcı bunlara doğrudan gitmez; SvelteKit sunucusu çağırır.
 
+use std::time::Duration;
+
 use axum::{
     Json, Router,
     extract::State,
@@ -17,6 +19,8 @@ use crate::{
 };
 
 const SIGNUP: &str = "signup";
+const TEN_MINUTES: Duration = Duration::from_secs(600);
+const FIFTEEN_MINUTES: Duration = Duration::from_secs(900);
 const PASSWORD_RESET: &str = "password_reset";
 
 pub fn router() -> Router<AppState> {
@@ -97,8 +101,15 @@ struct SessionResponse {
 
 async fn signup_start(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(body): Json<SignupStart>,
 ) -> Result<(StatusCode, Json<CodeSent>), AppError> {
+    rate_limit(
+        &state,
+        &format!("signup:ip:{}", client_ip(&headers)),
+        10,
+        TEN_MINUTES,
+    )?;
     let email = validate::email(&body.email)?;
     let username = validate::username(&body.username)?;
     validate::password(&body.password)?;
@@ -144,6 +155,12 @@ async fn signup_verify(
     headers: HeaderMap,
     Json(body): Json<VerifyCode>,
 ) -> Result<Json<SessionResponse>, AppError> {
+    rate_limit(
+        &state,
+        &format!("verify:ip:{}", client_ip(&headers)),
+        30,
+        TEN_MINUTES,
+    )?;
     let email = validate::email(&body.email)?;
     let code_input = validate::code(&body.code)?;
 
@@ -204,6 +221,11 @@ async fn login(
     Json(body): Json<Login>,
 ) -> Result<Json<SessionResponse>, AppError> {
     let identifier = body.identifier.trim().to_lowercase();
+    // Hem IP hem hesap başına: tek IP'den çok hesap ve çok IP'den tek hesap denemeleri sınırlanır.
+    let ip_key = format!("login:ip:{}", client_ip(&headers));
+    let id_key = format!("login:id:{identifier}");
+    rate_limit(&state, &ip_key, 20, FIFTEEN_MINUTES)?;
+    rate_limit(&state, &id_key, 8, FIFTEEN_MINUTES)?;
     // Sabit sorgular: dinamik SQL kullanılmaz, her ikisi de benzersiz indeksten çalışır.
     let query = if identifier.contains('@') {
         "SELECT u.id, u.username, u.email, c.password_hash
@@ -231,6 +253,7 @@ async fn login(
         return Err(AppError::Unauthorized("invalid_credentials"));
     };
 
+    state.limiter.reset(&id_key);
     let mut conn = state.db.acquire().await?;
     let token = create_session(&mut conn, row.id, &headers).await?;
     Ok(Json(SessionResponse {
@@ -263,8 +286,15 @@ async fn me(user: CurrentUser) -> Json<UserView> {
 
 async fn password_reset_start(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(body): Json<PasswordResetStart>,
 ) -> Result<(StatusCode, Json<CodeSent>), AppError> {
+    rate_limit(
+        &state,
+        &format!("reset:ip:{}", client_ip(&headers)),
+        10,
+        TEN_MINUTES,
+    )?;
     let email = validate::email(&body.email)?;
     ensure_cooldown(&state, PASSWORD_RESET, &email).await?;
 
@@ -281,8 +311,15 @@ async fn password_reset_start(
 
 async fn password_reset_confirm(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(body): Json<PasswordResetConfirm>,
 ) -> Result<StatusCode, AppError> {
+    rate_limit(
+        &state,
+        &format!("verify:ip:{}", client_ip(&headers)),
+        30,
+        TEN_MINUTES,
+    )?;
     let email = validate::email(&body.email)?;
     let code_input = validate::code(&body.code)?;
     validate::password(&body.new_password)?;
@@ -324,6 +361,24 @@ async fn password_reset_confirm(
 }
 
 // ---------- Yardımcılar ----------
+
+/// SvelteKit'in ilettiği gerçek istemci IP'si (API yalnızca iç ağdadır, başlığa güvenilir).
+/// Başlık yoksa ortak bir "unknown" kovasına düşer; bu daha sıkı sınırlanır, güvenli taraf.
+fn client_ip(headers: &HeaderMap) -> String {
+    headers
+        .get("x-client-ip")
+        .and_then(|v| v.to_str().ok())
+        .filter(|ip| ip.parse::<std::net::IpAddr>().is_ok())
+        .unwrap_or("unknown")
+        .to_owned()
+}
+
+fn rate_limit(state: &AppState, key: &str, max: u32, window: Duration) -> Result<(), AppError> {
+    state
+        .limiter
+        .hit(key, max, window)
+        .map_err(|_| AppError::TooManyRequests("rate_limited"))
+}
 
 fn corrupt() -> AppError {
     AppError::Internal(anyhow::anyhow!("bekleyen kayıt verisi bozuk"))
