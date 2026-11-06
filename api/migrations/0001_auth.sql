@@ -40,7 +40,9 @@ CREATE TABLE oauth_accounts (
 CREATE TABLE sessions (
     id           uuid PRIMARY KEY DEFAULT uuidv7(),
     user_id      uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token_hash   bytea NOT NULL UNIQUE, -- çerezdeki tokenin SHA-256 özeti
+    -- Çerez "<id>.<gizli parça>" biçimindedir (OWASP): oturum id ile bulunur,
+    -- gizli parçanın SHA-256 özeti burada saklanır ve sabit sürede karşılaştırılır.
+    verifier_hash bytea NOT NULL,
     user_agent   text,
     ip           inet,
     created_at   timestamptz NOT NULL DEFAULT now(),
