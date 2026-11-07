@@ -35,7 +35,7 @@
 
 <form bind:this={logoutForm} method="POST" action="/cikis" hidden></form>
 
-<ScreenHeader title="Hesap" description="Hesap bilgilerin ve oturumun." />
+<ScreenHeader title="Hesap" />
 
 {#if user}
 	<div class="space-y-6">
