@@ -13,6 +13,11 @@
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
 	import UsersIcon from "@lucide/svelte/icons/users";
+	import SearchIcon from "@lucide/svelte/icons/search";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { Kbd, KbdGroup } from "#lib/components/ui/kbd/index.js";
+	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
+	import { openSearch } from "#lib/features/search/search-state.svelte.js";
 	import UserMenu from "./user-menu.svelte";
 	import SettingsDialog from "./settings-dialog.svelte";
 
@@ -56,6 +61,14 @@
 	];
 
 	const sidebar = Sidebar.useSidebar();
+	// Only read while a tooltip is open, so it never runs during server rendering.
+	const isMac = () => /Mac|iPhone|iPad/.test(navigator.userAgent);
+
+	function search() {
+		if (sidebar.isMobile) sidebar.setOpenMobile(false);
+		openSearch();
+	}
+
 	const isActive = (href: string) => (href === "/" ? page.url.pathname === "/" : page.url.pathname.startsWith(href));
 </script>
 
@@ -80,6 +93,27 @@
 			>
 				<img src="/logos/playthru-mascot.svg" alt="Playthru" width="100" height="100" class="size-8 object-contain dark:invert" />
 			</a>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="icon-xs"
+							class="text-muted-foreground hover:text-primary hover:bg-foreground/8 dark:hover:bg-foreground/12 size-8 shrink-0 cursor-pointer rounded-xl transition-colors duration-100 pointer-coarse:size-11 group-data-[collapsible=icon]:hidden"
+							aria-label="Ara"
+							aria-keyshortcuts="Meta+K Control+K"
+							onclick={search}
+						>
+							<SearchIcon class="size-[18px]!" aria-hidden="true" />
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content side="bottom" sideOffset={8} class="flex items-center gap-2">
+					Ara
+					<KbdGroup><Kbd>{isMac() ? "⌘" : "Ctrl"}</Kbd><Kbd>K</Kbd></KbdGroup>
+				</Tooltip.Content>
+			</Tooltip.Root>
 			<Sidebar.Trigger
 				class="shrink-0 group-hover/brand:!opacity-100 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:transition-opacity"
 			/>
@@ -92,6 +126,17 @@
 				<Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
 				<Sidebar.GroupContent>
 					<Sidebar.Menu>
+						{#if group === groups[0]}
+							<!-- On the icon rail the header button is hidden, so search gets a row of its own. -->
+							<Sidebar.MenuItem class="hidden group-data-[collapsible=icon]:block">
+								<Sidebar.MenuButton tooltipContent="Ara" class="cursor-pointer font-[550]" onclick={search}>
+									<div data-sidebar="icon" class="flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
+										<SearchIcon class="size-4!" />
+									</div>
+									<span>Ara</span>
+								</Sidebar.MenuButton>
+							</Sidebar.MenuItem>
+						{/if}
 						{#each group.items as item (item.href)}
 							<Sidebar.MenuItem>
 								<Sidebar.MenuButton

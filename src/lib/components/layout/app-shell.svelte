@@ -6,6 +6,7 @@
 	import Footer from "#lib/components/footer.svelte";
 	import SettingsMenu from "./settings-menu.svelte";
 	import SettingsDialogs from "./settings-dialogs.svelte";
+	import SearchDialog from "#lib/features/search/search-dialog.svelte";
 	import { page } from "$app/state";
 
 	let { children }: { children: Snippet } = $props();
@@ -34,3 +35,4 @@
 </Sidebar.Provider>
 
 <SettingsDialogs />
+<SearchDialog />

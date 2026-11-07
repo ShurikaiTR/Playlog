@@ -60,3 +60,4 @@ export const viewerUsername = "gokhan";
 
 export const getProfile = (username: string): Profile | undefined => profiles[username.toLowerCase()];
 export const hasProfile = (username: string) => username in profiles;
+export const allProfiles: Profile[] = Object.values(profiles);
