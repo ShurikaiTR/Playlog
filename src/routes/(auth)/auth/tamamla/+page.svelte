@@ -77,7 +77,7 @@
 			>
 		</div>
 
-		<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
+		<Button type="submit" size="lg" class="w-full" disabled={pending}
 			>{pending ? 'Kayıt tamamlanıyor…' : 'Kaydı tamamla'}</Button
 		>
 	</form>

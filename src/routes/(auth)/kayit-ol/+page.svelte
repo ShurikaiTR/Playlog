@@ -135,22 +135,18 @@
 		<div in:fade={{ duration: 150 }}>
 			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabını oluştur</h1>
 
-			<Button class="h-11 w-full cursor-pointer rounded-full" onclick={() => signUpWith('google')}
+			<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
 				><GoogleIcon />Google ile kayıt ol</Button
 			>
 
 			<Separator class="mx-auto my-6 w-3/4!" />
 
 			<div class="space-y-3">
-				<Button
-					variant="outline"
-					class="h-11 w-full cursor-pointer rounded-full"
-					onclick={() => goTo('email')}><MailIcon />E-posta ile kayıt ol</Button
+				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
+					><MailIcon />E-posta ile kayıt ol</Button
 				>
-				<Button
-					variant="outline"
-					class="h-11 w-full cursor-pointer rounded-full"
-					onclick={() => signUpWith('discord')}><DiscordIcon />Discord ile kayıt ol</Button
+				<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
+					><DiscordIcon />Discord ile kayıt ol</Button
 				>
 			</div>
 		</div>
@@ -165,18 +161,15 @@
 					type="email"
 					bind:value={email}
 					autocomplete="email"
-					placeholder="sen@ornek.com"
 					required
 					autofocus
 				/>
 			</div>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full">İleri</Button>
+			<Button type="submit" size="lg" class="w-full">İleri</Button>
 
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('providers')}>Geri dön</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
+				>Geri dön</Button
 			>
 		</form>
 	{:else if step === 'details'}
@@ -207,7 +200,7 @@
 						bind:value={displayName}
 						maxlength={40}
 						autocomplete="nickname"
-							autofocus
+						autofocus
 					/>
 				</div>
 				<div class="space-y-2">
@@ -219,7 +212,7 @@
 						minlength={3}
 						maxlength={30}
 						autocomplete="username"
-							required
+						required
 					/>
 				</div>
 			</div>
@@ -232,7 +225,6 @@
 						type={showPassword ? 'text' : 'password'}
 						bind:value={password}
 						autocomplete="new-password"
-						placeholder="En az 8 karakter"
 						minlength={8}
 						required
 					/>
@@ -259,14 +251,12 @@
 				>
 			</div>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
+			<Button type="submit" size="lg" class="w-full" disabled={pending}
 				>{pending ? 'Kod gönderiliyor…' : 'Devam et'}</Button
 			>
 
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('email')}>Geri dön</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
+				>Geri dön</Button
 			>
 		</form>
 	{:else}
@@ -323,14 +313,10 @@
 				>
 			</p>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
-				>E-postayı doğrula</Button
-			>
+			<Button type="submit" size="lg" class="w-full" disabled={pending}>E-postayı doğrula</Button>
 
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('details')}>Geri dön</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('details')}
+				>Geri dön</Button
 			>
 		</form>
 	{/if}

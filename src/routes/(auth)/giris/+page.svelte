@@ -200,7 +200,8 @@
 						{/if}
 						<Button
 							variant="outline"
-							class="h-11 w-full cursor-pointer rounded-full"
+							size="lg"
+							class="w-full"
 							onclick={() => chooseProvider(provider.id)}
 							><provider.icon />{provider.label} ile devam et</Button
 						>
@@ -232,18 +233,15 @@
 					type="email"
 					bind:value={email}
 					autocomplete="email"
-					placeholder="sen@ornek.com"
 					required
 					autofocus
 				/>
 			</div>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full">İleri</Button>
+			<Button type="submit" size="lg" class="w-full">İleri</Button>
 
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('providers')}>Geri dön</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
+				>Geri dön</Button
 			>
 		</form>
 	{:else if step === 'password'}
@@ -266,10 +264,8 @@
 					required
 				/>
 			</div>
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={showEmailCodeMessage}><MailIcon />E-postama giriş kodu gönder</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={showEmailCodeMessage}
+				><MailIcon />E-postama giriş kodu gönder</Button
 			>
 
 			<div class="flex items-center gap-3 py-3" aria-hidden="true">
@@ -316,14 +312,12 @@
 				</InputGroup.Root>
 			</div>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
+			<Button type="submit" size="lg" class="w-full" disabled={pending}
 				>{pending ? 'Giriş yapılıyor…' : 'Giriş yap'}</Button
 			>
 
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('email')}>Geri dön</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
+				>Geri dön</Button
 			>
 		</form>
 	{:else}
@@ -389,7 +383,6 @@
 						type={showPassword ? 'text' : 'password'}
 						bind:value={newPassword}
 						autocomplete="new-password"
-						placeholder="En az 8 karakter"
 						minlength={8}
 						required
 					/>
@@ -410,14 +403,12 @@
 				</InputGroup.Root>
 			</div>
 
-			<Button type="submit" class="h-11 w-full cursor-pointer rounded-full" disabled={pending}
+			<Button type="submit" size="lg" class="w-full" disabled={pending}
 				>{pending ? 'Kaydediliyor…' : 'Şifreyi değiştir'}</Button
 			>
 
-			<Button
-				variant="outline"
-				class="h-11 w-full cursor-pointer rounded-full"
-				onclick={() => goTo('password')}>Geri dön</Button
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('password')}
+				>Geri dön</Button
 			>
 		</form>
 	{/if}

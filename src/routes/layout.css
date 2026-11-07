@@ -14,6 +14,10 @@
 	--field-border: color-mix(in oklch, var(--foreground) 18%, transparent);
 	--field-border-hover: color-mix(in oklch, var(--foreground) 45%, transparent);
 	--field-border-strong: var(--foreground);
+	/* Outline button: primary-coloured text and hairline, faint primary wash on hover. */
+	--btn-outline-text: var(--primary);
+	--btn-outline-border: color-mix(in oklch, var(--primary) 15%, transparent);
+	--btn-outline-hover: color-mix(in oklch, var(--primary) 5%, transparent);
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);
 	--card: oklch(1 0 0);
@@ -87,6 +91,9 @@
 	--field-border: color-mix(in oklch, var(--foreground) 18%, transparent);
 	--field-border-hover: color-mix(in oklch, var(--foreground) 45%, transparent);
 	--field-border-strong: color-mix(in oklch, var(--foreground) 87%, transparent);
+	--btn-outline-text: var(--primary);
+	--btn-outline-border: color-mix(in oklch, var(--primary) 15%, transparent);
+	--btn-outline-hover: color-mix(in oklch, var(--primary) 5%, transparent);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
 }
@@ -182,13 +189,12 @@
 /*
  * Form field outline shared by Input, Textarea, Select and InputGroup: 1px line, darker on hover,
  * 2px on keyboard/text focus, destructive colour when aria-invalid. Drawn with box-shadow instead of
- * a border so the 1px -> 2px change never moves the text.
+ * a border so the 1px -> 2px change never moves the text. No transition: focus shows at once.
  */
 @utility field-outline {
 	/* Inside an InputGroup the wrapper draws the outline, not the control. */
 	&:not([data-slot='input-group-control']) {
 		box-shadow: 0 0 0 1px var(--field-border);
-		transition: box-shadow 180ms ease-out;
 		&:hover:not(:disabled, [aria-invalid='true']) {
 			box-shadow: 0 0 0 1px var(--field-border-hover);
 		}
@@ -201,16 +207,12 @@
 		&[aria-invalid='true']:focus-visible {
 			box-shadow: 0 0 0 2px var(--destructive);
 		}
-		@media (prefers-reduced-motion: reduce) {
-			transition: none;
-		}
 	}
 }
 
 /* The same outline on a wrapper (InputGroup), following the control inside it. */
 @utility field-outline-within {
 	box-shadow: 0 0 0 1px var(--field-border);
-	transition: box-shadow 180ms ease-out;
 	&:hover:not(:has(:disabled, [aria-invalid='true'])) {
 		box-shadow: 0 0 0 1px var(--field-border-hover);
 	}
@@ -222,9 +224,6 @@
 	}
 	&:has([aria-invalid='true']:focus-visible) {
 		box-shadow: 0 0 0 2px var(--destructive);
-	}
-	@media (prefers-reduced-motion: reduce) {
-		transition: none;
 	}
 }
 
