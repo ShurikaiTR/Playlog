@@ -4,10 +4,9 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
-	import AuthTerms from './auth-terms.svelte';
 
-	// The sign-in options: last-used hint, provider buttons, "veya", then the email field.
-	// Page-agnostic on purpose, so a sign-in modal can reuse it later.
+	// The sign-in options: last-used hint, provider buttons, "or", then the email field. It is the
+	// body of the first step, so the page and the modal share it; the title and terms come from AuthShell.
 	type Provider = { id: string; label: string; icon: Component };
 	type Props = {
 		providers: Provider[];
@@ -17,6 +16,8 @@
 		onEmail: () => void;
 		signUpHref: string;
 		onSwitch?: (event: MouseEvent) => void;
+		/** Status or error text, shown in a reserved slot under the email field. */
+		message?: string;
 	};
 
 	let {
@@ -26,7 +27,8 @@
 		onProvider,
 		onEmail,
 		signUpHref,
-		onSwitch
+		onSwitch,
+		message = ''
 	}: Props = $props();
 
 	const lastLabel = $derived(
@@ -35,60 +37,56 @@
 	const ringStyle = 'mask-image: radial-gradient(circle, transparent 90%, black 100%);';
 </script>
 
-<div class="flex flex-col gap-3">
-	<h1 class="text-center text-title-2 font-semibold tracking-tight text-balance text-primary">
-		Log in to your account
-	</h1>
-
-	<div class="min-h-5">
-		{#if lastLabel}
-			<p
-				class="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground"
-				aria-live="polite"
-			>
-				<span
-					class="pointer-events-none size-3 rounded-full border border-orange-500"
-					style="mask-image: linear-gradient(transparent 0%, black 50%, transparent 100%);"
-					aria-hidden="true"
-				></span>
-				You last logged in with {lastLabel}
-			</p>
-		{/if}
-	</div>
-
-	{#each providers as provider (provider.id)}
-		<div class="relative">
-			{#if lastProvider === provider.id}
-				<div
-					class="pointer-events-none absolute -inset-1.5 rounded-full border border-orange-500"
-					style={ringStyle}
-					aria-hidden="true"
-				></div>
+<form
+	class="flex flex-1 flex-col"
+	onsubmit={(event) => {
+		event.preventDefault();
+		onEmail();
+	}}
+>
+	<div class="mt-auto flex flex-col gap-3">
+		<div class="min-h-5">
+			{#if lastLabel}
+				<p
+					class="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground"
+					aria-live="polite"
+				>
+					<span
+						class="pointer-events-none size-3 rounded-full border border-orange-500"
+						style="mask-image: linear-gradient(transparent 0%, black 50%, transparent 100%);"
+						aria-hidden="true"
+					></span>
+					You last logged in with {lastLabel}
+				</p>
 			{/if}
-			<Button variant="outline" size="lg" class="w-full" onclick={() => onProvider(provider.id)}
-				><provider.icon />Continue with {provider.label}</Button
-			>
 		</div>
-	{/each}
 
-	<div class="flex items-center gap-3 py-1" aria-hidden="true">
-		<Separator class="flex-1" />
-		<span class="text-xs text-muted-foreground">or</span>
-		<Separator class="flex-1" />
-	</div>
+		{#each providers as provider (provider.id)}
+			<div class="relative">
+				{#if lastProvider === provider.id}
+					<div
+						class="pointer-events-none absolute -inset-1.5 rounded-full border border-orange-500"
+						style={ringStyle}
+						aria-hidden="true"
+					></div>
+				{/if}
+				<Button variant="outline" size="lg" class="w-full" onclick={() => onProvider(provider.id)}
+					><provider.icon />Continue with {provider.label}</Button
+				>
+			</div>
+		{/each}
 
-	<form
-		class="flex flex-col gap-3"
-		onsubmit={(event) => {
-			event.preventDefault();
-			onEmail();
-		}}
-	>
-		<div class="relative flex flex-col gap-2">
+		<div class="flex items-center gap-3" aria-hidden="true">
+			<Separator class="flex-1" />
+			<span class="text-xs text-muted-foreground">or</span>
+			<Separator class="flex-1" />
+		</div>
+
+		<div class="relative flex flex-col gap-1.5">
 			<Label for="login-email" class="sr-only">Email</Label>
 			{#if lastProvider === 'email'}
 				<div
-					class="pointer-events-none absolute -inset-1.5 rounded-2xl border border-orange-500"
+					class="pointer-events-none absolute -top-1.5 -right-1.5 -left-1.5 h-12 rounded-2xl border border-orange-500"
 					style={ringStyle}
 					aria-hidden="true"
 				></div>
@@ -103,19 +101,21 @@
 				required
 				class="h-9 rounded-xl"
 			/>
+			<div class="min-h-5 text-center text-xs text-muted-foreground" aria-live="polite">
+				{message}
+			</div>
 		</div>
+	</div>
 
-		<div class="pt-5">
-			<Button type="submit" size="lg" class="w-full">Continue</Button>
+	<div class="mt-auto flex flex-col gap-3 pt-5">
+		<Button type="submit" size="lg" class="w-full">Continue</Button>
+		<div class="flex h-12 flex-col items-center justify-center">
+			<p class="text-center text-footnote text-muted-foreground">
+				Don't have an account?
+				<a href={signUpHref} onclick={onSwitch} class="font-medium text-foreground hover:underline"
+					>Sign up</a
+				>
+			</p>
 		</div>
-	</form>
-
-	<p class="text-center text-footnote text-muted-foreground">
-		Don't have an account?
-		<a href={signUpHref} onclick={onSwitch} class="font-medium text-foreground hover:underline"
-			>Kaydol</a
-		>
-	</p>
-
-	<AuthTerms />
-</div>
+	</div>
+</form>

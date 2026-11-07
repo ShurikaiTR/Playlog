@@ -22,6 +22,6 @@
 	</header>
 
 	<main class="flex flex-1 items-center justify-center py-12">
-		<div class="w-full max-w-sm">{@render children()}</div>
+		<div class="w-full max-w-100">{@render children()}</div>
 	</main>
 </div>

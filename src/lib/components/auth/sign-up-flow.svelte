@@ -18,7 +18,8 @@
 	import AppleIcon from '#lib/components/icons/apple.svelte';
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
-	import AuthTerms from '#lib/components/auth/auth-terms.svelte';
+	import AuthShell from '#lib/components/auth/auth-shell.svelte';
+	import PasswordInput from '#lib/components/auth/password-input.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 
 	// Sign-up options, then email, then the account details (which mails the code), then the code.
@@ -155,240 +156,219 @@
 		<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 	</form>
 
-	{#if step === 'providers'}
-		<div in:fade={{ duration: 150 }}>
-			<h1
-				class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary"
-			>
-				Create your account
-			</h1>
-
-			{#if enabled.google}
-				<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
-					><GoogleIcon />Sign up with Google</Button
-				>
-
-				<Separator class="mx-auto my-6 w-3/4!" />
-			{/if}
-
-			<div class="space-y-3">
-				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
-					><MailIcon />Sign up with email</Button
-				>
-				{#if enabled.apple}
-					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
-						><AppleIcon />Sign up with Apple</Button
-					>
-				{/if}
-				{#if enabled.discord}
-					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
-						><DiscordIcon />Sign up with Discord</Button
-					>
-				{/if}
-			</div>
+	{#snippet status()}
+		<div class="min-h-5 text-center text-xs text-muted-foreground" aria-live="polite">
+			{statusMessage}
 		</div>
-	{:else if step === 'email'}
-		<form class="space-y-3" onsubmit={submitEmail} in:fade={{ duration: 150 }}>
-			<h1
-				class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary"
-			>
-				Sign up with email
-			</h1>
-			<div class="space-y-2">
-				<Label for="signup-email">Email</Label>
-				<Input
-					id="signup-email"
-					name="email"
-					type="email"
-					bind:value={email}
-					autocomplete="email"
-					required
-					autofocus
-				/>
-			</div>
+	{/snippet}
 
-			<Button type="submit" size="lg" class="w-full">Continue</Button>
-
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
-				>Go back</Button
-			>
-		</form>
-	{:else if step === 'details'}
-		<form
-			method="POST"
-			action="/sign-up?/start"
-			class="space-y-3"
-			use:enhance={submitStart}
-			in:fade={{ duration: 150 }}
-		>
-			<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
-			<input type="hidden" name="email" value={email} />
-			<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
-			<div class="mb-8 text-center">
-				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Finish signing up
-				</h1>
-				<span
-					class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
-				>
-					<MailIcon class="size-4 shrink-0" />
-					<span class="truncate">{email}</span>
-				</span>
-			</div>
-			<div class="grid grid-cols-2 gap-3">
-				<div class="space-y-2">
-					<Label for="signup-name">Display name</Label>
-					<Input
-						id="signup-name"
-						name="display_name"
-						bind:value={displayName}
-						maxlength={40}
-						autocomplete="nickname"
-						autofocus
-					/>
-				</div>
-				<div class="space-y-2">
-					<Label for="signup-username">Username</Label>
-					<Input
-						id="signup-username"
-						name="username"
-						bind:value={username}
-						minlength={3}
-						maxlength={30}
-						autocomplete="username"
-						required
-					/>
-				</div>
-			</div>
-			<div class="space-y-2">
-				<Label for="signup-password">Password</Label>
-				<InputGroup.Root>
-					<InputGroup.Input
-						id="signup-password"
-						name="password"
-						type={showPassword ? 'text' : 'password'}
-						bind:value={password}
-						autocomplete="new-password"
-						minlength={8}
-						required
-					/>
-					<InputGroup.Addon align="inline-end">
-						<InputGroup.Button
-							size="icon-xs"
-							class="cursor-pointer rounded-full"
-							aria-label={showPassword ? 'Hide password' : 'Show password'}
-							onclick={() => (showPassword = !showPassword)}
-						>
-							{#if showPassword}
-								<EyeOffIcon />
-							{:else}
-								<EyeIcon />
-							{/if}
-						</InputGroup.Button>
-					</InputGroup.Addon>
-				</InputGroup.Root>
-			</div>
-			<div class="flex items-center gap-2.5 py-1">
-				<Checkbox id="signup-updates" bind:checked={wantsUpdates} />
-				<Label for="signup-updates" class="cursor-pointer text-callout font-normal"
-					>Email me about new features and announcements</Label
-				>
-			</div>
-
-			<Button type="submit" size="lg" class="w-full" disabled={pending}
-				>{pending ? 'Sending code…' : 'Continue'}</Button
-			>
-
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
-				>Go back</Button
-			>
-		</form>
-	{:else}
-		<form
-			method="POST"
-			action="/sign-up?/verify"
-			class="space-y-3"
-			use:enhance={submitVerify}
-			in:fade={{ duration: 150 }}
-		>
-			<input type="hidden" name="return_to" value={returnTo} />
-			<input type="hidden" name="email" value={email} />
-			<div class="text-center">
-				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Verify your email
-				</h1>
-				<p class="mt-3 text-callout text-pretty text-muted-foreground">
-					We sent a one-time security code to <span class="font-medium text-foreground"
-						>{email}</span
-					>. If it doesn't arrive within a few minutes, check your spam folder. Enter the code
-					below:
-				</p>
-			</div>
-
-			<div class="flex justify-center pt-4">
-				<InputOTP.Root
-					name="code"
-					maxlength={6}
-					bind:value={code}
-					pattern="^[0-9]*$"
-					pasteTransformer={(text) => text.replace(/\D/g, '')}
-					autofocus
-				>
-					{#snippet children({ cells })}
-						<InputOTP.Group>
-							{#each cells.slice(0, 3) as cell (cell)}
-								<InputOTP.Slot {cell} class="size-11 text-base" />
-							{/each}
-						</InputOTP.Group>
-						<InputOTP.Separator />
-						<InputOTP.Group>
-							{#each cells.slice(3, 6) as cell (cell)}
-								<InputOTP.Slot {cell} class="size-11 text-base" />
-							{/each}
-						</InputOTP.Group>
-					{/snippet}
-				</InputOTP.Root>
-			</div>
-
+	{#snippet loginRow()}
+		<div class="flex h-12 flex-col items-center justify-center">
 			<p class="text-center text-footnote text-muted-foreground">
-				Didn't get the code?
-				<Button
-					type="submit"
-					form="signup-resend"
-					variant="link"
-					class="h-auto cursor-pointer p-0 font-medium text-foreground disabled:font-normal disabled:text-muted-foreground disabled:no-underline"
-					disabled={resendIn > 0 || pending}
-					>Resend code{resendIn > 0 ? ` (${resendIn})` : ''}</Button
+				Already have an account?
+				<a
+					href={authHref('sign-in', returnTo)}
+					onclick={onSwitch}
+					class="font-medium text-foreground hover:underline">Log in</a
 				>
 			</p>
+		</div>
+	{/snippet}
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}>Verify email</Button>
-
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('details')}
-				>Go back</Button
-			>
-		</form>
+	{#if step === 'providers'}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Create your account">
+				<div class="flex flex-1 flex-col">
+					<div class="mt-auto flex flex-col gap-3">
+						{#if enabled.google}
+							<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
+								><GoogleIcon />Sign up with Google</Button
+							>
+							<div class="flex items-center gap-3" aria-hidden="true">
+								<Separator class="flex-1" />
+								<span class="text-xs text-muted-foreground">or</span>
+								<Separator class="flex-1" />
+							</div>
+						{/if}
+						<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
+							><MailIcon />Sign up with email</Button
+						>
+						{#if enabled.apple}
+							<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
+								><AppleIcon />Sign up with Apple</Button
+							>
+						{/if}
+						{#if enabled.discord}
+							<Button
+								variant="outline"
+								size="lg"
+								class="w-full"
+								onclick={() => signUpWith('discord')}><DiscordIcon />Sign up with Discord</Button
+							>
+						{/if}
+					</div>
+					<div class="mt-auto pt-5">{@render loginRow()}</div>
+				</div>
+			</AuthShell>
+		</div>
+	{:else if step === 'email'}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Sign up with email" onBack={() => goTo('providers')}>
+				<form class="flex flex-1 flex-col" onsubmit={submitEmail}>
+					<div class="mt-auto flex flex-col gap-1.5">
+						<Label for="signup-email" class="sr-only">Email</Label>
+						<Input
+							id="signup-email"
+							name="email"
+							type="email"
+							placeholder="Email"
+							bind:value={email}
+							autocomplete="email"
+							required
+							autofocus
+							class="h-9 rounded-xl"
+						/>
+						{@render status()}
+					</div>
+					<div class="mt-auto flex flex-col gap-3 pt-5">
+						<Button type="submit" size="lg" class="w-full">Continue</Button>
+						{@render loginRow()}
+					</div>
+				</form>
+			</AuthShell>
+		</div>
+	{:else if step === 'details'}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Finish signing up" onBack={() => goTo('email')}>
+				{#snippet subtitle()}<span class="font-medium text-foreground">{email}</span>{/snippet}
+				<form
+					method="POST"
+					action="/sign-up?/start"
+					class="flex flex-1 flex-col"
+					use:enhance={submitStart}
+				>
+					<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
+					<input type="hidden" name="email" value={email} />
+					<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
+					<div class="mt-auto flex flex-col gap-3">
+						<div class="grid grid-cols-2 gap-3">
+							<div class="flex flex-col gap-1.5">
+								<Label for="signup-name" class="text-xs font-medium">Display name</Label>
+								<Input
+									id="signup-name"
+									name="display_name"
+									bind:value={displayName}
+									maxlength={40}
+									autocomplete="nickname"
+									autofocus
+									class="h-9 rounded-xl"
+								/>
+							</div>
+							<div class="flex flex-col gap-1.5">
+								<Label for="signup-username" class="text-xs font-medium">Username</Label>
+								<Input
+									id="signup-username"
+									name="username"
+									bind:value={username}
+									minlength={3}
+									maxlength={30}
+									autocomplete="username"
+									required
+									class="h-9 rounded-xl"
+								/>
+							</div>
+						</div>
+						<div class="flex flex-col gap-1.5">
+							<Label for="signup-password" class="text-xs font-medium">Password</Label>
+							<PasswordInput
+								id="signup-password"
+								name="password"
+								bind:value={password}
+								autocomplete="new-password"
+								class="h-9 rounded-xl"
+							/>
+							{@render status()}
+						</div>
+						<div class="flex items-center gap-2.5">
+							<Checkbox id="signup-updates" bind:checked={wantsUpdates} />
+							<Label for="signup-updates" class="cursor-pointer text-xs leading-4 font-normal"
+								>Email me about new features and announcements</Label
+							>
+						</div>
+						<div class="min-h-16">
+							<Turnstile bind:this={captcha} bind:token={captchaToken} />
+						</div>
+					</div>
+					<div class="mt-auto flex flex-col gap-3 pt-5">
+						<Button type="submit" size="lg" class="w-full" disabled={pending}
+							>{pending ? 'Sending code…' : 'Continue'}</Button
+						>
+						{@render loginRow()}
+					</div>
+				</form>
+			</AuthShell>
+		</div>
+	{:else}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Verify your email" onBack={() => goTo('details')}>
+				{#snippet subtitle()}We sent a 6-digit code to
+					<span class="font-medium text-foreground">{email}</span>. Check your spam folder if it
+					doesn't arrive.{/snippet}
+				<form
+					method="POST"
+					action="/sign-up?/verify"
+					class="flex flex-1 flex-col"
+					use:enhance={submitVerify}
+				>
+					<input type="hidden" name="return_to" value={returnTo} />
+					<input type="hidden" name="email" value={email} />
+					<div class="mt-auto flex flex-col gap-1.5">
+						<InputOTP.Root
+							name="code"
+							maxlength={6}
+							bind:value={code}
+							pattern="^[0-9]*$"
+							pasteTransformer={(text) => text.replace(/\D/g, '')}
+							class="justify-center gap-1 sm:gap-2"
+							autofocus
+						>
+							{#snippet children({ cells })}
+								<InputOTP.Group class="gap-1 sm:gap-2">
+									{#each cells.slice(0, 3) as cell (cell)}
+										<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+									{/each}
+								</InputOTP.Group>
+								<InputOTP.Separator />
+								<InputOTP.Group class="gap-1 sm:gap-2">
+									{#each cells.slice(3, 6) as cell (cell)}
+										<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+									{/each}
+								</InputOTP.Group>
+							{/snippet}
+						</InputOTP.Root>
+						{@render status()}
+						<div class="min-h-16">
+							<Turnstile bind:this={captcha} bind:token={captchaToken} />
+						</div>
+					</div>
+					<div class="mt-auto flex flex-col gap-3 pt-5">
+						<Button type="submit" size="lg" class="w-full" disabled={pending || code.length < 6}
+							>Verify email</Button
+						>
+						<div class="flex h-12 flex-col">
+							<Button
+								type="submit"
+								form="signup-resend"
+								variant="outline"
+								size="lg"
+								class="w-full"
+								disabled={resendIn > 0 || pending}
+								>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
+							>
+						</div>
+					</div>
+				</form>
+			</AuthShell>
+		</div>
 	{/if}
-
-	{#if step === 'details' || step === 'verify'}
-		<div class="mt-4"><Turnstile bind:this={captcha} bind:token={captchaToken} /></div>
-	{/if}
-
-	{#if statusMessage}
-		<p class="mt-5 text-center text-footnote text-muted-foreground" aria-live="polite">
-			{statusMessage}
-		</p>
-	{/if}
-
-	<p class="mt-8 text-center text-footnote text-muted-foreground">
-		Already have an account?
-
-		<a
-			href={authHref('sign-in', returnTo)}
-			onclick={onSwitch}
-			class="font-medium text-foreground hover:underline">Log in</a
-		>
-	</p>
-
-	<AuthTerms />
 </div>

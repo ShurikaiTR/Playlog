@@ -11,6 +11,7 @@
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import Turnstile from './turnstile.svelte';
 	import { authHref } from '#lib/return-to.js';
+	import AuthShell from '#lib/components/auth/auth-shell.svelte';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -276,247 +277,242 @@
 		<input type="hidden" name="email" value={email} />
 	</form>
 
-	{#if step === 'providers'}
-		<div in:fade={{ duration: 150 }}>
-			<SignInOptions
-				providers={shownProviders}
-				{lastProvider}
-				bind:email
-				onProvider={(id) => chooseProvider(id as ProviderId)}
-				onEmail={() => goTo('password')}
-				signUpHref={authHref('sign-up', returnTo)}
-				{onSwitch}
-			/>
+	{#snippet status()}
+		<div class="min-h-5 text-center text-xs text-muted-foreground" aria-live="polite">
+			{statusMessage}
 		</div>
-	{:else if step === 'password'}
-		<form
-			method="POST"
-			action="/sign-in?/login"
-			class="relative"
-			use:enhance={submitLogin}
-			in:fade={{ duration: 150 }}
-		>
-			<input type="hidden" name="return_to" value={returnTo} />
-			<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
-			<input type="hidden" name="email" value={email} />
-			<Button
-				variant="ghost"
-				size="icon"
-				class="absolute -top-11 -left-2 size-8 rounded-xl text-muted-foreground hover:text-foreground"
-				aria-label="Go back"
-				onclick={() => goTo('providers')}><ArrowLeftIcon /></Button
-			>
-			<div class="flex flex-col gap-3">
-				<div class="text-center">
-					<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-						Log in with email
-					</h1>
-					<p class="mt-1.5 text-footnote text-muted-foreground">Enter your password to log in.</p>
-				</div>
+	{/snippet}
 
-				<Button
-					type="submit"
-					form="code-start"
-					variant="outline"
-					size="lg"
-					class="w-full"
-					disabled={pending}><MailIcon />Email login code</Button
-				>
-
-				<div class="flex items-center gap-3 py-1" aria-hidden="true">
-					<Separator class="flex-1" />
-					<span class="text-xs text-muted-foreground">or</span>
-					<Separator class="flex-1" />
-				</div>
-
-				<div class="flex flex-col gap-2">
-					<div class="flex min-h-5 items-center justify-between gap-2">
-						<Label for="login-password" class="text-xs font-medium">Password</Label>
-						<Button
-							type="submit"
-							form="reset-start"
-							variant="link"
-							class="h-auto cursor-pointer p-0 text-xs font-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-							disabled={pending}>Forgot password?</Button
-						>
-					</div>
-					<PasswordInput
-						id="login-password"
-						name="password"
-						bind:value={password}
-						autocomplete="current-password"
-						class="h-9 rounded-xl"
-						autofocus
-					/>
-				</div>
-
-				<Turnstile bind:this={captcha} bind:token={captchaToken} />
-			</div>
-
-			<div class="pt-5">
-				<Button type="submit" size="lg" class="w-full" disabled={pending}
-					>{pending ? 'Logging in…' : 'Log in'}</Button
-				>
-			</div>
-		</form>
-	{:else if step === 'code'}
-		<form
-			method="POST"
-			action="/sign-in?/codeVerify"
-			class="relative"
-			use:enhance={submitCodeVerify}
-			in:fade={{ duration: 150 }}
-		>
-			<input type="hidden" name="return_to" value={returnTo} />
-			<Button
-				variant="ghost"
-				size="icon"
-				class="absolute -top-11 -left-2 size-8 rounded-xl text-muted-foreground hover:text-foreground"
-				aria-label="Go back"
-				onclick={() => goTo('password')}><ArrowLeftIcon /></Button
-			>
-			<input type="hidden" name="email" value={email} />
-			<div class="flex flex-col gap-3">
-				<h1 class="text-center text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Enter your login code
-				</h1>
-				<p class="text-center text-footnote text-pretty text-muted-foreground">
-					We sent a 6-digit code to <span class="font-medium text-foreground">{email}</span>.
-				</p>
-				<div class="flex justify-center pt-3">
-					<InputOTP.Root
-						name="code"
-						maxlength={6}
-						bind:value={loginCode}
-						pattern="^[0-9]*$"
-						pasteTransformer={(text) => text.replace(/\D/g, '')}
-						autofocus
-					>
-						{#snippet children({ cells })}
-							<InputOTP.Group class="gap-1 sm:gap-2">
-								{#each cells.slice(0, 3) as cell (cell)}
-									<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
-								{/each}
-							</InputOTP.Group>
-							<InputOTP.Separator />
-							<InputOTP.Group class="gap-1 sm:gap-2">
-								{#each cells.slice(3, 6) as cell (cell)}
-									<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
-								{/each}
-							</InputOTP.Group>
-						{/snippet}
-					</InputOTP.Root>
-				</div>
-			</div>
-			<div class="flex flex-col gap-3 pt-5">
-				<Turnstile bind:this={captcha} bind:token={captchaToken} />
-				<Button type="submit" size="lg" class="w-full" disabled={pending || loginCode.length < 6}
-					>Log in</Button
-				>
-				<Button
-					type="submit"
-					form="code-start"
-					variant="outline"
-					size="lg"
-					class="w-full"
-					disabled={resendIn > 0 || pending}
-					>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
-				>
-			</div>
-		</form>
-	{:else}
-		<form
-			method="POST"
-			action="/sign-in?/resetConfirm"
-			class="space-y-3"
-			use:enhance={submitReset}
-			in:fade={{ duration: 150 }}
-		>
-			<div class="text-center">
-				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Reset your password
-				</h1>
-				<p class="mt-3 text-callout text-pretty text-muted-foreground">
-					If <span class="font-medium text-foreground">{email}</span> is linked to an account, we sent
-					a one-time code to that address. Enter the code and your new password:
-				</p>
-			</div>
-			<input type="hidden" name="email" value={email} />
-
-			<div class="flex justify-center pt-4">
-				<InputOTP.Root
-					name="code"
-					maxlength={6}
-					bind:value={resetCode}
-					pattern="^[0-9]*$"
-					pasteTransformer={(text) => text.replace(/\D/g, '')}
-					autofocus
-				>
-					{#snippet children({ cells })}
-						<InputOTP.Group>
-							{#each cells.slice(0, 3) as cell (cell)}
-								<InputOTP.Slot {cell} class="size-11 text-base" />
-							{/each}
-						</InputOTP.Group>
-						<InputOTP.Separator />
-						<InputOTP.Group>
-							{#each cells.slice(3, 6) as cell (cell)}
-								<InputOTP.Slot {cell} class="size-11 text-base" />
-							{/each}
-						</InputOTP.Group>
-					{/snippet}
-				</InputOTP.Root>
-			</div>
-
+	{#snippet signUpRow()}
+		<div class="flex h-12 flex-col items-center justify-center">
 			<p class="text-center text-footnote text-muted-foreground">
-				Didn't get the code?
-				<Button
-					type="submit"
-					form="reset-start"
-					variant="link"
-					class="h-auto cursor-pointer p-0 font-medium text-foreground disabled:font-normal disabled:text-muted-foreground disabled:no-underline"
-					disabled={resendIn > 0 || pending}
-					>Resend code{resendIn > 0 ? ` (${resendIn})` : ''}</Button
+				Don't have an account?
+				<a
+					href={authHref('sign-up', returnTo)}
+					onclick={onSwitch}
+					class="font-medium text-foreground hover:underline">Sign up</a
 				>
 			</p>
+		</div>
+	{/snippet}
 
-			<div class="space-y-2">
-				<Label for="reset-password">New password</Label>
-				<PasswordInput
-					id="reset-password"
-					name="password"
-					bind:value={newPassword}
-					autocomplete="new-password"
+	{#if step === 'providers'}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Log in">
+				<SignInOptions
+					providers={shownProviders}
+					{lastProvider}
+					bind:email
+					message={statusMessage}
+					onProvider={(id) => chooseProvider(id as ProviderId)}
+					onEmail={() => goTo('password')}
+					signUpHref={authHref('sign-up', returnTo)}
+					{onSwitch}
 				/>
-			</div>
+			</AuthShell>
+		</div>
+	{:else if step === 'password'}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Log in with email" onBack={() => goTo('providers')}>
+				{#snippet subtitle()}Enter your password to log in.{/snippet}
+				<form
+					method="POST"
+					action="/sign-in?/login"
+					class="flex flex-1 flex-col"
+					use:enhance={submitLogin}
+				>
+					<input type="hidden" name="return_to" value={returnTo} />
+					<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
+					<input type="hidden" name="email" value={email} />
+					<div class="mt-auto flex flex-col gap-3">
+						<Button
+							type="submit"
+							form="code-start"
+							variant="outline"
+							size="lg"
+							class="w-full"
+							disabled={pending}><MailIcon />Email login code</Button
+						>
 
-			<Turnstile bind:this={captcha} bind:token={captchaToken} />
+						<div class="flex items-center gap-3" aria-hidden="true">
+							<Separator class="flex-1" />
+							<span class="text-xs text-muted-foreground">or</span>
+							<Separator class="flex-1" />
+						</div>
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}
-				>{pending ? 'Saving…' : 'Change password'}</Button
-			>
+						<div class="flex flex-col gap-1.5">
+							<div class="flex min-h-5 items-center justify-between gap-2">
+								<Label for="login-password" class="text-xs font-medium">Password</Label>
+								<Button
+									type="submit"
+									form="reset-start"
+									variant="link"
+									class="h-auto cursor-pointer p-0 text-xs font-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+									disabled={pending}>Forgot password?</Button
+								>
+							</div>
+							<PasswordInput
+								id="login-password"
+								name="password"
+								bind:value={password}
+								autocomplete="current-password"
+								class="h-9 rounded-xl"
+								autofocus
+							/>
+							{@render status()}
+						</div>
 
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('password')}
-				>Go back</Button
-			>
-		</form>
-	{/if}
+						<div class="min-h-16">
+							<Turnstile bind:this={captcha} bind:token={captchaToken} />
+						</div>
+					</div>
 
-	{#if statusMessage}
-		<p class="mt-5 text-center text-footnote text-muted-foreground" aria-live="polite">
-			{statusMessage}
-		</p>
-	{/if}
+					<div class="mt-auto flex flex-col gap-3 pt-5">
+						<Button type="submit" size="lg" class="w-full" disabled={pending}
+							>{pending ? 'Logging in…' : 'Log in'}</Button
+						>
+						{@render signUpRow()}
+					</div>
+				</form>
+			</AuthShell>
+		</div>
+	{:else if step === 'code'}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Enter your login code" onBack={() => goTo('password')}>
+				{#snippet subtitle()}We sent a 6-digit code to
+					<span class="font-medium text-foreground">{email}</span>.{/snippet}
+				<form
+					method="POST"
+					action="/sign-in?/codeVerify"
+					class="flex flex-1 flex-col"
+					use:enhance={submitCodeVerify}
+				>
+					<input type="hidden" name="return_to" value={returnTo} />
+					<input type="hidden" name="email" value={email} />
+					<div class="mt-auto flex flex-col gap-1.5">
+						<InputOTP.Root
+							name="code"
+							maxlength={6}
+							bind:value={loginCode}
+							pattern="^[0-9]*$"
+							pasteTransformer={(text) => text.replace(/\D/g, '')}
+							class="justify-center gap-1 sm:gap-2"
+							autofocus
+						>
+							{#snippet children({ cells })}
+								<InputOTP.Group class="gap-1 sm:gap-2">
+									{#each cells.slice(0, 3) as cell (cell)}
+										<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+									{/each}
+								</InputOTP.Group>
+								<InputOTP.Separator />
+								<InputOTP.Group class="gap-1 sm:gap-2">
+									{#each cells.slice(3, 6) as cell (cell)}
+										<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+									{/each}
+								</InputOTP.Group>
+							{/snippet}
+						</InputOTP.Root>
+						{@render status()}
+						<div class="min-h-16">
+							<Turnstile bind:this={captcha} bind:token={captchaToken} />
+						</div>
+					</div>
 
-	{#if step !== 'providers'}
-		<p class="mt-8 text-center text-footnote text-muted-foreground">
-			Don't have an account?
+					<div class="mt-auto flex flex-col gap-3 pt-5">
+						<Button
+							type="submit"
+							size="lg"
+							class="w-full"
+							disabled={pending || loginCode.length < 6}>Log in</Button
+						>
+						<div class="flex h-12 flex-col">
+							<Button
+								type="submit"
+								form="code-start"
+								variant="outline"
+								size="lg"
+								class="w-full"
+								disabled={resendIn > 0 || pending}
+								>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
+							>
+						</div>
+					</div>
+				</form>
+			</AuthShell>
+		</div>
+	{:else}
+		<div in:fade={{ duration: 150 }}>
+			<AuthShell title="Reset your password" onBack={() => goTo('password')}>
+				{#snippet subtitle()}If <span class="font-medium text-foreground">{email}</span> is linked to
+					an account, we sent a one-time code to that address.{/snippet}
+				<form
+					method="POST"
+					action="/sign-in?/resetConfirm"
+					class="flex flex-1 flex-col"
+					use:enhance={submitReset}
+				>
+					<input type="hidden" name="email" value={email} />
+					<div class="mt-auto flex flex-col gap-3">
+						<InputOTP.Root
+							name="code"
+							maxlength={6}
+							bind:value={resetCode}
+							pattern="^[0-9]*$"
+							pasteTransformer={(text) => text.replace(/\D/g, '')}
+							class="justify-center gap-1 sm:gap-2"
+							autofocus
+						>
+							{#snippet children({ cells })}
+								<InputOTP.Group class="gap-1 sm:gap-2">
+									{#each cells.slice(0, 3) as cell (cell)}
+										<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+									{/each}
+								</InputOTP.Group>
+								<InputOTP.Separator />
+								<InputOTP.Group class="gap-1 sm:gap-2">
+									{#each cells.slice(3, 6) as cell (cell)}
+										<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+									{/each}
+								</InputOTP.Group>
+							{/snippet}
+						</InputOTP.Root>
 
-			<a
-				href={authHref('sign-up', returnTo)}
-				onclick={onSwitch}
-				class="font-medium text-foreground hover:underline">Sign up</a
-			>
-		</p>
+						<div class="flex flex-col gap-1.5">
+							<Label for="reset-password" class="text-xs font-medium">New password</Label>
+							<PasswordInput
+								id="reset-password"
+								name="password"
+								bind:value={newPassword}
+								autocomplete="new-password"
+								class="h-9 rounded-xl"
+							/>
+							{@render status()}
+						</div>
+
+						<div class="min-h-16">
+							<Turnstile bind:this={captcha} bind:token={captchaToken} />
+						</div>
+					</div>
+
+					<div class="mt-auto flex flex-col gap-3 pt-5">
+						<Button type="submit" size="lg" class="w-full" disabled={pending}
+							>{pending ? 'Saving…' : 'Change password'}</Button
+						>
+						<div class="flex h-12 flex-col">
+							<Button
+								type="submit"
+								form="reset-start"
+								variant="outline"
+								size="lg"
+								class="w-full"
+								disabled={resendIn > 0 || pending}
+								>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
+							>
+						</div>
+					</div>
+				</form>
+			</AuthShell>
+		</div>
 	{/if}
 </div>

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
+	import XIcon from '@lucide/svelte/icons/x';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { authHref } from '#lib/return-to.js';
 	import SignInFlow from './sign-in-flow.svelte';
@@ -23,9 +25,24 @@
 </script>
 
 <Dialog.Root open={!!modal} {onOpenChange}>
-	<Dialog.Content class="gap-0 p-0 sm:max-w-100" aria-describedby={undefined}>
+	<Dialog.Content
+		class="max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-100"
+		showCloseButton={false}
+		aria-describedby={undefined}
+	>
 		<Dialog.Title class="sr-only">{modal?.kind === 'sign-up' ? 'Sign up' : 'Log in'}</Dialog.Title>
-		<div class="max-h-[calc(100dvh-2rem)] overflow-y-auto px-5 pt-14 pb-6 sm:px-6">
+		<Dialog.Close class="absolute end-4 top-4 z-10">
+			{#snippet child({ props })}
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					class="rounded-xl text-muted-foreground hover:text-foreground"
+					aria-label="Close"
+					{...props}><XIcon /></Button
+				>
+			{/snippet}
+		</Dialog.Close>
+		<div class="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
 			{#if modal?.kind === 'sign-up'}
 				<SignUpFlow
 					enabled={modal.enabled}
