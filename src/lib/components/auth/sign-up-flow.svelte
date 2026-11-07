@@ -205,7 +205,7 @@
 				/>
 			</div>
 
-			<Button type="submit" size="lg" class="w-full">Next</Button>
+			<Button type="submit" size="lg" class="w-full">Continue</Button>
 
 			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
 				>Go back</Button

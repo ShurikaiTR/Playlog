@@ -109,7 +109,7 @@
 		</div>
 
 		<div class="pt-5">
-			<Button type="submit" class="h-10 w-full text-sm font-medium">Next</Button>
+			<Button type="submit" class="h-10 w-full text-sm font-medium">Continue</Button>
 		</div>
 	</form>
 
