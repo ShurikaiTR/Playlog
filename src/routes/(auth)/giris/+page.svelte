@@ -196,18 +196,10 @@
 			<div class="space-y-3">
 				{#each shownProviders as provider (provider.id)}
 					<div class="relative">
-						{#if lastProvider === provider.id}
-							<!-- Fading ring that marks the provider used last time. -->
-							<div
-								class="pointer-events-none absolute -inset-1.5 rounded-full border border-amber-500"
-								style="mask-image: radial-gradient(circle, transparent 90%, black 100%)"
-								aria-hidden="true"
-							></div>
-						{/if}
 						<Button
 							variant="outline"
 							size="lg"
-							class="w-full"
+							class={['w-full', lastProvider === provider.id && 'border-amber-500/60']}
 							onclick={() => chooseProvider(provider.id)}
 							><provider.icon />{provider.label} ile devam et</Button
 						>
@@ -220,8 +212,7 @@
 					aria-live="polite"
 				>
 					<span
-						class="pointer-events-none size-3 rounded-full border border-amber-500"
-						style="mask-image: linear-gradient(transparent 0%, black 50%, transparent 100%)"
+						class="pointer-events-none size-1.5 rounded-full bg-amber-500"
 						aria-hidden="true"
 					></span>
 					En son {lastProviderLabel} ile giriş yaptın
