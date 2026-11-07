@@ -235,17 +235,17 @@
 			</div>
 
 			<div class="space-y-2">
-				<div class="flex items-center justify-between">
-					<Label for="login-password">Şifre</Label>
+				<div class="flex min-h-5 items-center justify-between gap-2">
+					<Label for="login-password" class="text-xs font-medium">Şifre</Label>
 					<Button
 						type="submit"
 						form="reset-start"
 						variant="link"
-						class="h-auto cursor-pointer p-0 text-footnote font-normal text-muted-foreground hover:text-foreground"
-						disabled={pending}>Şifreni mi unuttun?</Button
+						class="h-auto cursor-pointer p-0 text-xs font-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						disabled={pending}>Şifremi unuttum</Button
 					>
 				</div>
-				<InputGroup.Root>
+				<InputGroup.Root class="h-9 rounded-xl">
 					<InputGroup.Input
 						id="login-password"
 						name="password"
