@@ -191,7 +191,7 @@
 
 	{#if step === 'providers'}
 		<div in:fade={{ duration: 150 }}>
-			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabına giriş yap</h1>
+			<h1 class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary">Hesabına giriş yap</h1>
 
 			<div class="space-y-3">
 				{#each shownProviders as provider (provider.id)}
@@ -220,8 +220,8 @@
 			{/if}
 		</div>
 	{:else if step === 'email'}
-		<form class="space-y-4" onsubmit={submitEmail} in:fade={{ duration: 150 }}>
-			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">E-postanla giriş yap</h1>
+		<form class="space-y-3" onsubmit={submitEmail} in:fade={{ duration: 150 }}>
+			<h1 class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary">E-postanla giriş yap</h1>
 			<div class="space-y-2">
 				<Label for="login-email">E-posta</Label>
 				<Input
@@ -245,11 +245,11 @@
 		<form
 			method="POST"
 			action="?/login"
-			class="space-y-4"
+			class="space-y-3"
 			use:enhance={submitLogin}
 			in:fade={{ duration: 150 }}
 		>
-			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">E-postanla giriş yap</h1>
+			<h1 class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary">E-postanla giriş yap</h1>
 			<div class="space-y-2">
 				<Label for="login-email">E-posta</Label>
 				<Input
@@ -321,12 +321,12 @@
 		<form
 			method="POST"
 			action="?/resetConfirm"
-			class="space-y-4"
+			class="space-y-3"
 			use:enhance={submitReset}
 			in:fade={{ duration: 150 }}
 		>
 			<div class="text-center">
-				<h1 class="text-title-1 text-balance text-primary">Şifreni sıfırla</h1>
+				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">Şifreni sıfırla</h1>
 				<p class="mt-3 text-callout text-pretty text-muted-foreground">
 					<span class="font-medium text-foreground">{email}</span> bir hesaba bağlıysa, bu adrese tek
 					kullanımlık bir kod gönderdik. Kodu ve yeni şifreni gir:

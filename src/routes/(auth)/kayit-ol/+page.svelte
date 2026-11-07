@@ -137,7 +137,7 @@
 
 	{#if step === 'providers'}
 		<div in:fade={{ duration: 150 }}>
-			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabını oluştur</h1>
+			<h1 class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary">Hesabını oluştur</h1>
 
 			{#if data.providers.google}
 				<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
@@ -164,8 +164,8 @@
 			</div>
 		</div>
 	{:else if step === 'email'}
-		<form class="space-y-4" onsubmit={submitEmail} in:fade={{ duration: 150 }}>
-			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">E-postanla kayıt ol</h1>
+		<form class="space-y-3" onsubmit={submitEmail} in:fade={{ duration: 150 }}>
+			<h1 class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary">E-postanla kayıt ol</h1>
 			<div class="space-y-2">
 				<Label for="signup-email">E-posta</Label>
 				<Input
@@ -189,14 +189,14 @@
 		<form
 			method="POST"
 			action="?/start"
-			class="space-y-4"
+			class="space-y-3"
 			use:enhance={submitStart}
 			in:fade={{ duration: 150 }}
 		>
 			<input type="hidden" name="email" value={email} />
 			<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 			<div class="mb-8 text-center">
-				<h1 class="text-title-1 text-balance text-primary">Kaydını tamamla</h1>
+				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">Kaydını tamamla</h1>
 				<span
 					class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
 				>
@@ -276,13 +276,13 @@
 		<form
 			method="POST"
 			action="?/verify"
-			class="space-y-4"
+			class="space-y-3"
 			use:enhance={submitVerify}
 			in:fade={{ duration: 150 }}
 		>
 			<input type="hidden" name="email" value={email} />
 			<div class="text-center">
-				<h1 class="text-title-1 text-balance text-primary">E-postanı doğrula</h1>
+				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">E-postanı doğrula</h1>
 				<p class="mt-3 text-callout text-pretty text-muted-foreground">
 					<span class="font-medium text-foreground">{email}</span> adresine tek kullanımlık bir güvenlik
 					kodu gönderdik. Birkaç dakika içinde gelmezse spam klasörünü de kontrol et. Kodu aşağıya gir:
