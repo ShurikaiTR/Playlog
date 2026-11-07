@@ -36,3 +36,47 @@ pub fn hash(secret: &[u8], purpose: &str, email: &str, code: &str) -> anyhow::Re
 pub fn matches(expected: &[u8], actual: &[u8]) -> bool {
     expected.ct_eq(actual).into()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_codes_are_six_digits() {
+        for _ in 0..200 {
+            let code = generate().unwrap();
+            assert_eq!(code.len(), 6);
+            assert!(code.bytes().all(|b| b.is_ascii_digit()));
+        }
+    }
+
+    #[test]
+    fn hash_is_bound_to_purpose_email_and_code() {
+        let secret = b"test-secret";
+        let base = hash(secret, "login_code", "a@b.co", "123456").unwrap();
+        assert!(matches(
+            &base,
+            &hash(secret, "login_code", "a@b.co", "123456").unwrap()
+        ));
+        // A login code can't be replayed as a reset or signup code, for another address, or with another digit.
+        assert!(!matches(
+            &base,
+            &hash(secret, "password_reset", "a@b.co", "123456").unwrap()
+        ));
+        assert!(!matches(
+            &base,
+            &hash(secret, "login_code", "c@d.co", "123456").unwrap()
+        ));
+        assert!(!matches(
+            &base,
+            &hash(secret, "login_code", "a@b.co", "123457").unwrap()
+        ));
+    }
+
+    #[test]
+    fn hash_depends_on_server_secret() {
+        let a = hash(b"one", "login_code", "a@b.co", "123456").unwrap();
+        let b = hash(b"two", "login_code", "a@b.co", "123456").unwrap();
+        assert!(!matches(&a, &b));
+    }
+}

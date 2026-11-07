@@ -64,7 +64,7 @@ export const actions: Actions = {
 		return { resetDone: true };
 	},
 
-	// Emails a one-time sign-in code. A 404 means the API has no code login yet.
+	// Emails a one-time sign-in code (the API answers the same whether or not the address has an account).
 	codeStart: async (event) => {
 		const data = await event.request.formData();
 		const email = text(data, 'email');

@@ -22,12 +22,15 @@ const SIGNUP: &str = "signup";
 pub(super) const TEN_MINUTES: Duration = Duration::from_secs(600);
 const FIFTEEN_MINUTES: Duration = Duration::from_secs(900);
 const PASSWORD_RESET: &str = "password_reset";
+const LOGIN_CODE: &str = "login_code";
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/signup/start", post(signup_start))
         .route("/signup/verify", post(signup_verify))
         .route("/login", post(login))
+        .route("/login-code/start", post(login_code_start))
+        .route("/login-code/verify", post(login_code_verify))
         .route("/logout", post(logout))
         .route("/me", get(me))
         .route("/password-reset/start", post(password_reset_start))
@@ -288,6 +291,115 @@ async fn login(
     }))
 }
 
+// ---------- E-posta koduyla giriş ----------
+
+#[derive(Deserialize)]
+struct LoginCodeStart {
+    email: String,
+}
+
+/// Giriş kodunu yollar. Hesap olsun ya da olmasın yanıt (ve hız sınırı davranışı) aynıdır;
+/// sınırlar veritabanına değil bellekteki sayaca bakar, böylece hesap sayımı sızmaz.
+async fn login_code_start(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<LoginCodeStart>,
+) -> Result<(StatusCode, Json<CodeSent>), AppError> {
+    rate_limit(
+        &state,
+        &format!("logincode:ip:{}", client_ip(&headers)),
+        10,
+        TEN_MINUTES,
+    )?;
+    let email = validate::email(&body.email)?;
+    // Aynı adrese dakikada bir kod: istemcinin geri sayımıyla aynı süre.
+    state
+        .limiter
+        .hit(
+            &format!("logincode:email:{email}"),
+            1,
+            Duration::from_secs(code::RESEND_COOLDOWN_SECONDS as u64),
+        )
+        .map_err(|_| AppError::TooManyRequests("code_cooldown"))?;
+
+    let eligible: bool = sqlx::query_scalar(
+        "SELECT EXISTS (SELECT 1 FROM users WHERE email = $1 AND email_verified_at IS NOT NULL)",
+    )
+    .bind(&email)
+    .fetch_one(&state.db)
+    .await?;
+    if eligible {
+        issue_code(&state, LOGIN_CODE, &email, None).await?;
+    }
+    Ok((StatusCode::ACCEPTED, CodeSent::new()))
+}
+
+#[derive(FromRow)]
+struct CodeLoginRow {
+    id: Uuid,
+    username: String,
+    display_name: Option<String>,
+    email: String,
+    role: Role,
+}
+
+/// Kodu doğrular (en fazla `MAX_ATTEMPTS` deneme, tek kullanımlık) ve parolalı girişle
+/// aynı biçimde oturum açar.
+async fn login_code_verify(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<VerifyCode>,
+) -> Result<Json<SessionResponse>, AppError> {
+    rate_limit(
+        &state,
+        &format!("verify:ip:{}", client_ip(&headers)),
+        30,
+        TEN_MINUTES,
+    )?;
+    let email = validate::email(&body.email)?;
+    let code_input = validate::code(&body.code)?;
+    rate_limit(
+        &state,
+        &format!("logincode:verify:{email}"),
+        10,
+        FIFTEEN_MINUTES,
+    )?;
+
+    let mut tx = state.db.begin().await?;
+    if consume_code(&state, &mut tx, LOGIN_CODE, &email, code_input)
+        .await?
+        .is_none()
+    {
+        // Yanlış kod: sayaç artırıldı, değişiklik kalıcı olmalı.
+        tx.commit().await?;
+        return Err(AppError::Unauthorized("invalid_code"));
+    }
+
+    let row: CodeLoginRow = sqlx::query_as(
+        "SELECT id, username, display_name, email, role
+           FROM users WHERE email = $1 AND email_verified_at IS NOT NULL",
+    )
+    .bind(&email)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(AppError::Unauthorized("invalid_code"))?;
+
+    let token = create_session(&mut tx, row.id, &headers).await?;
+    tx.commit().await?;
+    state.limiter.reset(&format!("logincode:verify:{email}"));
+
+    Ok(Json(SessionResponse {
+        token,
+        user: UserView {
+            id: row.id,
+            username: row.username,
+            display_name: row.display_name,
+            email: row.email,
+            role: row.role,
+        },
+    }))
+}
+
 async fn logout(State(state): State<AppState>, user: CurrentUser) -> Result<StatusCode, AppError> {
     sqlx::query("DELETE FROM sessions WHERE id = $1")
         .bind(user.session_id)
@@ -487,6 +599,7 @@ async fn issue_code(
             "Playthru doğrulama kodun",
             "Kaydını tamamlamak için doğrulama kodun:",
         ),
+        LOGIN_CODE => ("Playthru giriş kodun", "Giriş yapmak için kodun:"),
         _ => (
             "Playthru şifre sıfırlama kodun",
             "Şifreni sıfırlamak için kodun:",
