@@ -5,7 +5,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
+:root,
+.light {
 	/* Light mode: white tooltip. Dark mode overrides it with the sidebar hover colour. */
 	--tooltip: oklch(0.985 0 0);
 	--tooltip-foreground: oklch(0.145 0 0);

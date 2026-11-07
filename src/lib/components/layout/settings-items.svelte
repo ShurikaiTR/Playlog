@@ -11,6 +11,8 @@
 	import FlagIcon from '@lucide/svelte/icons/flag';
 
 	// Theme, language and feedback rows, shared by the header settings menu and the sidebar account menu.
+	// Signed-in users change the theme in the settings dialog instead, so the account menu hides that row.
+	let { theme: showTheme = true }: { theme?: boolean } = $props();
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft =
@@ -23,30 +25,32 @@
 	] as const;
 </script>
 
-<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
-	{#each themes as theme (theme.value)}
-		<Tooltip.Root>
-			<Tooltip.Trigger>
-				{#snippet child({ props })}
-					<DropdownMenu.Item
-						{...props}
-						aria-label={theme.label}
-						class={cn(
-							'h-10 cursor-pointer justify-center rounded-xl p-0',
-							soft,
-							userPrefersMode.current === theme.value && 'bg-muted text-foreground'
-						)}
-						onclick={() => setMode(theme.value)}
-					>
-						<theme.icon class="size-4" />
-					</DropdownMenu.Item>
-				{/snippet}
-			</Tooltip.Trigger>
-			<Tooltip.Content side="bottom" class="z-60">{theme.label}</Tooltip.Content>
-		</Tooltip.Root>
-	{/each}
-</div>
-<DropdownMenu.Group class="mt-1">
+{#if showTheme}
+	<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
+		{#each themes as theme (theme.value)}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<DropdownMenu.Item
+							{...props}
+							aria-label={theme.label}
+							class={cn(
+								'h-10 cursor-pointer justify-center rounded-xl p-0',
+								soft,
+								userPrefersMode.current === theme.value && 'bg-muted text-foreground'
+							)}
+							onclick={() => setMode(theme.value)}
+						>
+							<theme.icon class="size-4" />
+						</DropdownMenu.Item>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content side="bottom" class="z-60">{theme.label}</Tooltip.Content>
+			</Tooltip.Root>
+		{/each}
+	</div>
+{/if}
+<DropdownMenu.Group class={cn(showTheme && 'mt-1')}>
 	<DropdownMenu.Item
 		class={cn('cursor-pointer rounded-xl py-2', soft)}
 		onSelect={openLanguageDialog}

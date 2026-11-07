@@ -14,6 +14,7 @@
 	import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
 	import UsersIcon from "@lucide/svelte/icons/users";
 	import UserMenu from "./user-menu.svelte";
+	import SettingsDialog from "./settings-dialog.svelte";
 
 	interface Item {
 		label: string;
@@ -128,6 +129,7 @@
 		<Sidebar.Footer class="p-2">
 			<UserMenu user={page.data.user} />
 		</Sidebar.Footer>
+		<SettingsDialog />
 	{/if}
 
 	<Sidebar.Rail />

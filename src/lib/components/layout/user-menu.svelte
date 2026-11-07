@@ -5,6 +5,8 @@
 	import { showAuthTransition } from '#lib/auth-transition.svelte.js';
 	import UserIcon from '@lucide/svelte/icons/user';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
+	import SettingsIcon from '@lucide/svelte/icons/settings';
+	import { openSettings } from '#lib/settings-dialog.svelte.js';
 	import { cn } from '#lib/utils.js';
 	import SettingsItems from './settings-items.svelte';
 
@@ -84,8 +86,14 @@
 						</a>
 					{/snippet}
 				</DropdownMenu.Item>
+				<DropdownMenu.Item
+					class="cursor-pointer rounded-xl py-2"
+					onSelect={() => openSettings('appearance')}
+				>
+					<SettingsIcon />Ayarlar
+				</DropdownMenu.Item>
 				<DropdownMenu.Separator />
-				<SettingsItems />
+				<SettingsItems theme={false} />
 				<DropdownMenu.Separator />
 				<DropdownMenu.Item class="cursor-pointer rounded-xl py-2" onSelect={logOut}>
 					<LogOutIcon />Çıkış yap
