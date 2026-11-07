@@ -290,7 +290,7 @@
 				<a
 					href={authHref('sign-up', returnTo)}
 					onclick={onSwitch}
-					class="font-medium text-foreground hover:underline">Sign up</a
+					class="font-medium text-primary underline underline-offset-4">Sign up</a
 				>
 			</p>
 		</div>

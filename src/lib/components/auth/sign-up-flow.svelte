@@ -33,7 +33,7 @@
 	};
 	let { enabled, returnTo = '/', onSwitch }: Props = $props();
 
-	let step = $state<'providers' | 'email' | 'details' | 'verify'>('providers');
+	let step = $state<'providers' | 'details' | 'verify'>('providers');
 	let code = $state('');
 	let resendIn = $state(0);
 	let showPassword = $state(false);
@@ -63,6 +63,8 @@
 		statusMessage = '';
 		step = next;
 	}
+
+	const emailValid = $derived(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()));
 
 	function submitEmail(event: SubmitEvent) {
 		event.preventDefault();
@@ -109,7 +111,7 @@
 				return;
 			}
 			const data = result.type === 'failure' ? result.data : undefined;
-			if (typeof data?.code === 'string' && EMAIL_ERRORS.has(data.code)) step = 'email';
+			if (typeof data?.code === 'string' && EMAIL_ERRORS.has(data.code)) step = 'providers';
 			else if (step === 'verify' && data?.code !== 'code_cooldown') step = 'details';
 			statusMessage = failure(data);
 		};
@@ -139,7 +141,7 @@
 			const data = result.type === 'failure' ? result.data : undefined;
 			if (data?.code === 'invalid_code') code = '';
 			else if (data?.code === 'username_taken') step = 'details';
-			else if (data?.code === 'email_taken') step = 'email';
+			else if (data?.code === 'email_taken') step = 'providers';
 			statusMessage = failure(data);
 		};
 	};
@@ -169,7 +171,7 @@
 				<a
 					href={authHref('sign-in', returnTo)}
 					onclick={onSwitch}
-					class="font-medium text-foreground hover:underline">Log in</a
+					class="font-medium text-primary underline underline-offset-4">Log in</a
 				>
 			</p>
 		</div>
@@ -178,21 +180,17 @@
 	{#if step === 'providers'}
 		<div in:fade={{ duration: 150 }}>
 			<AuthShell title="Create your account">
-				<div class="flex flex-1 flex-col">
+				<form class="flex flex-1 flex-col" onsubmit={submitEmail}>
 					<div class="mt-auto flex flex-col gap-3">
+						<div class="min-h-5"></div>
 						{#if enabled.google}
-							<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
-								><GoogleIcon />Sign up with Google</Button
+							<Button
+								variant="outline"
+								size="lg"
+								class="w-full"
+								onclick={() => signUpWith('google')}><GoogleIcon />Sign up with Google</Button
 							>
-							<div class="flex items-center gap-3" aria-hidden="true">
-								<Separator class="flex-1" />
-								<span class="text-xs text-muted-foreground">or</span>
-								<Separator class="flex-1" />
-							</div>
 						{/if}
-						<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
-							><MailIcon />Sign up with email</Button
-						>
 						{#if enabled.apple}
 							<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
 								><AppleIcon />Sign up with Apple</Button
@@ -206,32 +204,30 @@
 								onclick={() => signUpWith('discord')}><DiscordIcon />Sign up with Discord</Button
 							>
 						{/if}
-					</div>
-					<div class="mt-auto pt-5">{@render loginRow()}</div>
-				</div>
-			</AuthShell>
-		</div>
-	{:else if step === 'email'}
-		<div in:fade={{ duration: 150 }}>
-			<AuthShell title="Sign up with email" onBack={() => goTo('providers')}>
-				<form class="flex flex-1 flex-col" onsubmit={submitEmail}>
-					<div class="mt-auto flex flex-col gap-1.5">
-						<Label for="signup-email" class="sr-only">Email</Label>
-						<Input
-							id="signup-email"
-							name="email"
-							type="email"
-							placeholder="Email"
-							bind:value={email}
-							autocomplete="email"
-							required
-							autofocus
-							class="h-9 rounded-xl"
-						/>
-						{@render status()}
+
+						<div class="flex items-center gap-3" aria-hidden="true">
+							<Separator class="flex-1" />
+							<span class="text-xs text-muted-foreground">or</span>
+							<Separator class="flex-1" />
+						</div>
+
+						<div class="flex flex-col gap-1.5">
+							<Input
+								id="signup-email"
+								name="email"
+								type="email"
+								aria-label="Email"
+								placeholder="Enter your email"
+								bind:value={email}
+								autocomplete="email"
+								required
+								class="h-9 rounded-xl"
+							/>
+							{@render status()}
+						</div>
 					</div>
 					<div class="mt-auto flex flex-col gap-3 pt-5">
-						<Button type="submit" size="lg" class="w-full">Continue</Button>
+						<Button type="submit" size="lg" class="w-full" disabled={!emailValid}>Continue</Button>
 						{@render loginRow()}
 					</div>
 				</form>
@@ -239,7 +235,7 @@
 		</div>
 	{:else if step === 'details'}
 		<div in:fade={{ duration: 150 }}>
-			<AuthShell title="Finish signing up" onBack={() => goTo('email')}>
+			<AuthShell title="Finish signing up" onBack={() => goTo('providers')}>
 				{#snippet subtitle()}<span class="font-medium text-foreground">{email}</span>{/snippet}
 				<form
 					method="POST"

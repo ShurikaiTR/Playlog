@@ -34,6 +34,7 @@
 	const lastLabel = $derived(
 		lastProvider === 'email' ? 'Email' : providers.find((p) => p.id === lastProvider)?.label
 	);
+	const emailValid = $derived(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()));
 	const ringStyle = 'mask-image: radial-gradient(circle, transparent 90%, black 100%);';
 </script>
 
@@ -83,7 +84,6 @@
 		</div>
 
 		<div class="relative flex flex-col gap-1.5">
-			<Label for="login-email" class="sr-only">Email</Label>
 			{#if lastProvider === 'email'}
 				<div
 					class="pointer-events-none absolute -top-1.5 -right-1.5 -left-1.5 h-12 rounded-2xl border border-orange-500"
@@ -93,9 +93,10 @@
 			{/if}
 			<Input
 				id="login-email"
+				aria-label="Email"
 				name="email"
 				type="email"
-				placeholder="Email"
+				placeholder="Enter your email"
 				bind:value={email}
 				autocomplete="email"
 				required
@@ -108,12 +109,14 @@
 	</div>
 
 	<div class="mt-auto flex flex-col gap-3 pt-5">
-		<Button type="submit" size="lg" class="w-full">Continue</Button>
+		<Button type="submit" size="lg" class="w-full" disabled={!emailValid}>Continue</Button>
 		<div class="flex h-12 flex-col items-center justify-center">
 			<p class="text-center text-footnote text-muted-foreground">
 				Don't have an account?
-				<a href={signUpHref} onclick={onSwitch} class="font-medium text-foreground hover:underline"
-					>Sign up</a
+				<a
+					href={signUpHref}
+					onclick={onSwitch}
+					class="font-medium text-primary underline underline-offset-4">Sign up</a
 				>
 			</p>
 		</div>
