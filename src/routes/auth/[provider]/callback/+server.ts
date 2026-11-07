@@ -6,6 +6,7 @@ import {
 	OAUTH_LINK_COOKIE,
 	OAUTH_LINK_RETURN_COOKIE,
 	OAUTH_PENDING_COOKIE,
+	OAUTH_RETURN_COOKIE,
 	OAUTH_STATE_COOKIE,
 	safeReturnPath,
 	setSessionCookie,
@@ -38,6 +39,8 @@ async function finish(
 ): Promise<never> {
 	const stateToken = event.cookies.get(OAUTH_STATE_COOKIE);
 	clearCookie(event.cookies, OAUTH_STATE_COOKIE);
+	// Where the visitor was headed; for a brand-new account it stays until the username step.
+	const returnTo = safeReturnPath(event.cookies.get(OAUTH_RETURN_COOKIE));
 
 	// Connecting a provider from settings rather than signing in.
 	const linkBack = event.cookies.get(OAUTH_LINK_COOKIE);
@@ -74,7 +77,8 @@ async function finish(
 
 	if (result.data.status === 'signed_in') {
 		setSessionCookie(event.cookies, result.data.token);
-		redirect(303, '/');
+		clearCookie(event.cookies, OAUTH_RETURN_COOKIE);
+		redirect(303, returnTo);
 	}
 
 	// New account: the visitor picks a username first.

@@ -10,4 +10,4 @@
 	<meta name="description" content="Log in to your Playthru account." />
 </svelte:head>
 
-<SignInFlow enabled={data.providers} notice={data.notice} />
+<SignInFlow enabled={data.providers} notice={data.notice} returnTo={data.returnTo} />

@@ -65,7 +65,7 @@
 					aria-hidden="true"
 				></div>
 			{/if}
-			<Button variant="outline" size="auth" class="w-full" onclick={() => onProvider(provider.id)}
+			<Button variant="outline" size="lg" class="w-full" onclick={() => onProvider(provider.id)}
 				><provider.icon />Continue with {provider.label}</Button
 			>
 		</div>
@@ -106,7 +106,7 @@
 		</div>
 
 		<div class="pt-5">
-			<Button type="submit" size="auth" class="w-full">Continue</Button>
+			<Button type="submit" size="lg" class="w-full">Continue</Button>
 		</div>
 	</form>
 

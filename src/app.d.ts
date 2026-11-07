@@ -18,6 +18,7 @@ declare global {
 				kind: 'sign-in' | 'sign-up';
 				enabled: Record<'google' | 'apple' | 'discord', boolean>;
 				notice: string | null;
+				returnTo: string;
 			};
 		}
 		// interface Platform {}

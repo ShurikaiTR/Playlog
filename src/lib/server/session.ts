@@ -33,6 +33,8 @@ export const OAUTH_LINK_COOKIE = prefixed('oauth_link');
 // Apple returns with a cross-site POST, which carries no session cookie. The code is parked here
 // for one same-site GET hop that does carry it.
 export const OAUTH_LINK_RETURN_COOKIE = prefixed('oauth_link_return');
+// Where to send a visitor after a Google/Discord/Apple sign-in or sign-up (from `return_to`).
+export const OAUTH_RETURN_COOKIE = prefixed('oauth_return');
 
 export type PendingSignup = {
 	pending_token: string;
@@ -75,8 +77,4 @@ export function readPendingSignup(cookies: Cookies): PendingSignup | null {
 	}
 }
 
-/** A same-origin path to come back to, from a query parameter; anything else falls back to `/`. */
-export function safeReturnPath(raw: string | null): string {
-	if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '/';
-	return raw.slice(0, 300);
-}
+export { safeReturnPath } from '#lib/return-to.js';

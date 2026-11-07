@@ -77,7 +77,7 @@
 			>
 		</div>
 
-		<Button type="submit" size="auth" class="w-full" disabled={pending}
+		<Button type="submit" size="lg" class="w-full" disabled={pending}
 			>{pending ? 'Finishing…' : 'Finish sign-up'}</Button
 		>
 	</form>

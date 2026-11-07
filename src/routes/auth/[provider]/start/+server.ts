@@ -9,6 +9,7 @@ import {
 import {
 	clearCookie,
 	OAUTH_LINK_COOKIE,
+	OAUTH_RETURN_COOKIE,
 	OAUTH_STATE_COOKIE,
 	safeReturnPath,
 	setShortCookie
@@ -20,7 +21,8 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async (event) => {
 	const provider = providerParam(event.params.provider);
 	if (event.url.searchParams.has('baglan')) return startLink(event, provider);
-	if (event.locals.user) redirect(303, '/');
+	const returnTo = safeReturnPath(event.url.searchParams.get('return_to'));
+	if (event.locals.user) redirect(303, returnTo);
 	clearCookie(event.cookies, OAUTH_LINK_COOKIE);
 
 	const result = await api<{ authorization_url: string; state_token: string }>(
@@ -31,6 +33,9 @@ export const GET: RequestHandler = async (event) => {
 	if (!result.ok) redirect(303, `/sign-in?hata=${encodeURIComponent(result.error)}`);
 
 	setShortCookie(event.cookies, OAUTH_STATE_COOKIE, result.data.state_token, 600, {
+		crossSitePost: provider === 'apple'
+	});
+	setShortCookie(event.cookies, OAUTH_RETURN_COOKIE, returnTo, 600, {
 		crossSitePost: provider === 'apple'
 	});
 	redirect(302, result.data.authorization_url, { external: PROVIDER_ORIGINS });

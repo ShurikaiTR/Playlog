@@ -8,9 +8,11 @@
 	import SettingsDialogs from "./settings-dialogs.svelte";
 	import SearchDialog from "#lib/features/search/search-dialog.svelte";
 	import { page } from "$app/state";
-	import { openAuthModal } from "#lib/auth-modal.js";
+	import { currentReturnPath, openAuthModal } from "#lib/auth-modal.js";
+	import { authHref } from "#lib/return-to.js";
 
 	let { children }: { children: Snippet } = $props();
+	const returnPath = $derived(currentReturnPath());
 </script>
 
 <Sidebar.Provider>
@@ -24,8 +26,8 @@
 			{#if !page.data.user}
 				<div class="ml-auto flex items-center gap-2">
 					<SettingsMenu />
-					<Button href="/sign-in" variant="outline" size="lg" onclick={(event) => openAuthModal(event, "sign-in")}>Log in</Button>
-					<Button href="/sign-up" size="lg" onclick={(event) => openAuthModal(event, "sign-up")}>Sign up</Button>
+					<Button href={authHref("sign-in", returnPath)} variant="outline" size="lg" onclick={(event) => openAuthModal(event, "sign-in")}>Log in</Button>
+					<Button href={authHref("sign-up", returnPath)} size="lg" onclick={(event) => openAuthModal(event, "sign-up")}>Sign up</Button>
 				</div>
 			{/if}
 		</header>

@@ -2,13 +2,15 @@ import { fail, redirect } from '@sveltejs/kit';
 import { authErrorMessage } from '#lib/auth-errors.js';
 import { api, type ApiUser } from '#lib/server/api.js';
 import { enabledProviders } from '#lib/server/oauth.js';
-import { setSessionCookie } from '#lib/server/session.js';
+import { safeReturnPath, setSessionCookie } from '#lib/server/session.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
-	if (event.locals.user) redirect(303, '/');
+	const returnTo = safeReturnPath(event.url.searchParams.get('return_to'));
+	if (event.locals.user) redirect(303, returnTo);
 	const notice = event.url.searchParams.get('hata');
 	return {
+		returnTo,
 		notice: notice ? authErrorMessage(notice) : null,
 		providers: await enabledProviders(event)
 	};
@@ -36,7 +38,7 @@ export const actions: Actions = {
 		if (!result.ok) return fail(result.status, { error: authErrorMessage(result.error) });
 
 		setSessionCookie(event.cookies, result.data.token);
-		redirect(303, '/');
+		redirect(303, safeReturnPath(text(data, 'return_to')));
 	},
 
 	// Mails a reset code. The API answers the same whether or not the address has an account.
@@ -97,6 +99,6 @@ export const actions: Actions = {
 		if (!result.ok) return fail(result.status, { error: codeError(result), code: result.error });
 
 		setSessionCookie(event.cookies, result.data.token);
-		redirect(303, '/');
+		redirect(303, safeReturnPath(text(data, 'return_to')));
 	}
 };

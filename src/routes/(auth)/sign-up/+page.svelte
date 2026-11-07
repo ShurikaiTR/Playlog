@@ -10,4 +10,4 @@
 	<meta name="description" content="Create a free Playthru account." />
 </svelte:head>
 
-<SignUpFlow enabled={data.providers} />
+<SignUpFlow enabled={data.providers} returnTo={data.returnTo} />

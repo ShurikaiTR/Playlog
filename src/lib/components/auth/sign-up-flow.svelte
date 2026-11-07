@@ -6,6 +6,7 @@
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import Turnstile from './turnstile.svelte';
+	import { authHref } from '#lib/return-to.js';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
@@ -24,11 +25,12 @@
 	// The right code creates the account and signs in.
 	type Props = {
 		enabled: Record<'google' | 'apple' | 'discord', boolean>;
-		notice?: string | null;
+		/** Where to go after signing up (a same-origin path, already validated). */
+		returnTo?: string;
 		/** Set when the form sits in a modal, to swap to the other auth modal instead of navigating. */
 		onSwitch?: (event: MouseEvent) => void;
 	};
-	let { enabled, notice = null, onSwitch }: Props = $props();
+	let { enabled, returnTo = '/', onSwitch }: Props = $props();
 
 	let step = $state<'providers' | 'email' | 'details' | 'verify'>('providers');
 	let code = $state('');
@@ -53,7 +55,7 @@
 
 	// Google, Apple and Discord share the sign-in route; a new account then picks a username.
 	function signUpWith(provider: 'google' | 'apple' | 'discord') {
-		window.location.assign(`/auth/${provider}/start`);
+		window.location.assign(`/auth/${provider}/start?return_to=${encodeURIComponent(returnTo)}`);
 	}
 
 	function goTo(next: typeof step) {
@@ -162,7 +164,7 @@
 			</h1>
 
 			{#if enabled.google}
-				<Button size="auth" class="w-full" onclick={() => signUpWith('google')}
+				<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
 					><GoogleIcon />Sign up with Google</Button
 				>
 
@@ -170,16 +172,16 @@
 			{/if}
 
 			<div class="space-y-3">
-				<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('email')}
+				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
 					><MailIcon />Sign up with email</Button
 				>
 				{#if enabled.apple}
-					<Button variant="outline" size="auth" class="w-full" onclick={() => signUpWith('apple')}
+					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
 						><AppleIcon />Sign up with Apple</Button
 					>
 				{/if}
 				{#if enabled.discord}
-					<Button variant="outline" size="auth" class="w-full" onclick={() => signUpWith('discord')}
+					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
 						><DiscordIcon />Sign up with Discord</Button
 					>
 				{/if}
@@ -205,9 +207,9 @@
 				/>
 			</div>
 
-			<Button type="submit" size="auth" class="w-full">Continue</Button>
+			<Button type="submit" size="lg" class="w-full">Continue</Button>
 
-			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('providers')}
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
 				>Go back</Button
 			>
 		</form>
@@ -293,11 +295,11 @@
 				>
 			</div>
 
-			<Button type="submit" size="auth" class="w-full" disabled={pending}
+			<Button type="submit" size="lg" class="w-full" disabled={pending}
 				>{pending ? 'Sending code…' : 'Continue'}</Button
 			>
 
-			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('email')}
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
 				>Go back</Button
 			>
 		</form>
@@ -309,6 +311,7 @@
 			use:enhance={submitVerify}
 			in:fade={{ duration: 150 }}
 		>
+			<input type="hidden" name="return_to" value={returnTo} />
 			<input type="hidden" name="email" value={email} />
 			<div class="text-center">
 				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
@@ -359,9 +362,9 @@
 				>
 			</p>
 
-			<Button type="submit" size="auth" class="w-full" disabled={pending}>Verify email</Button>
+			<Button type="submit" size="lg" class="w-full" disabled={pending}>Verify email</Button>
 
-			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('details')}
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('details')}
 				>Go back</Button
 			>
 		</form>
@@ -380,8 +383,10 @@
 	<p class="mt-8 text-center text-footnote text-muted-foreground">
 		Already have an account?
 
-		<a href="/sign-in" onclick={onSwitch} class="font-medium text-foreground hover:underline"
-			>Log in</a
+		<a
+			href={authHref('sign-in', returnTo)}
+			onclick={onSwitch}
+			class="font-medium text-foreground hover:underline">Log in</a
 		>
 	</p>
 

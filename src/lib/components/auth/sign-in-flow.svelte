@@ -10,6 +10,7 @@
 	import { fade } from 'svelte/transition';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import Turnstile from './turnstile.svelte';
+	import { authHref } from '#lib/return-to.js';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -21,10 +22,12 @@
 	type Props = {
 		enabled: Record<'google' | 'apple' | 'discord', boolean>;
 		notice?: string | null;
+		/** Where to go after logging in (a same-origin path, already validated). */
+		returnTo?: string;
 		/** Set when the form sits in a modal, to swap to the other auth modal instead of navigating. */
 		onSwitch?: (event: MouseEvent) => void;
 	};
-	let { enabled, notice = null, onSwitch }: Props = $props();
+	let { enabled, notice = null, returnTo = '/', onSwitch }: Props = $props();
 
 	// The page moves from the provider list to an email step, then a password step.
 	// "Forgot password?" mails a code and opens the reset step.
@@ -88,7 +91,7 @@
 		}
 		rememberProvider(id);
 		// A full page load: the server route sends the visitor on to the provider.
-		window.location.assign(`/auth/${id}/start`);
+		window.location.assign(`/auth/${id}/start?return_to=${encodeURIComponent(returnTo)}`);
 	}
 
 	function goTo(next: typeof step) {
@@ -281,7 +284,7 @@
 				bind:email
 				onProvider={(id) => chooseProvider(id as ProviderId)}
 				onEmail={() => goTo('password')}
-				signUpHref="/sign-up"
+				signUpHref={authHref('sign-up', returnTo)}
 				{onSwitch}
 			/>
 		</div>
@@ -293,6 +296,7 @@
 			use:enhance={submitLogin}
 			in:fade={{ duration: 150 }}
 		>
+			<input type="hidden" name="return_to" value={returnTo} />
 			<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 			<input type="hidden" name="email" value={email} />
 			<Button
@@ -314,7 +318,7 @@
 					type="submit"
 					form="code-start"
 					variant="outline"
-					size="auth"
+					size="lg"
 					class="w-full"
 					disabled={pending}><MailIcon />Email login code</Button
 				>
@@ -350,7 +354,7 @@
 			</div>
 
 			<div class="pt-5">
-				<Button type="submit" size="auth" class="w-full" disabled={pending}
+				<Button type="submit" size="lg" class="w-full" disabled={pending}
 					>{pending ? 'Logging in…' : 'Log in'}</Button
 				>
 			</div>
@@ -363,6 +367,7 @@
 			use:enhance={submitCodeVerify}
 			in:fade={{ duration: 150 }}
 		>
+			<input type="hidden" name="return_to" value={returnTo} />
 			<Button
 				variant="ghost"
 				size="icon"
@@ -405,14 +410,14 @@
 			</div>
 			<div class="flex flex-col gap-3 pt-5">
 				<Turnstile bind:this={captcha} bind:token={captchaToken} />
-				<Button type="submit" size="auth" class="w-full" disabled={pending || loginCode.length < 6}
+				<Button type="submit" size="lg" class="w-full" disabled={pending || loginCode.length < 6}
 					>Log in</Button
 				>
 				<Button
 					type="submit"
 					form="code-start"
 					variant="outline"
-					size="auth"
+					size="lg"
 					class="w-full"
 					disabled={resendIn > 0 || pending}
 					>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
@@ -487,11 +492,11 @@
 
 			<Turnstile bind:this={captcha} bind:token={captchaToken} />
 
-			<Button type="submit" size="auth" class="w-full" disabled={pending}
+			<Button type="submit" size="lg" class="w-full" disabled={pending}
 				>{pending ? 'Saving…' : 'Change password'}</Button
 			>
 
-			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('password')}
+			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('password')}
 				>Go back</Button
 			>
 		</form>
@@ -507,8 +512,10 @@
 		<p class="mt-8 text-center text-footnote text-muted-foreground">
 			Don't have an account?
 
-			<a href="/sign-up" onclick={onSwitch} class="font-medium text-foreground hover:underline"
-				>Sign up</a
+			<a
+				href={authHref('sign-up', returnTo)}
+				onclick={onSwitch}
+				class="font-medium text-foreground hover:underline">Sign up</a
 			>
 		</p>
 	{/if}
