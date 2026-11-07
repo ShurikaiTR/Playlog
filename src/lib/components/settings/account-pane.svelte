@@ -45,14 +45,14 @@
 				<Button
 					href={resolve('/hesap')}
 					variant="outline"
-					class="h-11 px-5"
+					class="h-11 rounded-xl px-5"
 					onclick={manage}>Yönet</Button
 				>
 			</SettingsRow>
 		</SettingsGroup>
 		<SettingsGroup plain>
 			<SettingsRow label="Oturum">
-				<Button variant="outline" class="h-11 px-5" onclick={signOut}>
+				<Button variant="outline" class="h-11 rounded-xl px-5" onclick={signOut}>
 					<LogOutIcon />Çıkış yap
 				</Button>
 			</SettingsRow>
