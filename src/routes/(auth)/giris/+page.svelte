@@ -1,5 +1,6 @@
 <script lang="ts">
 	import GoogleIcon from '#lib/components/icons/google.svelte';
+	import AppleIcon from '#lib/components/icons/apple.svelte';
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 	import { hideAuthTransition, showAuthTransition } from '#lib/auth-transition.svelte.js';
@@ -32,9 +33,10 @@
 	let resendIn = $state(0);
 	let pending = $state(false);
 
-	type ProviderId = 'google' | 'discord' | 'email';
+	type ProviderId = 'google' | 'apple' | 'discord' | 'email';
 	const providers: { id: ProviderId; label: string; icon: typeof GoogleIcon }[] = [
 		{ id: 'google', label: 'Google', icon: GoogleIcon },
+		{ id: 'apple', label: 'Apple', icon: AppleIcon },
 		{ id: 'discord', label: 'Discord', icon: DiscordIcon },
 		{ id: 'email', label: 'E-posta', icon: MailIcon }
 	];

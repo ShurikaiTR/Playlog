@@ -22,7 +22,7 @@ export function clearSessionCookie(cookies: Cookies) {
 	cookies.delete(SESSION_COOKIE, { path: '/', secure: !dev });
 }
 
-// Short-lived cookies for Google/Discord sign-in: the state token while the visitor is at the
+// Short-lived cookies for Google/Discord/Apple sign-in: the state token while the visitor is at the
 // provider, then the pending sign-up while they pick a username.
 const prefixed = (name: string) => (dev ? `playthru_${name}` : `__Host-playthru_${name}`);
 export const OAUTH_STATE_COOKIE = prefixed('oauth');
@@ -35,8 +35,23 @@ export type PendingSignup = {
 	display_name: string | null;
 };
 
-export function setShortCookie(cookies: Cookies, name: string, value: string, maxAge: number) {
-	cookies.set(name, value, { path: '/', httpOnly: true, secure: !dev, sameSite: 'lax', maxAge });
+export function setShortCookie(
+	cookies: Cookies,
+	name: string,
+	value: string,
+	maxAge: number,
+	{ crossSitePost = false } = {}
+) {
+	// Apple returns with a cross-site form POST, which never carries SameSite=Lax cookies. Its
+	// state cookie is SameSite=None (which requires Secure; browsers allow that on localhost too).
+	// It is still bound to the signed state and expires in minutes.
+	cookies.set(name, value, {
+		path: '/',
+		httpOnly: true,
+		secure: crossSitePost || !dev,
+		sameSite: crossSitePost ? 'none' : 'lax',
+		maxAge
+	});
 }
 
 export function clearCookie(cookies: Cookies, name: string) {

@@ -12,6 +12,7 @@
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
+	import AppleIcon from '#lib/components/icons/apple.svelte';
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
@@ -30,8 +31,8 @@
 	let password = $state('');
 	let pending = $state(false);
 
-	// Google and Discord share the sign-in route; a new account then picks a username.
-	function signUpWith(provider: 'google' | 'discord') {
+	// Google, Apple and Discord share the sign-in route; a new account then picks a username.
+	function signUpWith(provider: 'google' | 'apple' | 'discord') {
 		window.location.assign(`/auth/${provider}/start`);
 	}
 
@@ -144,6 +145,9 @@
 			<div class="space-y-3">
 				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
 					><MailIcon />E-posta ile kayıt ol</Button
+				>
+				<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
+					><AppleIcon />Apple ile kayıt ol</Button
 				>
 				<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
 					><DiscordIcon />Discord ile kayıt ol</Button

@@ -62,6 +62,7 @@ async fn main() -> anyhow::Result<()> {
                 config.public_url,
                 config.google,
                 config.discord,
+                config.apple,
                 &config.code_secret,
             )?
             .into(),

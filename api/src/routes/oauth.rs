@@ -1,4 +1,4 @@
-//! Google / Discord girişi. SvelteKit yönlendirmeleri yapar, bu uçlar yalnızca iç ağdan çağrılır.
+//! Google / Discord / Apple girişi. SvelteKit yönlendirmeleri yapar, bu uçlar yalnızca iç ağdan çağrılır.
 
 use axum::{
     Json, Router,
@@ -39,6 +39,10 @@ struct CallbackBody {
     code: String,
     state: String,
     state_token: String,
+    /// Yalnızca Apple: ad kimlik jetonunda olmadığı için ilk girişte formdan gelir.
+    /// Doğrulanmamış bir ipucudur, sadece görünen ad önerisi olarak kullanılır.
+    #[serde(default)]
+    display_name: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -121,7 +125,7 @@ async fn callback(
         TEN_MINUTES,
     )?;
 
-    let identity = match state
+    let mut identity = match state
         .oauth
         .finish(provider, body.code, &body.state, &body.state_token)
         .await
@@ -133,6 +137,10 @@ async fn callback(
             return Err(AppError::Unauthorized("oauth_failed"));
         }
     };
+
+    if provider == Provider::Apple && identity.display_name.is_none() {
+        identity.display_name = clean_display_name(body.display_name.as_deref());
+    }
 
     let mut tx = state.db.begin().await?;
 

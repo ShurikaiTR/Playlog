@@ -1823,6 +1823,7 @@ dependencies = [
  "hmac 0.13.0",
  "oauth2",
  "openidconnect",
+ "p256",
  "reqwest 0.13.5",
  "serde",
  "serde_json",

@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use anyhow::{Context, bail};
 
-use crate::oauth::Credentials;
+use crate::oauth::{AppleConfig, Credentials};
 
 pub struct Config {
     pub database_url: String,
@@ -17,6 +17,7 @@ pub struct Config {
     pub public_url: Option<String>,
     pub google: Option<Credentials>,
     pub discord: Option<Credentials>,
+    pub apple: Option<AppleConfig>,
     /// Hiç admin yoksa açılışta bu e-postalı (doğrulanmış) hesap admin yapılır.
     pub admin_email: Option<String>,
 }
@@ -51,6 +52,7 @@ impl Config {
             public_url: env_non_empty("PUBLIC_URL"),
             google: credentials("GOOGLE")?,
             discord: credentials("DISCORD")?,
+            apple: apple()?,
             admin_email: env_non_empty("ADMIN_EMAIL").map(|v| v.trim().to_lowercase()),
         })
     }
@@ -71,5 +73,33 @@ fn credentials(prefix: &str) -> anyhow::Result<Option<Credentials>> {
         })),
         (None, None) => Ok(None),
         _ => bail!("{prefix}_CLIENT_ID ve {prefix}_CLIENT_SECRET birlikte tanımlanmalı"),
+    }
+}
+
+/// Apple: Services ID, Team ID, anahtar kimliği ve .p8 özel anahtarı (PEM). Dördü birlikte gerekir.
+/// Ortam değişkeninde satır sonları `\n` olarak yazılabilir.
+fn apple() -> anyhow::Result<Option<AppleConfig>> {
+    let values = [
+        env_non_empty("APPLE_CLIENT_ID"),
+        env_non_empty("APPLE_TEAM_ID"),
+        env_non_empty("APPLE_KEY_ID"),
+        env_non_empty("APPLE_PRIVATE_KEY"),
+    ];
+    match values {
+        [
+            Some(client_id),
+            Some(team_id),
+            Some(key_id),
+            Some(private_key),
+        ] => Ok(Some(AppleConfig {
+            client_id,
+            team_id,
+            key_id,
+            private_key_pem: private_key.replace("\\n", "\n"),
+        })),
+        [None, None, None, None] => Ok(None),
+        _ => bail!(
+            "APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID ve APPLE_PRIVATE_KEY birlikte tanımlanmalı"
+        ),
     }
 }
