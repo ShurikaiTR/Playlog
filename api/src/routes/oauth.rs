@@ -82,7 +82,7 @@ enum CallbackResponse {
     },
 }
 
-fn provider_of(state: &AppState, raw: &str) -> Result<Provider, AppError> {
+pub(super) fn provider_of(state: &AppState, raw: &str) -> Result<Provider, AppError> {
     Provider::parse(raw)
         .filter(|p| state.oauth.enabled(*p))
         .ok_or(AppError::Validation("unknown_provider"))
@@ -100,7 +100,7 @@ async fn start(
         30,
         TEN_MINUTES,
     )?;
-    let started = state.oauth.start(provider).await?;
+    let started = state.oauth.start(provider, None).await?;
     Ok(Json(StartResponse {
         authorization_url: started.authorization_url,
         state_token: started.state_token,
@@ -147,7 +147,9 @@ async fn callback(
         .finish(provider, body.code, &body.state, &body.state_token)
         .await
     {
-        Ok(Some(identity)) => identity,
+        // Bağlama akışının belirteci girişte geçmez (yalnızca /v1/account üzerinden).
+        Ok(Some(finished)) if finished.link_user.is_none() => finished.identity,
+        Ok(Some(_)) => return Err(AppError::Unauthorized("invalid_state")),
         Ok(None) => return Err(AppError::Unauthorized("invalid_state")),
         Err(err) => {
             tracing::warn!(error = ?err, provider = provider.as_str(), "OAuth girişi başarısız");

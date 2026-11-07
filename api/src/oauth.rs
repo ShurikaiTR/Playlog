@@ -125,6 +125,10 @@ struct StateClaims {
     nonce: String,
     verifier: String,
     exp: i64,
+    /// Hesap ayarlarından başlatılan bağlama akışında, bağlanacak kullanıcı.
+    /// Giriş akışında yoktur; böylece bir akışın belirteci diğerinde kullanılamaz.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    link_user: Option<uuid::Uuid>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -134,6 +138,12 @@ pub struct PendingClaims {
     pub email: String,
     pub display_name: Option<String>,
     pub exp: i64,
+}
+
+/// Doğrulanmış dönüş: sağlayıcı kimliği ve akış bağlama içinse bağlanacak kullanıcı.
+pub struct Finished {
+    pub identity: ProviderIdentity,
+    pub link_user: Option<uuid::Uuid>,
 }
 
 pub struct Started {
@@ -247,7 +257,12 @@ impl OAuth {
 
     // ---------- Akış ----------
 
-    pub async fn start(&self, provider: Provider) -> anyhow::Result<Started> {
+    /// `link_user`: hesap ayarlarından bağlama akışı başlatan kullanıcı; girişte `None`.
+    pub async fn start(
+        &self,
+        provider: Provider,
+        link_user: Option<uuid::Uuid>,
+    ) -> anyhow::Result<Started> {
         let (challenge, verifier) = PkceCodeChallenge::new_random_sha256();
         let (url, state, nonce) = match provider {
             Provider::Google => {
@@ -302,6 +317,7 @@ impl OAuth {
                 nonce,
                 verifier: verifier.secret().clone(),
                 exp: now() + STATE_TTL_SECONDS,
+                link_user,
             },
         )?;
         Ok(Started {
@@ -318,7 +334,7 @@ impl OAuth {
         code: String,
         state: &str,
         state_token: &str,
-    ) -> anyhow::Result<Option<ProviderIdentity>> {
+    ) -> anyhow::Result<Option<Finished>> {
         let Some(claims) = self.verify::<StateClaims>("oauth-state", state_token) else {
             return Ok(None);
         };
@@ -328,6 +344,7 @@ impl OAuth {
             return Ok(None);
         }
         let verifier = PkceCodeVerifier::new(claims.verifier);
+        let link_user = claims.link_user;
 
         let identity = match provider {
             Provider::Google => {
@@ -377,7 +394,10 @@ impl OAuth {
                 identity_from_claims(id_claims, false)
             }
         };
-        Ok(Some(identity))
+        Ok(Some(Finished {
+            identity,
+            link_user,
+        }))
     }
 
     async fn google_client(&self, creds: &Credentials) -> anyhow::Result<OidcClient> {
@@ -612,6 +632,7 @@ mod tests {
                     nonce: String::new(),
                     verifier: "v".into(),
                     exp: now() + 60,
+                    link_user: None,
                 },
             )
             .unwrap();
@@ -624,9 +645,33 @@ mod tests {
         assert!(oauth.verify::<StateClaims>("oauth-state", &token).is_some());
     }
 
+    #[test]
+    fn link_user_survives_state_token_and_defaults_to_none() {
+        let oauth = oauth();
+        let user = uuid::Uuid::now_v7();
+        let claims = |link_user| StateClaims {
+            provider: "discord".into(),
+            state: "s".into(),
+            nonce: String::new(),
+            verifier: "v".into(),
+            exp: now() + 60,
+            link_user,
+        };
+        let linked = oauth.sign("oauth-state", &claims(Some(user))).unwrap();
+        let parsed: StateClaims = oauth.verify("oauth-state", &linked).unwrap();
+        assert_eq!(parsed.link_user, Some(user));
+        // Giriş akışının belirtecinde alan hiç yazılmaz, okununca `None` olur.
+        let sign_in = oauth.sign("oauth-state", &claims(None)).unwrap();
+        let payload = sign_in.split_once('.').unwrap().0;
+        let json = String::from_utf8(URL_SAFE_NO_PAD.decode(payload).unwrap()).unwrap();
+        assert!(!json.contains("link_user"));
+        let parsed: StateClaims = oauth.verify("oauth-state", &sign_in).unwrap();
+        assert_eq!(parsed.link_user, None);
+    }
+
     #[tokio::test]
     async fn discord_start_builds_pkce_url() {
-        let started = oauth().start(Provider::Discord).await.unwrap();
+        let started = oauth().start(Provider::Discord, None).await.unwrap();
         let url = url_query(&started.authorization_url);
         assert!(
             started
@@ -724,7 +769,7 @@ e2n6TOBrOL33Vsw+aWK9v+FH+LyhRANCAAR7DduJib/86+d3N/RybH/xwpn/syCr
     #[tokio::test]
     #[ignore = "ağ erişimi ister"]
     async fn apple_start_builds_form_post_url() {
-        let started = apple_oauth().start(Provider::Apple).await.unwrap();
+        let started = apple_oauth().start(Provider::Apple, None).await.unwrap();
         assert!(
             started
                 .authorization_url

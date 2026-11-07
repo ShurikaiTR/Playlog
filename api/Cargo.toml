@@ -11,6 +11,8 @@ argon2 = "0.6"
 axum = "0.8.9"
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 base64 = "0.23.1"
+# Hesap uçlarındaki zaman damgaları RFC 3339 olarak serileştirilir.
+chrono = { version = "0.4.45", default-features = false, features = ["serde"] }
 dotenvy = "0.15.7"
 getrandom = "0.4.3"
 hmac = "0.13.0"

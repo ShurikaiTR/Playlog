@@ -1,3 +1,4 @@
+mod account;
 mod admin;
 mod auth;
 mod oauth;
@@ -12,6 +13,7 @@ pub fn router() -> Router<AppState> {
         .route("/health", get(health))
         .nest("/v1/auth", auth::router())
         .nest("/v1/auth/oauth", oauth::router())
+        .nest("/v1/account", account::router())
         .nest("/v1/admin", admin::router())
 }
 
