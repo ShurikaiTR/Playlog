@@ -200,17 +200,13 @@
 			box-shadow: 0 0 0 1px var(--field-border-hover);
 		}
 		&:focus-visible {
-			box-shadow:
-				0 0 0 1px var(--field-border-strong),
-				inset 0 0 0 1px var(--field-border-strong);
+			box-shadow: 0 0 0 2px var(--field-border-strong);
 		}
 		&[aria-invalid='true'] {
 			box-shadow: 0 0 0 1px var(--destructive);
 		}
 		&[aria-invalid='true']:focus-visible {
-			box-shadow:
-				0 0 0 1px var(--destructive),
-				inset 0 0 0 1px var(--destructive);
+			box-shadow: 0 0 0 2px var(--destructive);
 		}
 	}
 }
@@ -224,17 +220,13 @@
 		box-shadow: 0 0 0 1px var(--field-border-hover);
 	}
 	&:has([data-slot='input-group-control']:focus-visible) {
-		box-shadow:
-			0 0 0 1px var(--field-border-strong),
-			inset 0 0 0 1px var(--field-border-strong);
+		box-shadow: 0 0 0 2px var(--field-border-strong);
 	}
 	&:has([aria-invalid='true']) {
 		box-shadow: 0 0 0 1px var(--destructive);
 	}
 	&:has([aria-invalid='true']:focus-visible) {
-		box-shadow:
-			0 0 0 1px var(--destructive),
-			inset 0 0 0 1px var(--destructive);
+		box-shadow: 0 0 0 2px var(--destructive);
 	}
 }
 
@@ -251,7 +243,7 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background text-foreground antialiased;
+		@apply antialiased bg-background text-foreground;
 		overflow-wrap: break-word;
 	}
 	h1 {
