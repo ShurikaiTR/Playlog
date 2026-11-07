@@ -8,6 +8,7 @@
 	import SettingsDialogs from "./settings-dialogs.svelte";
 	import SearchDialog from "#lib/features/search/search-dialog.svelte";
 	import { page } from "$app/state";
+	import { openAuthModal } from "#lib/auth-modal.js";
 
 	let { children }: { children: Snippet } = $props();
 </script>
@@ -23,8 +24,8 @@
 			{#if !page.data.user}
 				<div class="ml-auto flex items-center gap-2">
 					<SettingsMenu />
-					<Button href="/sign-in" variant="outline" size="lg">Giriş yap</Button>
-					<Button href="/sign-up" size="lg">Kayıt ol</Button>
+					<Button href="/sign-in" variant="outline" size="lg" onclick={(event) => openAuthModal(event, "sign-in")}>Giriş yap</Button>
+					<Button href="/sign-up" size="lg" onclick={(event) => openAuthModal(event, "sign-up")}>Kayıt ol</Button>
 				</div>
 			{/if}
 		</header>

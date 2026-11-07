@@ -24,14 +24,4 @@
 	<main class="flex flex-1 items-center justify-center py-12">
 		<div class="w-full max-w-sm">{@render children()}</div>
 	</main>
-
-	<footer class="text-center text-footnote text-muted-foreground">
-		Devam ederek Playthru'nun
-		<a href="/kullanim-sartlari" class="underline underline-offset-4 hover:text-primary"
-			>Kullanım Şartları</a
-		>'nı ve
-		<a href="/gizlilik-politikasi" class="underline underline-offset-4 hover:text-primary"
-			>Gizlilik Politikası</a
-		>'nı kabul etmiş olursun.
-	</footer>
 </div>

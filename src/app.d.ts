@@ -12,7 +12,14 @@ declare global {
 			token: string | null;
 		}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/** Set while the sign-in or sign-up form is open in a modal over the current page. */
+			authModal?: {
+				kind: 'sign-in' | 'sign-up';
+				enabled: Record<'google' | 'apple' | 'discord', boolean>;
+				notice: string | null;
+			};
+		}
 		// interface Platform {}
 	}
 }
