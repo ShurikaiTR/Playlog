@@ -1,6 +1,6 @@
 <script lang="ts" module>
-	import { type VariantProps, tv } from "tailwind-variants";
-	import { cn, type WithElementRef } from "#lib/utils.js";
+	import { type VariantProps } from "tailwind-variants";
+	import { cn, type WithElementRef, tv } from "#lib/utils.js";
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
 
 	export const buttonVariants = tv({
@@ -8,7 +8,7 @@
 		variants: {
 			variant: {
 				default: "bg-primary text-primary-foreground hover:bg-primary/80",
-				outline: "bg-transparent [color:var(--btn-outline-text)] ring-1 ring-(--btn-outline-border) hover:bg-(--btn-outline-hover) aria-expanded:bg-(--btn-outline-hover)",
+				outline: "bg-transparent text-(--btn-outline-text) ring-1 ring-(--btn-outline-border) hover:bg-(--btn-outline-hover) aria-expanded:bg-(--btn-outline-hover)",
 				secondary: "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
 				ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
 				destructive: "bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30",
