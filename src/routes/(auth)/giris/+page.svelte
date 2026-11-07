@@ -40,6 +40,10 @@
 		{ id: 'discord', label: 'Discord', icon: DiscordIcon },
 		{ id: 'email', label: 'E-posta', icon: MailIcon }
 	];
+	// E-mail always works; the others only when their keys are configured on the API.
+	const shownProviders = $derived(
+		providers.filter((provider) => provider.id === 'email' || data.providers[provider.id])
+	);
 	const LAST_PROVIDER_KEY = 'playthru-last-login-provider';
 	let lastProvider = $state<ProviderId | null>(null);
 	const lastProviderLabel = $derived(
@@ -190,7 +194,7 @@
 			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabına giriş yap</h1>
 
 			<div class="space-y-3">
-				{#each providers as provider (provider.id)}
+				{#each shownProviders as provider (provider.id)}
 					<div class="relative">
 						{#if lastProvider === provider.id}
 							<!-- Fading ring that marks the provider used last time. -->

@@ -16,9 +16,12 @@
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
+	import type { PageProps } from './$types';
 
 	// Sign-up options, then email, then the account details (which mails the code), then the code.
 	// The right code creates the account and signs in.
+	let { data }: PageProps = $props();
+
 	let step = $state<'providers' | 'email' | 'details' | 'verify'>('providers');
 	let code = $state('');
 	let resendIn = $state(0);
@@ -136,22 +139,28 @@
 		<div in:fade={{ duration: 150 }}>
 			<h1 class="mb-6 text-center text-title-1 text-balance text-primary">Hesabını oluştur</h1>
 
-			<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
-				><GoogleIcon />Google ile kayıt ol</Button
-			>
+			{#if data.providers.google}
+				<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
+					><GoogleIcon />Google ile kayıt ol</Button
+				>
 
-			<Separator class="mx-auto my-6 w-3/4!" />
+				<Separator class="mx-auto my-6 w-3/4!" />
+			{/if}
 
 			<div class="space-y-3">
 				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
 					><MailIcon />E-posta ile kayıt ol</Button
 				>
-				<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
-					><AppleIcon />Apple ile kayıt ol</Button
-				>
-				<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
-					><DiscordIcon />Discord ile kayıt ol</Button
-				>
+				{#if data.providers.apple}
+					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
+						><AppleIcon />Apple ile kayıt ol</Button
+					>
+				{/if}
+				{#if data.providers.discord}
+					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
+						><DiscordIcon />Discord ile kayıt ol</Button
+					>
+				{/if}
 			</div>
 		</div>
 	{:else if step === 'email'}

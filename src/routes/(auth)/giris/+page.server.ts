@@ -1,13 +1,17 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { authErrorMessage } from '#lib/auth-errors.js';
 import { api, type ApiUser } from '#lib/server/api.js';
+import { enabledProviders } from '#lib/server/oauth.js';
 import { setSessionCookie } from '#lib/server/session.js';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals, url }) => {
-	if (locals.user) redirect(303, '/');
-	const notice = url.searchParams.get('hata');
-	return { notice: notice ? authErrorMessage(notice) : null };
+export const load: PageServerLoad = async (event) => {
+	if (event.locals.user) redirect(303, '/');
+	const notice = event.url.searchParams.get('hata');
+	return {
+		notice: notice ? authErrorMessage(notice) : null,
+		providers: await enabledProviders(event)
+	};
 };
 
 const text = (data: FormData, key: string) => String(data.get(key) ?? '').trim();

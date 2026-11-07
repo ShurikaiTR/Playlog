@@ -1,4 +1,5 @@
-import { error } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
+import { api } from './api.js';
 
 export type Provider = 'google' | 'discord' | 'apple';
 
@@ -30,4 +31,19 @@ export function appleDisplayName(raw: FormDataEntryValue | null): string | null 
 	} catch {
 		return null;
 	}
+}
+
+export type EnabledProviders = Record<Provider, boolean>;
+
+/**
+ * Which sign-in providers have keys configured on the API, so pages only offer those. If the API
+ * can't be reached none are shown: signing in through them would fail anyway.
+ */
+export async function enabledProviders(
+	event: Pick<RequestEvent, 'request' | 'getClientAddress'>
+): Promise<EnabledProviders> {
+	const result = await api<EnabledProviders>(event, '/v1/auth/oauth/providers', { method: 'GET' });
+	return result.ok
+		? { google: result.data.google, discord: result.data.discord, apple: result.data.apple }
+		: { google: false, discord: false, apple: false };
 }

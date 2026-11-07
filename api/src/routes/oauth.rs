@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
     extract::{Path, State},
     http::HeaderMap,
-    routing::post,
+    routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -23,9 +23,26 @@ use crate::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("/providers", get(providers))
         .route("/complete", post(complete))
         .route("/{provider}/start", post(start))
         .route("/{provider}/callback", post(callback))
+}
+
+/// Hangi sağlayıcıların anahtarları tanımlı. Arayüz yalnızca bunların butonlarını gösterir.
+#[derive(Serialize)]
+struct Providers {
+    google: bool,
+    discord: bool,
+    apple: bool,
+}
+
+async fn providers(State(state): State<AppState>) -> Json<Providers> {
+    Json(Providers {
+        google: state.oauth.enabled(Provider::Google),
+        discord: state.oauth.enabled(Provider::Discord),
+        apple: state.oauth.enabled(Provider::Apple),
+    })
 }
 
 #[derive(Serialize)]
