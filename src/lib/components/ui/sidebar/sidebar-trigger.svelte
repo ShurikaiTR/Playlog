@@ -39,11 +39,11 @@
 				{...mergedProps}
 			>
 				<SidebarToggleIcon class="cn-rtl-flip size-[18px]!" aria-hidden="true" />
-				<span class="sr-only">{sidebar.state === 'expanded' ? 'Daralt' : 'Genişlet'}</span>
+				<span class="sr-only">{sidebar.state === 'expanded' ? 'Collapse' : 'Expand'}</span>
 			</Button>
 		{/snippet}
 	</Tooltip.Trigger>
 	<Tooltip.Content side="right" sideOffset={8}>
-		{sidebar.state === 'expanded' ? 'Daralt' : 'Genişlet'}
+		{sidebar.state === 'expanded' ? 'Collapse' : 'Expand'}
 	</Tooltip.Content>
 </Tooltip.Root>

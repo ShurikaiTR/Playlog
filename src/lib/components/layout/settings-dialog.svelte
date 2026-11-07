@@ -33,12 +33,12 @@
 		id: Exclude<SettingsSection, 'account'>;
 		label: string;
 		icon: typeof PaletteIcon;
-	}[] = [{ id: 'appearance', label: 'Görünüm', icon: PaletteIcon }];
+	}[] = [{ id: 'appearance', label: 'Appearance', icon: PaletteIcon }];
 
 	const themes = [
-		{ id: 'light', label: 'Açık' },
-		{ id: 'dark', label: 'Koyu' },
-		{ id: 'system', label: 'Sistem' }
+		{ id: 'light', label: 'Light' },
+		{ id: 'dark', label: 'Dark' },
+		{ id: 'system', label: 'System' }
 	] as const;
 
 	function changeTheme(value: (typeof themes)[number]['id']) {
@@ -47,7 +47,7 @@
 	}
 
 	const languageLabel = $derived(
-		languages.find((option) => option.value === languageChoice.value)?.label ?? 'Türkçe'
+		languages.find((option) => option.value === languageChoice.value)?.label ?? 'English'
 	);
 
 	const listVisible = $derived(!isMobile.current || settingsDialog.showList);
@@ -78,10 +78,10 @@
 	>
 		{#if listVisible}
 			<ScrollArea class="min-h-0 md:border-r md:border-border">
-				<nav class="flex flex-col gap-1 p-3 max-md:pt-14" aria-label="Ayar bölümleri">
+				<nav class="flex flex-col gap-1 p-3 max-md:pt-14" aria-label="Settings sections">
 					{#if isMobile.current}
-						<Dialog.Title class="px-2.5 pb-3 text-large-title">Ayarlar</Dialog.Title>
-						<Dialog.Description class="sr-only">Hesabın ve uygulama ayarları.</Dialog.Description>
+						<Dialog.Title class="px-2.5 pb-3 text-large-title">Settings</Dialog.Title>
+						<Dialog.Description class="sr-only">Your account and app settings.</Dialog.Description>
 					{/if}
 					{#if user}
 						<!-- Like the Apple Account entry at the top of System Settings. -->
@@ -98,13 +98,13 @@
 							<span class="min-w-0 flex-1 leading-tight">
 								<span class="block truncate text-callout font-medium">{name}</span>
 								<span class="block truncate text-footnote font-normal text-muted-foreground"
-									>Playthru Hesabı</span
+									>Playthru Account</span
 								>
 							</span>
 							{#if isMobile.current}<ChevronRightIcon class="size-4 text-muted-foreground" />{/if}
 						</Button>
 					{/if}
-					<p class="px-2.5 pt-3 pb-1 text-footnote text-muted-foreground">Genel</p>
+					<p class="px-2.5 pt-3 pb-1 text-footnote text-muted-foreground">General</p>
 					{#each sections as item (item.id)}
 						<Button
 							variant="ghost"
@@ -141,11 +141,11 @@
 					{#if settingsDialog.section === 'account' && user}
 						<AccountPane />
 					{:else}
-						<ScreenHeader title="Görünüm" description="Sitenin teması ve dili." />
+						<ScreenHeader title="Appearance" description="The site theme and language." />
 
 						<div class="space-y-6">
-							<SettingsGroup title="Tema">
-								<div class="flex justify-around gap-3 px-4 py-4" role="group" aria-label="Tema seç">
+							<SettingsGroup title="Theme">
+								<div class="flex justify-around gap-3 px-4 py-4" role="group" aria-label="Choose theme">
 									{#each themes as theme (theme.id)}
 										{@const selected = userPrefersMode.current === theme.id}
 										<button
@@ -186,7 +186,7 @@
 							</SettingsGroup>
 
 							<SettingsGroup>
-								<SettingsRow label="Dil" value={languageLabel} onclick={openLanguageDialog}>
+								<SettingsRow label="Language" value={languageLabel} onclick={openLanguageDialog}>
 									<ChevronDownIcon class="size-4 text-muted-foreground/70" aria-hidden="true" />
 								</SettingsRow>
 							</SettingsGroup>

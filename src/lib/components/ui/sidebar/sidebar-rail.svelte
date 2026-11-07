@@ -17,10 +17,10 @@
 	bind:this={ref}
 	data-sidebar="rail"
 	data-slot="sidebar-rail"
-	aria-label="Kenar çubuğunu aç/kapat"
+	aria-label="Toggle sidebar"
 	tabindex={-1}
 	onclick={sidebar.toggle}
-	title="Kenar çubuğunu aç/kapat"
+	title="Toggle sidebar"
 	class={cn(
 		'absolute inset-y-0 z-20 hidden w-4 cursor-pointer transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] hover:after:bg-sidebar-border sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2',
 		'group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full hover:group-data-[collapsible=offcanvas]:bg-sidebar',

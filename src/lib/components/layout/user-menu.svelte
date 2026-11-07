@@ -21,7 +21,7 @@
 	let logoutForm = $state<HTMLFormElement | null>(null);
 
 	function logOut() {
-		showAuthTransition({ title: 'Çıkış yapılıyor', description: 'Görüşmek üzere…' });
+		showAuthTransition({ title: 'Logging out', description: 'See you soon…' });
 		logoutForm?.requestSubmit();
 	}
 </script>
@@ -81,7 +81,7 @@
 							href={`/profil/${user.username}`}
 							onclick={() => sidebar.isMobile && sidebar.setOpenMobile(false)}
 						>
-							<UserIcon />Profilim
+							<UserIcon />My profile
 						</a>
 					{/snippet}
 				</DropdownMenu.Item>
@@ -89,7 +89,7 @@
 					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
 					onSelect={() => openSettings('account')}
 				>
-					<SettingsIcon />Ayarlar
+					<SettingsIcon />Settings
 				</DropdownMenu.Item>
 				<DropdownMenu.Separator />
 				<SettingsItems theme={false} language={false} />
@@ -98,7 +98,7 @@
 					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
 					onSelect={logOut}
 				>
-					<LogOutIcon />Çıkış yap
+					<LogOutIcon />Log out
 				</DropdownMenu.Item>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>

@@ -22,14 +22,14 @@
 		'focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground';
 
 	const themes = [
-		{ value: 'light', label: 'Açık tema', icon: SunIcon },
-		{ value: 'dark', label: 'Koyu tema', icon: MoonIcon },
-		{ value: 'system', label: 'Sistem teması', icon: MonitorIcon }
+		{ value: 'light', label: 'Light theme', icon: SunIcon },
+		{ value: 'dark', label: 'Dark theme', icon: MoonIcon },
+		{ value: 'system', label: 'System theme', icon: MonitorIcon }
 	] as const;
 </script>
 
 {#if showTheme}
-	<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
+	<div class="grid grid-cols-3 gap-1" role="group" aria-label="Choose theme">
 		{#each themes as theme (theme.value)}
 			<Tooltip.Root>
 				<Tooltip.Trigger>

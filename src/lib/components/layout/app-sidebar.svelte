@@ -30,28 +30,28 @@
 	// Placeholder destinations until the real pages exist.
 	const groups: { label: string; items: Item[] }[] = [
 		{
-			label: "Göz at",
+			label: "Browse",
 			items: [
-				{ label: "Ana sayfa", href: "/", icon: HouseIcon },
-				{ label: "Keşfet", href: "/kesfet", icon: CompassIcon },
-				{ label: "Tüm oyunlar", href: "/oyunlar", icon: LayoutGridIcon },
-				{ label: "Popüler", href: "/kesfet/populer", icon: TrendingUpIcon },
-				{ label: "Türler", href: "/kesfet/turler", icon: TagIcon },
+				{ label: "Home", href: "/", icon: HouseIcon },
+				{ label: "Discover", href: "/kesfet", icon: CompassIcon },
+				{ label: "All games", href: "/oyunlar", icon: LayoutGridIcon },
+				{ label: "Popular", href: "/kesfet/populer", icon: TrendingUpIcon },
+				{ label: "Genres", href: "/kesfet/turler", icon: TagIcon },
 			],
 		},
 		{
-			label: "Topluluk",
+			label: "Community",
 			items: [
-				{ label: "İncelemeler", href: "/incelemeler", icon: MessageSquareIcon },
-				{ label: "Listeler", href: "/listeler", icon: ListIcon },
-				{ label: "Kullanıcılar", href: "/kullanicilar", icon: UsersIcon },
+				{ label: "Reviews", href: "/incelemeler", icon: MessageSquareIcon },
+				{ label: "Lists", href: "/listeler", icon: ListIcon },
+				{ label: "Users", href: "/kullanicilar", icon: UsersIcon },
 			],
 		},
 		{
-			label: "Kütüphane",
+			label: "Library",
 			items: [
-				{ label: "Kütüphanem", href: "/kutuphane", icon: LibraryIcon },
-				{ label: "Favoriler", href: "/favoriler", icon: HeartIcon },
+				{ label: "My library", href: "/kutuphane", icon: LibraryIcon },
+				{ label: "Favorites", href: "/favoriler", icon: HeartIcon },
 			],
 		},
 		{
@@ -82,14 +82,14 @@
 			<a
 				href="/"
 				class="text-primary focus-visible:ring-ring/50 flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-[3px] group-data-[collapsible=icon]:hidden"
-				aria-label="Playthru ana sayfa"
+				aria-label="Playthru home"
 			>
 				<img src="/logos/playthru.svg" alt="Playthru" width="282" height="56" class="h-8 w-auto dark:invert" />
 			</a>
 			<a
 				href="/"
 				class="text-primary hidden size-10 items-center justify-center transition-opacity group-hover/brand:opacity-0 group-data-[collapsible=icon]:flex"
-				aria-label="Playthru ana sayfa"
+				aria-label="Playthru home"
 			>
 				<img src="/logos/playthru-mascot.svg" alt="Playthru" width="100" height="100" class="size-8 object-contain dark:invert" />
 			</a>
@@ -101,7 +101,7 @@
 							variant="ghost"
 							size="icon-xs"
 							class="text-muted-foreground hover:text-primary hover:bg-foreground/8 dark:hover:bg-foreground/12 size-8 shrink-0 cursor-pointer rounded-xl transition-colors duration-100 pointer-coarse:size-11 group-data-[collapsible=icon]:hidden"
-							aria-label="Ara"
+							aria-label="Search"
 							aria-keyshortcuts="Meta+K Control+K"
 							onclick={search}
 						>
@@ -133,7 +133,7 @@
 									<div data-sidebar="icon" class="flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
 										<SearchIcon class="size-4!" />
 									</div>
-									<span>Ara</span>
+									<span>Search</span>
 								</Sidebar.MenuButton>
 							</Sidebar.MenuItem>
 						{/if}

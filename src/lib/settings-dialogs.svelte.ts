@@ -2,14 +2,14 @@
 // so both the header settings menu and the sidebar account menu can open them.
 export const settingsDialogs = $state({ language: false, feedback: false });
 
-// TODO: placeholder, the app is Turkish only for now. The choice is just remembered until translations exist.
+// TODO: placeholder, the app is English only for now. The choice is just remembered until translations exist.
 export const languages = [
-	{ value: 'tr', label: 'Türkçe', turkish: 'Türkçe' },
-	{ value: 'en', label: 'English', turkish: 'İngilizce' }
+	{ value: 'en', label: 'English', native: 'English' },
+	{ value: 'tr', label: 'Türkçe', native: 'Turkish' }
 ];
 
 // The chosen language, shared so the settings dialog can show it next to the picker button.
-export const languageChoice = $state({ value: 'tr' });
+export const languageChoice = $state({ value: 'en' });
 
 export function openLanguageDialog() {
 	settingsDialogs.language = true;

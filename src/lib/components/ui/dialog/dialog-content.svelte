@@ -43,7 +43,7 @@
 						variant="ghost"
 						size="icon"
 						class="absolute top-2.5 right-2.5 size-11 cursor-pointer rounded-xl text-muted-foreground hover:text-foreground"
-						aria-label="Kapat"
+						aria-label="Close"
 						{...props}
 					>
 						<XIcon class="size-4" />

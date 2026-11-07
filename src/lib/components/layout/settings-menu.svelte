@@ -11,7 +11,7 @@
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger
 		class={cn(buttonVariants({ variant: 'ghost', size: 'icon-lg' }), 'cursor-pointer rounded-full')}
-		aria-label="Ayarlar"
+		aria-label="Settings"
 	>
 		<SettingsIcon class="size-5" />
 	</DropdownMenu.Trigger>

@@ -18,33 +18,33 @@
 		try {
 			localStorage.setItem('playlog-language', value);
 		} catch {}
-		if (value !== 'tr') toast('Dil desteği yakında');
+		if (value !== 'en') toast('More languages are coming soon');
 	}
 </script>
 
 <Command.Dialog
 	bind:open={settingsDialogs.language}
-	title="Dil seçici"
-	description="Sitenin dilini seç"
+	title="Language picker"
+	description="Choose the site language"
 	class="z-60"
 	overlayClass="z-60"
 >
-	<Command.Input placeholder="Dil ara" />
+	<Command.Input placeholder="Search languages" />
 	<Command.List class="max-h-none p-1">
-		<Command.Empty>Dil bulunamadı</Command.Empty>
+		<Command.Empty>No language found</Command.Empty>
 		{#each languages as option (option.value)}
 			<!-- The highlight is an inset pill behind the row, not the row itself. -->
 			<Command.Item
-				value="{option.label} {option.turkish}"
+				value="{option.label} {option.native}"
 				data-checked={option.value === languageChoice.value}
 				class="relative isolate cursor-pointer gap-2 rounded-none px-3.5 py-3 after:absolute after:inset-x-1 after:inset-y-0 after:-z-10 after:rounded-lg after:bg-transparent after:transition-colors after:duration-75 in-data-[slot=dialog-content]:rounded-none data-selected:bg-transparent data-selected:after:bg-muted not-data-[checked=true]:[&>svg]:hidden"
 				onSelect={() => chooseLanguage(option.value)}
 			>
 				{option.label}
 				{#if option.value === languageChoice.value}
-					<span class="sr-only">(seçili)</span>
+					<span class="sr-only">(selected)</span>
 				{:else}
-					<span class="ms-auto text-muted-foreground">{option.turkish}</span>
+					<span class="ms-auto text-muted-foreground">{option.native}</span>
 				{/if}
 			</Command.Item>
 		{/each}
@@ -54,9 +54,9 @@
 <Dialog.Root bind:open={settingsDialogs.feedback}>
 	<Dialog.Content class="w-[520px]">
 		<Dialog.Header>
-			<Dialog.Title>Geri bildirim</Dialog.Title>
+			<Dialog.Title>Feedback</Dialog.Title>
 			<Dialog.Description class="sr-only"
-				>Bir sorunu bildir ya da fikrini paylaş.</Dialog.Description
+				>Report a problem or share an idea.</Dialog.Description
 			>
 		</Dialog.Header>
 		<FeedbackForm onsent={() => (settingsDialogs.feedback = false)} />
