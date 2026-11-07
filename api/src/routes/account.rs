@@ -30,6 +30,7 @@ const FIFTEEN_MINUTES: Duration = Duration::from_secs(900);
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(account).delete(delete_account))
+        .route("/export", get(export))
         .route("/profile", put(update_profile))
         .route("/password", put(set_password))
         .route("/sessions", get(sessions).delete(revoke_other_sessions))
@@ -159,6 +160,13 @@ struct PasswordChange {
     /// Şifresi olan hesapta zorunludur; yalnızca sosyal girişi olan hesap ilk şifresini belirlerken boştur.
     current_password: Option<String>,
     new_password: String,
+    /// Bu cihaz dışındaki oturumlar kapatılsın mı (varsayılan: evet).
+    #[serde(default = "yes")]
+    sign_out_others: bool,
+}
+
+fn yes() -> bool {
+    true
 }
 
 async fn set_password(
@@ -199,8 +207,10 @@ async fn set_password(
     .bind(new_hash)
     .execute(&mut *tx)
     .await?;
-    // Şifre değişince bu cihaz dışındaki oturumlar kapanır (OWASP Session Management).
-    delete_other_sessions(&mut tx, user.user_id, user.session_id).await?;
+    // Önerilen ve varsayılan: şifre değişince bu cihaz dışındaki oturumlar kapanır (OWASP Session Management).
+    if body.sign_out_others {
+        delete_other_sessions(&mut tx, user.user_id, user.session_id).await?;
+    }
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -214,6 +224,8 @@ struct SessionView {
     ip: Option<String>,
     created_at: DateTime<Utc>,
     last_seen_at: DateTime<Utc>,
+    /// Boşta kalma süresiyle 90 günlük mutlak sınırdan hangisi önce gelirse.
+    expires_at: DateTime<Utc>,
     current: bool,
 }
 
@@ -223,7 +235,8 @@ async fn sessions(
 ) -> Result<Json<Vec<SessionView>>, AppError> {
     // Kimlik doğrulayıcıyla aynı geçerlilik koşulu: süresi dolanlar listelenmez.
     let sessions = sqlx::query_as(
-        "SELECT id, user_agent, host(ip) AS ip, created_at, last_seen_at, id = $2 AS current
+        "SELECT id, user_agent, host(ip) AS ip, created_at, last_seen_at,
+                LEAST(expires_at, created_at + interval '90 days') AS expires_at, id = $2 AS current
            FROM sessions
           WHERE user_id = $1
             AND expires_at > now()
@@ -415,13 +428,14 @@ async fn link_callback(
 
 // ---------- Hesabı silme ----------
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 struct DeleteAccount {
     /// Şifresi olan hesapta zorunlu.
     password: Option<String>,
-    /// Şifresi olmayan (yalnızca sosyal girişli) hesapta kullanıcı adını yazarak onaylar.
-    confirm_username: Option<String>,
 }
+
+/// Şifresi olmayan hesap silinirken oturum en fazla bu kadar önce açılmış olmalı (yeniden giriş).
+const FRESH_SESSION: &str = "1 day";
 
 async fn delete_account(
     State(state): State<AppState>,
@@ -449,10 +463,17 @@ async fn delete_account(
                 return Err(AppError::Unauthorized("invalid_password"));
             }
         }
+        // Yalnızca sosyal girişli hesap: kimliği yakın zamanda sağlayıcıda doğrulanmış olmalı.
         None => {
-            let typed = body.confirm_username.unwrap_or_default();
-            if typed.trim().to_ascii_lowercase() != user.username {
-                return Err(AppError::Validation("confirmation_mismatch"));
+            let fresh: bool = sqlx::query_scalar(
+                "SELECT created_at > now() - $2::interval FROM sessions WHERE id = $1",
+            )
+            .bind(user.session_id)
+            .bind(FRESH_SESSION)
+            .fetch_one(&state.db)
+            .await?;
+            if !fresh {
+                return Err(AppError::Unauthorized("session_not_fresh"));
             }
         }
     }
@@ -476,4 +497,76 @@ async fn delete_account(
     tx.commit().await?;
     tracing::info!(user = %user.user_id, "hesap silindi");
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ---------- Verilerimi indir ----------
+
+#[derive(Serialize)]
+struct Export {
+    exported_at: DateTime<Utc>,
+    account: ExportAccount,
+    sign_in_methods: Vec<LinkedAccount>,
+    sessions: Vec<ExportSession>,
+}
+
+#[derive(Serialize, FromRow)]
+struct ExportAccount {
+    id: Uuid,
+    username: String,
+    display_name: Option<String>,
+    email: String,
+    email_verified_at: Option<DateTime<Utc>>,
+    avatar_url: Option<String>,
+    role: Role,
+    marketing_opt_in_at: Option<DateTime<Utc>>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+    has_password: bool,
+}
+
+#[derive(Serialize, FromRow)]
+struct ExportSession {
+    user_agent: Option<String>,
+    ip: Option<String>,
+    created_at: DateTime<Utc>,
+    last_seen_at: DateTime<Utc>,
+}
+
+/// Hesapta tutulan her şey tek bir JSON belgesi olarak (KVKK/GDPR veri taşınabilirliği).
+/// Parola özeti, oturum belirteçleri ve sağlayıcı kimlik numaraları dahil edilmez.
+async fn export(
+    State(state): State<AppState>,
+    user: CurrentUser,
+) -> Result<Json<Export>, AppError> {
+    rate_limit(
+        &state,
+        &format!("account:export:{}", user.user_id),
+        10,
+        FIFTEEN_MINUTES,
+    )?;
+    let account: ExportAccount = sqlx::query_as(
+        "SELECT u.id, u.username, u.display_name, u.email, u.email_verified_at, u.avatar_url,
+                u.role, u.marketing_opt_in_at, u.created_at, u.updated_at,
+                EXISTS (SELECT 1 FROM credentials c WHERE c.user_id = u.id) AS has_password
+           FROM users u
+          WHERE u.id = $1",
+    )
+    .bind(user.user_id)
+    .fetch_one(&state.db)
+    .await?;
+    let sessions = sqlx::query_as(
+        "SELECT user_agent, host(ip) AS ip, created_at, last_seen_at
+           FROM sessions
+          WHERE user_id = $1 AND expires_at > now()
+          ORDER BY created_at",
+    )
+    .bind(user.user_id)
+    .fetch_all(&state.db)
+    .await?;
+    Ok(Json(Export {
+        exported_at: Utc::now(),
+        account,
+        sign_in_methods: linked_accounts(&state.db, user.user_id).await?,
+        sessions,
+    }))
 }
