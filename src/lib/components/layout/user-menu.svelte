@@ -48,9 +48,8 @@
 						class="h-11 cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! data-[state=open]:bg-sidebar-accent"
 					>
 						{@render avatar('size-8')}
-						<span class="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
+						<span class="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
 							<span class="truncate text-callout font-[550]">{name}</span>
-							<span class="truncate text-footnote text-muted-foreground">@{user.username}</span>
 						</span>
 					</Sidebar.MenuButton>
 				{/snippet}
