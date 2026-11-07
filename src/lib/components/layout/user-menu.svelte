@@ -5,7 +5,7 @@
 	import { showAuthTransition } from '#lib/auth-transition.svelte.js';
 	import UserIcon from '@lucide/svelte/icons/user';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
-	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import { cn } from '#lib/utils.js';
 	import SettingsItems from './settings-items.svelte';
 
 	// Account menu at the bottom of the sidebar for signed-in users.
@@ -14,6 +14,7 @@
 	const name = $derived(user.displayName || user.username);
 	const initial = $derived(name.charAt(0).toLocaleUpperCase('tr'));
 	const sidebar = Sidebar.useSidebar();
+	const collapsed = $derived(!sidebar.isMobile && sidebar.state === 'collapsed');
 
 	let logoutForm = $state<HTMLFormElement | null>(null);
 
@@ -49,17 +50,18 @@
 							<span class="truncate font-[550]">{name}</span>
 							<span class="truncate text-xs text-muted-foreground">@{user.username}</span>
 						</span>
-						<ChevronsUpDownIcon
-							class="ms-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden"
-						/>
 					</Sidebar.MenuButton>
 				{/snippet}
 			</DropdownMenu.Trigger>
+			<!-- Opens above the row, as wide as the sidebar. Collapsed to icons, there is no room above, so it opens beside it. -->
 			<DropdownMenu.Content
-				side={sidebar.isMobile ? 'top' : 'right'}
-				align="end"
+				side={collapsed ? 'right' : 'top'}
+				align={collapsed ? 'end' : 'start'}
 				sideOffset={8}
-				class="w-60 rounded-2xl p-2"
+				class={cn(
+					'rounded-2xl p-2',
+					collapsed ? 'w-60' : 'w-(--bits-dropdown-menu-anchor-width) min-w-0'
+				)}
 			>
 				<DropdownMenu.Label
 					class="flex items-center gap-2.5 px-2 py-1.5 font-normal text-foreground"
