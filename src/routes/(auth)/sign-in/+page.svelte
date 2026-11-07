@@ -6,8 +6,8 @@
 </script>
 
 <svelte:head>
-	<title>Giriş yap | Playthru</title>
-	<meta name="description" content="Playthru hesabına giriş yap." />
+	<title>Log in | Playthru</title>
+	<meta name="description" content="Log in to your Playthru account." />
 </svelte:head>
 
 <SignInFlow enabled={data.providers} notice={data.notice} />

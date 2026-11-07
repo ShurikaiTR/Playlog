@@ -24,8 +24,8 @@
 			{#if !page.data.user}
 				<div class="ml-auto flex items-center gap-2">
 					<SettingsMenu />
-					<Button href="/sign-in" variant="outline" size="lg" onclick={(event) => openAuthModal(event, "sign-in")}>Giriş yap</Button>
-					<Button href="/sign-up" size="lg" onclick={(event) => openAuthModal(event, "sign-up")}>Kayıt ol</Button>
+					<Button href="/sign-in" variant="outline" size="lg" onclick={(event) => openAuthModal(event, "sign-in")}>Log in</Button>
+					<Button href="/sign-up" size="lg" onclick={(event) => openAuthModal(event, "sign-up")}>Sign up</Button>
 				</div>
 			{/if}
 		</header>

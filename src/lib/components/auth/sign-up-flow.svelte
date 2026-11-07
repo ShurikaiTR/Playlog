@@ -47,7 +47,7 @@
 	let captcha = $state<ReturnType<typeof Turnstile>>();
 	function captchaReady() {
 		if (!TURNSTILE_SITE_KEY || captchaToken) return true;
-		statusMessage = 'Doğrulama tamamlanıyor, bir saniye bekle.';
+		statusMessage = 'Verifying you are human, one moment.';
 		return false;
 	}
 
@@ -79,7 +79,7 @@
 	onDestroy(() => clearInterval(countdown));
 
 	const failure = (data: Record<string, unknown> | undefined) =>
-		typeof data?.error === 'string' ? data.error : 'Bir şeyler ters gitti. Lütfen tekrar dene.';
+		typeof data?.error === 'string' ? data.error : 'Something went wrong. Please try again.';
 
 	// Errors that belong to the email step send the visitor back there.
 	const EMAIL_ERRORS = new Set(['invalid_email', 'email_taken']);
@@ -98,7 +98,7 @@
 			if (result.type === 'success') {
 				startResendCountdown();
 				if (step === 'verify') {
-					statusMessage = 'Yeni kod gönderildi.';
+					statusMessage = 'A new code was sent.';
 				} else {
 					code = '';
 					goTo('verify');
@@ -115,15 +115,15 @@
 	// Verify step: the right code creates the account.
 	const submitVerify: SubmitFunction = ({ cancel }) => {
 		if (code.length < 6) {
-			statusMessage = 'E-postana gelen 6 haneli kodu gir.';
+			statusMessage = 'Enter the 6-digit code from your email.';
 			cancel();
 			return;
 		}
 		pending = true;
 		statusMessage = '';
 		showAuthTransition({
-			title: 'Hesabın oluşturuluyor',
-			description: 'Her şeyi hazırlıyoruz, lütfen bekle…'
+			title: 'Creating your account',
+			description: 'Getting everything ready, please wait…'
 		});
 		return async ({ result }) => {
 			pending = false;
@@ -142,8 +142,8 @@
 	};
 </script>
 
-<div lang="tr">
-	<!-- "Tekrar gönder" posts the same details again; kept outside the code form so Enter there verifies. -->
+<div lang="en">
+	<!-- "Resend code" posts the same details again; kept outside the code form so Enter there verifies. -->
 	<form id="signup-resend" method="POST" action="/sign-up?/start" hidden use:enhance={submitStart}>
 		<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 		<input type="hidden" name="email" value={email} />
@@ -158,12 +158,12 @@
 			<h1
 				class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary"
 			>
-				Hesabını oluştur
+				Create your account
 			</h1>
 
 			{#if enabled.google}
 				<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
-					><GoogleIcon />Google ile kayıt ol</Button
+					><GoogleIcon />Sign up with Google</Button
 				>
 
 				<Separator class="mx-auto my-6 w-3/4!" />
@@ -171,16 +171,16 @@
 
 			<div class="space-y-3">
 				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
-					><MailIcon />E-posta ile kayıt ol</Button
+					><MailIcon />Sign up with email</Button
 				>
 				{#if enabled.apple}
 					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
-						><AppleIcon />Apple ile kayıt ol</Button
+						><AppleIcon />Sign up with Apple</Button
 					>
 				{/if}
 				{#if enabled.discord}
 					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
-						><DiscordIcon />Discord ile kayıt ol</Button
+						><DiscordIcon />Sign up with Discord</Button
 					>
 				{/if}
 			</div>
@@ -190,10 +190,10 @@
 			<h1
 				class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary"
 			>
-				E-postanla kayıt ol
+				Sign up with email
 			</h1>
 			<div class="space-y-2">
-				<Label for="signup-email">E-posta</Label>
+				<Label for="signup-email">Email</Label>
 				<Input
 					id="signup-email"
 					name="email"
@@ -205,10 +205,10 @@
 				/>
 			</div>
 
-			<Button type="submit" size="lg" class="w-full">İleri</Button>
+			<Button type="submit" size="lg" class="w-full">Next</Button>
 
 			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
-				>Geri dön</Button
+				>Go back</Button
 			>
 		</form>
 	{:else if step === 'details'}
@@ -224,7 +224,7 @@
 			<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 			<div class="mb-8 text-center">
 				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Kaydını tamamla
+					Finish signing up
 				</h1>
 				<span
 					class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
@@ -235,7 +235,7 @@
 			</div>
 			<div class="grid grid-cols-2 gap-3">
 				<div class="space-y-2">
-					<Label for="signup-name">Görünen ad</Label>
+					<Label for="signup-name">Display name</Label>
 					<Input
 						id="signup-name"
 						name="display_name"
@@ -246,7 +246,7 @@
 					/>
 				</div>
 				<div class="space-y-2">
-					<Label for="signup-username">Kullanıcı adı</Label>
+					<Label for="signup-username">Username</Label>
 					<Input
 						id="signup-username"
 						name="username"
@@ -259,7 +259,7 @@
 				</div>
 			</div>
 			<div class="space-y-2">
-				<Label for="signup-password">Şifre</Label>
+				<Label for="signup-password">Password</Label>
 				<InputGroup.Root>
 					<InputGroup.Input
 						id="signup-password"
@@ -274,7 +274,7 @@
 						<InputGroup.Button
 							size="icon-xs"
 							class="cursor-pointer rounded-full"
-							aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+							aria-label={showPassword ? 'Hide password' : 'Show password'}
 							onclick={() => (showPassword = !showPassword)}
 						>
 							{#if showPassword}
@@ -289,16 +289,16 @@
 			<div class="flex items-center gap-2.5 py-1">
 				<Checkbox id="signup-updates" bind:checked={wantsUpdates} />
 				<Label for="signup-updates" class="cursor-pointer text-callout font-normal"
-					>Yeni özellikler ve duyurular hakkında e-posta almak istiyorum</Label
+					>Email me about new features and announcements</Label
 				>
 			</div>
 
 			<Button type="submit" size="lg" class="w-full" disabled={pending}
-				>{pending ? 'Kod gönderiliyor…' : 'Devam et'}</Button
+				>{pending ? 'Sending code…' : 'Continue'}</Button
 			>
 
 			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
-				>Geri dön</Button
+				>Go back</Button
 			>
 		</form>
 	{:else}
@@ -312,11 +312,13 @@
 			<input type="hidden" name="email" value={email} />
 			<div class="text-center">
 				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-					E-postanı doğrula
+					Verify your email
 				</h1>
 				<p class="mt-3 text-callout text-pretty text-muted-foreground">
-					<span class="font-medium text-foreground">{email}</span> adresine tek kullanımlık bir güvenlik
-					kodu gönderdik. Birkaç dakika içinde gelmezse spam klasörünü de kontrol et. Kodu aşağıya gir:
+					We sent a one-time security code to <span class="font-medium text-foreground"
+						>{email}</span
+					>. If it doesn't arrive within a few minutes, check your spam folder. Enter the code
+					below:
 				</p>
 			</div>
 
@@ -346,21 +348,21 @@
 			</div>
 
 			<p class="text-center text-footnote text-muted-foreground">
-				Kod gelmedi mi?
+				Didn't get the code?
 				<Button
 					type="submit"
 					form="signup-resend"
 					variant="link"
 					class="h-auto cursor-pointer p-0 font-medium text-foreground disabled:font-normal disabled:text-muted-foreground disabled:no-underline"
 					disabled={resendIn > 0 || pending}
-					>Tekrar gönder{resendIn > 0 ? ` (${resendIn})` : ''}</Button
+					>Resend code{resendIn > 0 ? ` (${resendIn})` : ''}</Button
 				>
 			</p>
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}>E-postayı doğrula</Button>
+			<Button type="submit" size="lg" class="w-full" disabled={pending}>Verify email</Button>
 
 			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('details')}
-				>Geri dön</Button
+				>Go back</Button
 			>
 		</form>
 	{/if}
@@ -376,10 +378,10 @@
 	{/if}
 
 	<p class="mt-8 text-center text-footnote text-muted-foreground">
-		Zaten hesabın var mı?
+		Already have an account?
 
 		<a href="/sign-in" onclick={onSwitch} class="font-medium text-foreground hover:underline"
-			>Giriş yap</a
+			>Log in</a
 		>
 	</p>
 

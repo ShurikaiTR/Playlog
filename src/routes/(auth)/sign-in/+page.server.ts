@@ -20,7 +20,7 @@ const captcha = (data: FormData) => text(data, 'cf-turnstile-response');
 
 const codeError = (result: { status: number; error: string }) =>
 	result.status === 404
-		? 'E-postayla giriş kodu henüz kullanılamıyor. Şifrenle giriş yapabilirsin.'
+		? 'Email login codes are not available right now. Log in with your password instead.'
 		: authErrorMessage(result.error);
 
 export const actions: Actions = {
@@ -28,7 +28,7 @@ export const actions: Actions = {
 		const data = await event.request.formData();
 		const identifier = text(data, 'email');
 		const password = String(data.get('password') ?? '');
-		if (!identifier || !password) return fail(400, { error: 'E-postanı ve şifreni gir.' });
+		if (!identifier || !password) return fail(400, { error: 'Enter your email and password.' });
 
 		const result = await api<{ token: string; user: ApiUser }>(event, '/v1/auth/login', {
 			body: { identifier, password, turnstile_token: captcha(data) }
@@ -43,7 +43,7 @@ export const actions: Actions = {
 	resetStart: async (event) => {
 		const data = await event.request.formData();
 		const email = text(data, 'email');
-		if (!email) return fail(400, { error: 'Önce e-posta adresini gir.' });
+		if (!email) return fail(400, { error: 'Enter your email address first.' });
 
 		const result = await api(event, '/v1/auth/password-reset/start', {
 			body: { email, turnstile_token: captcha(data) }
@@ -57,7 +57,7 @@ export const actions: Actions = {
 		const email = text(data, 'email');
 		const code = text(data, 'code').replace(/\D/g, '');
 		const newPassword = String(data.get('password') ?? '');
-		if (code.length !== 6) return fail(400, { error: 'E-postana gelen 6 haneli kodu gir.' });
+		if (code.length !== 6) return fail(400, { error: 'Enter the 6-digit code from your email.' });
 
 		const result = await api(event, '/v1/auth/password-reset/confirm', {
 			body: { email, code, new_password: newPassword }
@@ -72,7 +72,7 @@ export const actions: Actions = {
 	codeStart: async (event) => {
 		const data = await event.request.formData();
 		const email = text(data, 'email');
-		if (!email) return fail(400, { error: 'Önce e-posta adresini gir.' });
+		if (!email) return fail(400, { error: 'Enter your email address first.' });
 
 		const result = await api(event, '/v1/auth/login-code/start', {
 			body: { email, turnstile_token: captcha(data) }
@@ -85,7 +85,7 @@ export const actions: Actions = {
 		const data = await event.request.formData();
 		const email = text(data, 'email');
 		const code = text(data, 'code').replace(/\D/g, '');
-		if (code.length !== 6) return fail(400, { error: 'E-postana gelen 6 haneli kodu gir.' });
+		if (code.length !== 6) return fail(400, { error: 'Enter the 6-digit code from your email.' });
 
 		const result = await api<{ token: string; user: ApiUser }>(
 			event,

@@ -1,9 +1,10 @@
 <p class="mt-2 text-center text-xs text-muted-foreground">
-	Devam ederek Playthru'nun
+	By continuing, you agree to Playthru's
 	<a href="/kullanim-sartlari" class="underline underline-offset-4 hover:text-primary"
-		>Kullanım Şartları</a
-	>'nı ve
+		>Terms of Service</a
+	>
+	and
 	<a href="/gizlilik-politikasi" class="underline underline-offset-4 hover:text-primary"
-		>Gizlilik Politikası</a
-	>'nı kabul etmiş olursun.
+		>Privacy Policy</a
+	>.
 </p>

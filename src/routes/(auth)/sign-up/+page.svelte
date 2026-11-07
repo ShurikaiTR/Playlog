@@ -6,8 +6,8 @@
 </script>
 
 <svelte:head>
-	<title>Kayıt ol | Playthru</title>
-	<meta name="description" content="Ücretsiz bir Playthru hesabı oluştur." />
+	<title>Sign up | Playthru</title>
+	<meta name="description" content="Create a free Playthru account." />
 </svelte:head>
 
 <SignUpFlow enabled={data.providers} />

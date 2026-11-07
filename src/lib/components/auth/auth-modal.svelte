@@ -23,9 +23,7 @@
 
 <Dialog.Root open={!!modal} {onOpenChange}>
 	<Dialog.Content class="gap-0 p-0 sm:max-w-100" aria-describedby={undefined}>
-		<Dialog.Title class="sr-only"
-			>{modal?.kind === 'sign-up' ? 'Kayıt ol' : 'Giriş yap'}</Dialog.Title
-		>
+		<Dialog.Title class="sr-only">{modal?.kind === 'sign-up' ? 'Sign up' : 'Log in'}</Dialog.Title>
 		<div class="max-h-[calc(100dvh-2rem)] overflow-y-auto px-5 pt-14 pb-6 sm:px-6">
 			{#if modal?.kind === 'sign-up'}
 				<SignUpFlow enabled={modal.enabled} onSwitch={(event) => swap(event, 'sign-in')} />

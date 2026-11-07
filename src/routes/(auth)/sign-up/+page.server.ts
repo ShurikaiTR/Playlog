@@ -36,7 +36,7 @@ export const actions: Actions = {
 	verify: async (event) => {
 		const data = await event.request.formData();
 		const code = text(data, 'code').replace(/\D/g, '');
-		if (code.length !== 6) return fail(400, { error: 'E-postana gelen 6 haneli kodu gir.' });
+		if (code.length !== 6) return fail(400, { error: 'Enter the 6-digit code from your email.' });
 
 		const result = await api<{ token: string; user: ApiUser }>(event, '/v1/auth/signup/verify', {
 			body: { email: text(data, 'email'), code }

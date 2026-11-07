@@ -30,14 +30,14 @@
 	}: Props = $props();
 
 	const lastLabel = $derived(
-		lastProvider === 'email' ? 'E-posta' : providers.find((p) => p.id === lastProvider)?.label
+		lastProvider === 'email' ? 'Email' : providers.find((p) => p.id === lastProvider)?.label
 	);
 	const ringStyle = 'mask-image: radial-gradient(circle, transparent 90%, black 100%);';
 </script>
 
 <div class="flex flex-col gap-3">
 	<h1 class="text-center text-title-2 font-semibold tracking-tight text-balance text-primary">
-		Hesabına giriş yap
+		Log in to your account
 	</h1>
 
 	<div class="min-h-5">
@@ -51,7 +51,7 @@
 					style="mask-image: linear-gradient(transparent 0%, black 50%, transparent 100%);"
 					aria-hidden="true"
 				></span>
-				En son {lastLabel} ile giriş yaptın
+				You last logged in with {lastLabel}
 			</p>
 		{/if}
 	</div>
@@ -69,14 +69,14 @@
 				variant="outline"
 				class="h-10 w-full text-sm font-medium [&_svg:not([class*='size-'])]:size-4"
 				onclick={() => onProvider(provider.id)}
-				><provider.icon />{provider.label} ile devam et</Button
+				><provider.icon />Continue with {provider.label}</Button
 			>
 		</div>
 	{/each}
 
 	<div class="flex items-center gap-3 py-1" aria-hidden="true">
 		<Separator class="flex-1" />
-		<span class="text-xs text-muted-foreground">veya</span>
+		<span class="text-xs text-muted-foreground">or</span>
 		<Separator class="flex-1" />
 	</div>
 
@@ -88,7 +88,7 @@
 		}}
 	>
 		<div class="relative flex flex-col gap-2">
-			<Label for="login-email" class="sr-only">E-posta</Label>
+			<Label for="login-email" class="sr-only">Email</Label>
 			{#if lastProvider === 'email'}
 				<div
 					class="pointer-events-none absolute -inset-1.5 rounded-2xl border border-orange-500"
@@ -100,7 +100,7 @@
 				id="login-email"
 				name="email"
 				type="email"
-				placeholder="E-posta"
+				placeholder="Email"
 				bind:value={email}
 				autocomplete="email"
 				required
@@ -109,12 +109,12 @@
 		</div>
 
 		<div class="pt-5">
-			<Button type="submit" class="h-10 w-full text-sm font-medium">İleri</Button>
+			<Button type="submit" class="h-10 w-full text-sm font-medium">Next</Button>
 		</div>
 	</form>
 
 	<p class="text-center text-footnote text-muted-foreground">
-		Hesabın yok mu?
+		Don't have an account?
 		<a href={signUpHref} onclick={onSwitch} class="font-medium text-foreground hover:underline"
 			>Kaydol</a
 		>

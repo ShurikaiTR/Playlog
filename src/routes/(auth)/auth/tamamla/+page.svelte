@@ -21,8 +21,8 @@
 		pending = true;
 		statusMessage = '';
 		showAuthTransition({
-			title: 'Hesabın oluşturuluyor',
-			description: 'Her şeyi hazırlıyoruz, lütfen bekle…'
+			title: 'Creating your account',
+			description: 'Getting everything ready, please wait…'
 		});
 		return async ({ result }) => {
 			pending = false;
@@ -35,19 +35,19 @@
 			statusMessage =
 				result.type === 'failure' && typeof result.data?.error === 'string'
 					? result.data.error
-					: 'Bir şeyler ters gitti. Lütfen tekrar dene.';
+					: 'Something went wrong. Please try again.';
 		};
 	};
 </script>
 
 <svelte:head>
-	<title>Kaydını tamamla | Playthru</title>
+	<title>Finish signing up | Playthru</title>
 </svelte:head>
 
-<div lang="tr">
+<div lang="en">
 	<form method="POST" class="space-y-4" use:enhance={submit}>
 		<div class="mb-8 text-center">
-			<h1 class="text-title-1 text-balance text-primary">Kaydını tamamla</h1>
+			<h1 class="text-title-1 text-balance text-primary">Finish signing up</h1>
 			<span
 				class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
 			>
@@ -58,7 +58,7 @@
 		<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 
 		<div class="space-y-2">
-			<Label for="complete-username">Kullanıcı adı</Label>
+			<Label for="complete-username">Username</Label>
 			<Input
 				id="complete-username"
 				name="username"
@@ -73,12 +73,12 @@
 		<div class="flex items-center gap-2.5 py-1">
 			<Checkbox id="complete-updates" bind:checked={wantsUpdates} />
 			<Label for="complete-updates" class="cursor-pointer text-callout font-normal"
-				>Yeni özellikler ve duyurular hakkında e-posta almak istiyorum</Label
+				>Email me about new features and announcements</Label
 			>
 		</div>
 
 		<Button type="submit" size="lg" class="w-full" disabled={pending}
-			>{pending ? 'Kayıt tamamlanıyor…' : 'Kaydı tamamla'}</Button
+			>{pending ? 'Finishing…' : 'Finish sign-up'}</Button
 		>
 	</form>
 

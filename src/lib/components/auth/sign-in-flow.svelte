@@ -9,12 +9,10 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
-	import EyeIcon from '@lucide/svelte/icons/eye';
-	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import Turnstile from './turnstile.svelte';
+	import PasswordInput from '#lib/components/auth/password-input.svelte';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -29,9 +27,8 @@
 	let { enabled, notice = null, onSwitch }: Props = $props();
 
 	// The page moves from the provider list to an email step, then a password step.
-	// "Şifreni mi unuttun?" mails a code and opens the reset step.
+	// "Forgot password?" mails a code and opens the reset step.
 	let step = $state<'providers' | 'password' | 'reset' | 'code'>('providers');
-	let showPassword = $state(false);
 	// A message from a Google/Discord attempt that sent the visitor back here.
 	// svelte-ignore state_referenced_locally
 	let statusMessage = $state(notice ?? '');
@@ -48,7 +45,7 @@
 	let captcha = $state<ReturnType<typeof Turnstile>>();
 	function captchaReady() {
 		if (!TURNSTILE_SITE_KEY || captchaToken) return true;
-		statusMessage = 'Doğrulama tamamlanıyor, bir saniye bekle.';
+		statusMessage = 'Verifying you are human, one moment.';
 		return false;
 	}
 
@@ -57,7 +54,7 @@
 		{ id: 'google', label: 'Google', icon: GoogleIcon },
 		{ id: 'apple', label: 'Apple', icon: AppleIcon },
 		{ id: 'discord', label: 'Discord', icon: DiscordIcon },
-		{ id: 'email', label: 'E-posta', icon: MailIcon }
+		{ id: 'email', label: 'Email', icon: MailIcon }
 	];
 	// E-mail always works; the others only when their keys are configured on the API.
 	const shownProviders = $derived(
@@ -112,7 +109,7 @@
 	onDestroy(() => clearInterval(countdown));
 
 	const failure = (data: Record<string, unknown> | undefined) =>
-		typeof data?.error === 'string' ? data.error : 'Bir şeyler ters gitti. Lütfen tekrar dene.';
+		typeof data?.error === 'string' ? data.error : 'Something went wrong. Please try again.';
 
 	// Signs in from the password step.
 	const submitLogin: SubmitFunction = ({ cancel }) => {
@@ -123,8 +120,8 @@
 		pending = true;
 		statusMessage = '';
 		showAuthTransition({
-			title: 'Giriş yapılıyor',
-			description: 'Hesabın doğrulanıyor, lütfen bekle…'
+			title: 'Logging in',
+			description: 'Checking your account, please wait…'
 		});
 		return async ({ result }) => {
 			captcha?.reset();
@@ -140,7 +137,7 @@
 		};
 	};
 
-	// "Şifreni mi unuttun?" and "Tekrar gönder" both mail a reset code through the hidden form
+	// "Forgot password?" and "Resend code" both mail a reset code through the hidden form
 	// below, so pressing Enter in a step's own form never triggers them.
 	const submitResetStart: SubmitFunction = ({ cancel }) => {
 		if (!captchaReady()) {
@@ -148,7 +145,7 @@
 			return;
 		}
 		if (!email.trim()) {
-			statusMessage = 'Önce e-posta adresini gir.';
+			statusMessage = 'Enter your email address first.';
 			cancel();
 			return;
 		}
@@ -163,7 +160,7 @@
 			}
 			startResendCountdown();
 			if (step === 'reset') {
-				statusMessage = 'Yeni kod gönderildi.';
+				statusMessage = 'A new code was sent.';
 			} else {
 				resetCode = '';
 				newPassword = '';
@@ -172,14 +169,14 @@
 		};
 	};
 
-	// "Email login code" and "Kodu yeniden gönder" mail a sign-in code.
+	// "Email login code" and "Resend code" mail a sign-in code.
 	const submitCodeStart: SubmitFunction = ({ cancel }) => {
 		if (!captchaReady()) {
 			cancel();
 			return;
 		}
 		if (!email.trim()) {
-			statusMessage = 'Önce e-posta adresini gir.';
+			statusMessage = 'Enter your email address first.';
 			cancel();
 			return;
 		}
@@ -194,7 +191,7 @@
 			}
 			startResendCountdown();
 			if (step === 'code') {
-				statusMessage = 'Yeni kod gönderildi.';
+				statusMessage = 'A new code was sent.';
 			} else {
 				loginCode = '';
 				goTo('code');
@@ -211,8 +208,8 @@
 		pending = true;
 		statusMessage = '';
 		showAuthTransition({
-			title: 'Giriş yapılıyor',
-			description: 'Kodun doğrulanıyor, lütfen bekle…'
+			title: 'Logging in',
+			description: 'Checking your code, please wait…'
 		});
 		return async ({ result }) => {
 			pending = false;
@@ -232,7 +229,7 @@
 	// Sets the new password from the reset step.
 	const submitReset: SubmitFunction = ({ cancel }) => {
 		if (resetCode.length < 6) {
-			statusMessage = 'E-postana gelen 6 haneli kodu gir.';
+			statusMessage = 'Enter the 6-digit code from your email.';
 			cancel();
 			return;
 		}
@@ -243,7 +240,7 @@
 			if (result.type === 'success') {
 				password = '';
 				goTo('password');
-				statusMessage = 'Şifren değişti. Yeni şifrenle giriş yapabilirsin.';
+				statusMessage = 'Your password was changed. You can now log in with it.';
 			} else {
 				const data = result.type === 'failure' ? result.data : undefined;
 				if (data?.code === 'invalid_code') resetCode = '';
@@ -253,7 +250,7 @@
 	};
 </script>
 
-<div lang="tr">
+<div lang="en">
 	<form
 		id="reset-start"
 		method="POST"
@@ -292,87 +289,70 @@
 		<form
 			method="POST"
 			action="/sign-in?/login"
-			class="space-y-3"
+			class="relative"
 			use:enhance={submitLogin}
 			in:fade={{ duration: 150 }}
 		>
 			<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
-			<h1
-				class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary"
-			>
-				E-postanla giriş yap
-			</h1>
-			<div class="space-y-2">
-				<Label for="login-email">E-posta</Label>
-				<Input
-					id="login-email"
-					name="email"
-					type="email"
-					bind:value={email}
-					autocomplete="email"
-					required
-				/>
-			</div>
+			<input type="hidden" name="email" value={email} />
 			<Button
-				type="submit"
-				form="code-start"
-				variant="outline"
-				size="lg"
-				class="w-full"
-				disabled={pending}><MailIcon />Email login code</Button
+				variant="ghost"
+				size="icon"
+				class="absolute -top-11 -left-2 size-8 rounded-xl text-muted-foreground hover:text-foreground"
+				aria-label="Go back"
+				onclick={() => goTo('providers')}><ArrowLeftIcon /></Button
 			>
-
-			<div class="flex items-center gap-3 py-3" aria-hidden="true">
-				<Separator class="flex-1" />
-				<span class="text-footnote text-muted-foreground">veya</span>
-				<Separator class="flex-1" />
-			</div>
-
-			<div class="space-y-2">
-				<div class="flex min-h-5 items-center justify-between gap-2">
-					<Label for="login-password" class="text-xs font-medium">Şifre</Label>
-					<Button
-						type="submit"
-						form="reset-start"
-						variant="link"
-						class="h-auto cursor-pointer p-0 text-xs font-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-						disabled={pending}>Şifremi unuttum</Button
-					>
+			<div class="flex flex-col gap-3">
+				<div class="text-center">
+					<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
+						Log in with email
+					</h1>
+					<p class="mt-1.5 text-footnote text-muted-foreground">Enter your password to log in.</p>
 				</div>
-				<InputGroup.Root class="h-9 rounded-xl">
-					<InputGroup.Input
+
+				<Button
+					type="submit"
+					form="code-start"
+					variant="outline"
+					class="h-10 w-full text-sm font-medium [&_svg:not([class*='size-'])]:size-4"
+					disabled={pending}><MailIcon />Email login code</Button
+				>
+
+				<div class="flex items-center gap-3 py-1" aria-hidden="true">
+					<Separator class="flex-1" />
+					<span class="text-xs text-muted-foreground">or</span>
+					<Separator class="flex-1" />
+				</div>
+
+				<div class="flex flex-col gap-2">
+					<div class="flex min-h-5 items-center justify-between gap-2">
+						<Label for="login-password" class="text-xs font-medium">Password</Label>
+						<Button
+							type="submit"
+							form="reset-start"
+							variant="link"
+							class="h-auto cursor-pointer p-0 text-xs font-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+							disabled={pending}>Forgot password?</Button
+						>
+					</div>
+					<PasswordInput
 						id="login-password"
 						name="password"
-						type={showPassword ? 'text' : 'password'}
 						bind:value={password}
 						autocomplete="current-password"
-						required
+						class="h-9 rounded-xl"
 						autofocus
 					/>
-					<InputGroup.Addon align="inline-end">
-						<InputGroup.Button
-							size="icon-xs"
-							class="cursor-pointer rounded-full"
-							aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-							onclick={() => (showPassword = !showPassword)}
-						>
-							{#if showPassword}
-								<EyeOffIcon />
-							{:else}
-								<EyeIcon />
-							{/if}
-						</InputGroup.Button>
-					</InputGroup.Addon>
-				</InputGroup.Root>
+				</div>
+
+				<Turnstile bind:this={captcha} bind:token={captchaToken} />
 			</div>
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}
-				>{pending ? 'Giriş yapılıyor…' : 'Giriş yap'}</Button
-			>
-
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
-				>Geri dön</Button
-			>
+			<div class="pt-5">
+				<Button type="submit" class="h-10 w-full text-sm font-medium" disabled={pending}
+					>{pending ? 'Logging in…' : 'Log in'}</Button
+				>
+			</div>
 		</form>
 	{:else if step === 'code'}
 		<form
@@ -386,16 +366,16 @@
 				variant="ghost"
 				size="icon"
 				class="absolute -top-11 -left-2 size-8 rounded-xl text-muted-foreground hover:text-foreground"
-				aria-label="Geri dön"
+				aria-label="Go back"
 				onclick={() => goTo('password')}><ArrowLeftIcon /></Button
 			>
 			<input type="hidden" name="email" value={email} />
 			<div class="flex flex-col gap-3">
 				<h1 class="text-center text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Giriş kodunu gir
+					Enter your login code
 				</h1>
 				<p class="text-center text-footnote text-pretty text-muted-foreground">
-					<span class="font-medium text-foreground">{email}</span> adresine 6 haneli bir kod gönderdik.
+					We sent a 6-digit code to <span class="font-medium text-foreground">{email}</span>.
 				</p>
 				<div class="flex justify-center pt-3">
 					<InputOTP.Root
@@ -423,10 +403,11 @@
 				</div>
 			</div>
 			<div class="flex flex-col gap-3 pt-5">
+				<Turnstile bind:this={captcha} bind:token={captchaToken} />
 				<Button
 					type="submit"
 					class="h-10 w-full text-sm font-medium"
-					disabled={pending || loginCode.length < 6}>Giriş yap</Button
+					disabled={pending || loginCode.length < 6}>Log in</Button
 				>
 				<Button
 					type="submit"
@@ -434,9 +415,7 @@
 					variant="outline"
 					class="h-10 w-full text-sm font-medium"
 					disabled={resendIn > 0 || pending}
-					>{resendIn > 0
-						? `Kodu ${resendIn}s içinde yeniden gönder`
-						: 'Kodu yeniden gönder'}</Button
+					>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
 				>
 			</div>
 		</form>
@@ -450,11 +429,11 @@
 		>
 			<div class="text-center">
 				<h1 class="text-title-2 font-semibold tracking-tight text-balance text-primary">
-					Şifreni sıfırla
+					Reset your password
 				</h1>
 				<p class="mt-3 text-callout text-pretty text-muted-foreground">
-					<span class="font-medium text-foreground">{email}</span> bir hesaba bağlıysa, bu adrese tek
-					kullanımlık bir kod gönderdik. Kodu ve yeni şifreni gir:
+					If <span class="font-medium text-foreground">{email}</span> is linked to an account, we sent
+					a one-time code to that address. Enter the code and your new password:
 				</p>
 			</div>
 			<input type="hidden" name="email" value={email} />
@@ -485,58 +464,37 @@
 			</div>
 
 			<p class="text-center text-footnote text-muted-foreground">
-				Kod gelmedi mi?
+				Didn't get the code?
 				<Button
 					type="submit"
 					form="reset-start"
 					variant="link"
 					class="h-auto cursor-pointer p-0 font-medium text-foreground disabled:font-normal disabled:text-muted-foreground disabled:no-underline"
 					disabled={resendIn > 0 || pending}
-					>Tekrar gönder{resendIn > 0 ? ` (${resendIn})` : ''}</Button
+					>Resend code{resendIn > 0 ? ` (${resendIn})` : ''}</Button
 				>
 			</p>
 
 			<div class="space-y-2">
-				<Label for="reset-password">Yeni şifre</Label>
-				<InputGroup.Root>
-					<InputGroup.Input
-						id="reset-password"
-						name="password"
-						type={showPassword ? 'text' : 'password'}
-						bind:value={newPassword}
-						autocomplete="new-password"
-						minlength={8}
-						required
-					/>
-					<InputGroup.Addon align="inline-end">
-						<InputGroup.Button
-							size="icon-xs"
-							class="cursor-pointer rounded-full"
-							aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-							onclick={() => (showPassword = !showPassword)}
-						>
-							{#if showPassword}
-								<EyeOffIcon />
-							{:else}
-								<EyeIcon />
-							{/if}
-						</InputGroup.Button>
-					</InputGroup.Addon>
-				</InputGroup.Root>
+				<Label for="reset-password">New password</Label>
+				<PasswordInput
+					id="reset-password"
+					name="password"
+					bind:value={newPassword}
+					autocomplete="new-password"
+				/>
 			</div>
 
+			<Turnstile bind:this={captcha} bind:token={captchaToken} />
+
 			<Button type="submit" size="lg" class="w-full" disabled={pending}
-				>{pending ? 'Kaydediliyor…' : 'Şifreyi değiştir'}</Button
+				>{pending ? 'Saving…' : 'Change password'}</Button
 			>
 
 			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('password')}
-				>Geri dön</Button
+				>Go back</Button
 			>
 		</form>
-	{/if}
-
-	{#if step !== 'providers'}
-		<div class="mt-4"><Turnstile bind:this={captcha} bind:token={captchaToken} /></div>
 	{/if}
 
 	{#if statusMessage}
@@ -547,10 +505,10 @@
 
 	{#if step !== 'providers'}
 		<p class="mt-8 text-center text-footnote text-muted-foreground">
-			Hesabın yok mu?
+			Don't have an account?
 
 			<a href="/sign-up" onclick={onSwitch} class="font-medium text-foreground hover:underline"
-				>Hesap oluştur</a
+				>Sign up</a
 			>
 		</p>
 	{/if}
