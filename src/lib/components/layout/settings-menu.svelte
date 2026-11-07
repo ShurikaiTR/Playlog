@@ -22,6 +22,8 @@
 	import UploadIcon from "@lucide/svelte/icons/upload";
 	import XIcon from "@lucide/svelte/icons/x";
 
+	let { side = "bottom" }: { side?: "top" | "right" | "bottom" | "left" } = $props();
+
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft = "focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground";
 
@@ -90,7 +92,7 @@
 	<DropdownMenu.Trigger class={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), "cursor-pointer rounded-full")} aria-label="Ayarlar">
 		<SettingsIcon class="size-5" />
 	</DropdownMenu.Trigger>
-	<DropdownMenu.Content align="end" sideOffset={10} class="w-56 rounded-2xl p-2">
+	<DropdownMenu.Content {side} align="end" sideOffset={10} class="w-56 rounded-2xl p-2">
 		<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
 			{#each themes as theme (theme.value)}
 				<Tooltip.Root>
