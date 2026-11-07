@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use sqlx::PgPool;
 
-use crate::{mail::Mailer, oauth::OAuth, ratelimit::RateLimiter};
+use crate::{mail::Mailer, oauth::OAuth, ratelimit::RateLimiter, turnstile::Turnstile};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -13,4 +13,6 @@ pub struct AppState {
     pub dummy_hash: Arc<str>,
     pub limiter: Arc<RateLimiter>,
     pub oauth: Arc<OAuth>,
+    /// Yalnızca TURNSTILE_SECRET tanımlıysa var; yoksa bot doğrulaması atlanır (yerel geliştirme).
+    pub turnstile: Option<Arc<Turnstile>>,
 }

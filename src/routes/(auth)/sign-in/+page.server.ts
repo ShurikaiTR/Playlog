@@ -15,6 +15,8 @@ export const load: PageServerLoad = async (event) => {
 };
 
 const text = (data: FormData, key: string) => String(data.get(key) ?? '').trim();
+// The Turnstile widget's response, posted by the form as `cf-turnstile-response`.
+const captcha = (data: FormData) => text(data, 'cf-turnstile-response');
 
 const codeError = (result: { status: number; error: string }) =>
 	result.status === 404
@@ -29,7 +31,7 @@ export const actions: Actions = {
 		if (!identifier || !password) return fail(400, { error: 'E-postanı ve şifreni gir.' });
 
 		const result = await api<{ token: string; user: ApiUser }>(event, '/v1/auth/login', {
-			body: { identifier, password }
+			body: { identifier, password, turnstile_token: captcha(data) }
 		});
 		if (!result.ok) return fail(result.status, { error: authErrorMessage(result.error) });
 
@@ -43,7 +45,9 @@ export const actions: Actions = {
 		const email = text(data, 'email');
 		if (!email) return fail(400, { error: 'Önce e-posta adresini gir.' });
 
-		const result = await api(event, '/v1/auth/password-reset/start', { body: { email } });
+		const result = await api(event, '/v1/auth/password-reset/start', {
+			body: { email, turnstile_token: captcha(data) }
+		});
 		if (!result.ok) return fail(result.status, { error: authErrorMessage(result.error) });
 		return { resetSent: true };
 	},
@@ -70,7 +74,9 @@ export const actions: Actions = {
 		const email = text(data, 'email');
 		if (!email) return fail(400, { error: 'Önce e-posta adresini gir.' });
 
-		const result = await api(event, '/v1/auth/login-code/start', { body: { email } });
+		const result = await api(event, '/v1/auth/login-code/start', {
+			body: { email, turnstile_token: captcha(data) }
+		});
 		if (!result.ok) return fail(result.status, { error: codeError(result) });
 		return { codeSent: true };
 	},

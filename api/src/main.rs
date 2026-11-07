@@ -6,6 +6,7 @@ mod oauth;
 mod ratelimit;
 mod routes;
 mod state;
+mod turnstile;
 
 use std::time::Duration;
 
@@ -20,6 +21,7 @@ use crate::{
     mail::Mailer,
     oauth::OAuth,
     state::AppState,
+    turnstile::Turnstile,
 };
 
 #[tokio::main]
@@ -58,6 +60,11 @@ async fn main() -> anyhow::Result<()> {
             code_secret: std::sync::Arc::from(config.code_secret.as_slice()),
             dummy_hash: password::dummy_hash().await?.into(),
             limiter: Default::default(),
+            turnstile: config
+                .turnstile_secret
+                .map(|secret| Turnstile::new(secret, config.turnstile_hostnames))
+                .transpose()?
+                .map(std::sync::Arc::new),
             oauth: OAuth::new(
                 config.public_url,
                 config.google,

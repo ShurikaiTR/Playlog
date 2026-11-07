@@ -5,6 +5,8 @@
 	import { fade } from 'svelte/transition';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
+	import Turnstile from './turnstile.svelte';
+	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
@@ -40,6 +42,15 @@
 	let password = $state('');
 	let pending = $state(false);
 
+	// Cloudflare Turnstile: one widget per flow, its token posted with the forms that need it.
+	let captchaToken = $state('');
+	let captcha = $state<ReturnType<typeof Turnstile>>();
+	function captchaReady() {
+		if (!TURNSTILE_SITE_KEY || captchaToken) return true;
+		statusMessage = 'Doğrulama tamamlanıyor, bir saniye bekle.';
+		return false;
+	}
+
 	// Google, Apple and Discord share the sign-in route; a new account then picks a username.
 	function signUpWith(provider: 'google' | 'apple' | 'discord') {
 		window.location.assign(`/auth/${provider}/start`);
@@ -74,10 +85,15 @@
 	const EMAIL_ERRORS = new Set(['invalid_email', 'email_taken']);
 
 	// Details step and "Tekrar gönder": checks the details and mails the code.
-	const submitStart: SubmitFunction = () => {
+	const submitStart: SubmitFunction = ({ cancel }) => {
+		if (!captchaReady()) {
+			cancel();
+			return;
+		}
 		pending = true;
 		statusMessage = '';
 		return async ({ result }) => {
+			captcha?.reset();
 			pending = false;
 			if (result.type === 'success') {
 				startResendCountdown();
@@ -129,6 +145,7 @@
 <div lang="tr">
 	<!-- "Tekrar gönder" posts the same details again; kept outside the code form so Enter there verifies. -->
 	<form id="signup-resend" method="POST" action="/sign-up?/start" hidden use:enhance={submitStart}>
+		<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 		<input type="hidden" name="email" value={email} />
 		<input type="hidden" name="username" value={username} />
 		<input type="hidden" name="password" value={password} />
@@ -202,6 +219,7 @@
 			use:enhance={submitStart}
 			in:fade={{ duration: 150 }}
 		>
+			<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 			<input type="hidden" name="email" value={email} />
 			<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 			<div class="mb-8 text-center">
@@ -345,6 +363,10 @@
 				>Geri dön</Button
 			>
 		</form>
+	{/if}
+
+	{#if step === 'details' || step === 'verify'}
+		<div class="mt-4"><Turnstile bind:this={captcha} bind:token={captchaToken} /></div>
 	{/if}
 
 	{#if statusMessage}

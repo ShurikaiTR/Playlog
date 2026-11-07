@@ -22,7 +22,8 @@ export const actions: Actions = {
 				username: text(data, 'username'),
 				password: String(data.get('password') ?? ''),
 				display_name: text(data, 'display_name') || undefined,
-				marketing_opt_in: data.get('marketing_opt_in') === 'true'
+				marketing_opt_in: data.get('marketing_opt_in') === 'true',
+				turnstile_token: text(data, 'cf-turnstile-response')
 			}
 		});
 		if (!result.ok) {

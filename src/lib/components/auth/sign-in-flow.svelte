@@ -11,6 +11,8 @@
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
+	import Turnstile from './turnstile.svelte';
+	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -40,6 +42,15 @@
 	let newPassword = $state('');
 	let resendIn = $state(0);
 	let pending = $state(false);
+
+	// Cloudflare Turnstile: one widget per flow, its token posted with the forms that need it.
+	let captchaToken = $state('');
+	let captcha = $state<ReturnType<typeof Turnstile>>();
+	function captchaReady() {
+		if (!TURNSTILE_SITE_KEY || captchaToken) return true;
+		statusMessage = 'Doğrulama tamamlanıyor, bir saniye bekle.';
+		return false;
+	}
 
 	type ProviderId = 'google' | 'apple' | 'discord' | 'email';
 	const providers: { id: ProviderId; label: string; icon: typeof GoogleIcon }[] = [
@@ -104,7 +115,11 @@
 		typeof data?.error === 'string' ? data.error : 'Bir şeyler ters gitti. Lütfen tekrar dene.';
 
 	// Signs in from the password step.
-	const submitLogin: SubmitFunction = () => {
+	const submitLogin: SubmitFunction = ({ cancel }) => {
+		if (!captchaReady()) {
+			cancel();
+			return;
+		}
 		pending = true;
 		statusMessage = '';
 		showAuthTransition({
@@ -112,6 +127,7 @@
 			description: 'Hesabın doğrulanıyor, lütfen bekle…'
 		});
 		return async ({ result }) => {
+			captcha?.reset();
 			pending = false;
 			if (result.type === 'redirect') {
 				rememberProvider('email');
@@ -127,6 +143,10 @@
 	// "Şifreni mi unuttun?" and "Tekrar gönder" both mail a reset code through the hidden form
 	// below, so pressing Enter in a step's own form never triggers them.
 	const submitResetStart: SubmitFunction = ({ cancel }) => {
+		if (!captchaReady()) {
+			cancel();
+			return;
+		}
 		if (!email.trim()) {
 			statusMessage = 'Önce e-posta adresini gir.';
 			cancel();
@@ -135,6 +155,7 @@
 		pending = true;
 		statusMessage = '';
 		return async ({ result }) => {
+			captcha?.reset();
 			pending = false;
 			if (result.type !== 'success') {
 				statusMessage = failure(result.type === 'failure' ? result.data : undefined);
@@ -153,6 +174,10 @@
 
 	// "E-postama giriş kodu gönder" and "Kodu yeniden gönder" mail a sign-in code.
 	const submitCodeStart: SubmitFunction = ({ cancel }) => {
+		if (!captchaReady()) {
+			cancel();
+			return;
+		}
 		if (!email.trim()) {
 			statusMessage = 'Önce e-posta adresini gir.';
 			cancel();
@@ -161,6 +186,7 @@
 		pending = true;
 		statusMessage = '';
 		return async ({ result }) => {
+			captcha?.reset();
 			pending = false;
 			if (result.type !== 'success') {
 				statusMessage = failure(result.type === 'failure' ? result.data : undefined);
@@ -235,6 +261,7 @@
 		hidden
 		use:enhance={submitResetStart}
 	>
+		<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 		<input type="hidden" name="email" value={email} />
 	</form>
 
@@ -245,6 +272,7 @@
 		hidden
 		use:enhance={submitCodeStart}
 	>
+		<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 		<input type="hidden" name="email" value={email} />
 	</form>
 
@@ -268,6 +296,7 @@
 			use:enhance={submitLogin}
 			in:fade={{ duration: 150 }}
 		>
+			<input type="hidden" name="cf-turnstile-response" value={captchaToken} />
 			<h1
 				class="mb-6 text-center text-title-2 font-semibold tracking-tight text-balance text-primary"
 			>
@@ -504,6 +533,10 @@
 				>Geri dön</Button
 			>
 		</form>
+	{/if}
+
+	{#if step !== 'providers'}
+		<div class="mt-4"><Turnstile bind:this={captcha} bind:token={captchaToken} /></div>
 	{/if}
 
 	{#if statusMessage}

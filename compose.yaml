@@ -40,6 +40,9 @@ services:
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      # Cloudflare Turnstile: sır yalnızca burada (api); boşsa doğrulama kapalıdır.
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+      TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES:-}
       RUST_LOG: info
 
   web:
@@ -57,6 +60,8 @@ services:
       # (port 127.0.0.1'e bağlı; dışarıdan sahte başlık gönderilemez).
       PROTOCOL_HEADER: x-forwarded-proto
       ADDRESS_HEADER: cf-connecting-ip
+      # Turnstile site anahtarı herkese açıktır; widget boşsa gösterilmez.
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
     ports:
       # Yalnızca aynı makinedeki vekil erişir; Docker yayımlanan portlarda güvenlik duvarını atlar.
       - "127.0.0.1:3000:3000"

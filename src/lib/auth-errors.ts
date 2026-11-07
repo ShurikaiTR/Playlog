@@ -11,6 +11,7 @@ const messages: Record<string, string> = {
 	email_taken: 'Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.',
 	invalid_code: 'Kod hatalı veya süresi dolmuş. Yeni bir kod isteyebilirsin.',
 	code_cooldown: 'Yeni kod istemeden önce bir dakika bekle.',
+	captcha_failed: 'Doğrulama başarısız oldu. Doğrulamayı tamamlayıp tekrar dene.',
 	rate_limited: 'Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.',
 	oauth_failed: 'Giriş tamamlanamadı. Lütfen tekrar dene.',
 	invalid_state: 'Giriş oturumunun süresi doldu. Lütfen tekrar dene.',

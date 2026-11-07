@@ -20,6 +20,10 @@ pub struct Config {
     pub apple: Option<AppleConfig>,
     /// Hiç admin yoksa açılışta bu e-postalı (doğrulanmış) hesap admin yapılır.
     pub admin_email: Option<String>,
+    /// Cloudflare Turnstile sırrı; tanımlıysa kayıt, giriş ve kod isteklerinde doğrulama zorunlu olur.
+    pub turnstile_secret: Option<String>,
+    /// Turnstile yanıtında kabul edilen alan adları (virgülle ayrılmış TURNSTILE_HOSTNAMES).
+    pub turnstile_hostnames: Vec<String>,
 }
 
 impl Config {
@@ -54,6 +58,15 @@ impl Config {
             discord: credentials("DISCORD")?,
             apple: apple()?,
             admin_email: env_non_empty("ADMIN_EMAIL").map(|v| v.trim().to_lowercase()),
+            turnstile_secret: env_non_empty("TURNSTILE_SECRET"),
+            turnstile_hostnames: env_non_empty("TURNSTILE_HOSTNAMES")
+                .map(|v| {
+                    v.split(',')
+                        .map(|h| h.trim().to_owned())
+                        .filter(|h| !h.is_empty())
+                        .collect()
+                })
+                .unwrap_or_default(),
         })
     }
 }

@@ -41,6 +41,9 @@ pub fn router() -> Router<AppState> {
 
 #[derive(Deserialize)]
 struct SignupStart {
+    /// Turnstile yanıt belirteci (cf-turnstile-response).
+    #[serde(default)]
+    turnstile_token: Option<String>,
     email: String,
     username: String,
     password: String,
@@ -57,6 +60,9 @@ struct VerifyCode {
 
 #[derive(Deserialize)]
 struct Login {
+    /// Turnstile yanıt belirteci (cf-turnstile-response).
+    #[serde(default)]
+    turnstile_token: Option<String>,
     /// E-posta ya da kullanıcı adı.
     identifier: String,
     password: String,
@@ -64,6 +70,9 @@ struct Login {
 
 #[derive(Deserialize)]
 struct PasswordResetStart {
+    /// Turnstile yanıt belirteci (cf-turnstile-response).
+    #[serde(default)]
+    turnstile_token: Option<String>,
     email: String,
 }
 
@@ -118,6 +127,7 @@ async fn signup_start(
         10,
         TEN_MINUTES,
     )?;
+    verify_captcha(&state, &headers, body.turnstile_token.as_deref()).await?;
     let email = validate::email(&body.email)?;
     let username = validate::username(&body.username)?;
     let display_name = validate::display_name(body.display_name.as_deref())?;
@@ -249,6 +259,7 @@ async fn login(
     let id_key = format!("login:id:{identifier}");
     rate_limit(&state, &ip_key, 20, FIFTEEN_MINUTES)?;
     rate_limit(&state, &id_key, 8, FIFTEEN_MINUTES)?;
+    verify_captcha(&state, &headers, body.turnstile_token.as_deref()).await?;
     // Sabit sorgular: dinamik SQL kullanılmaz, her ikisi de benzersiz indeksten çalışır.
     let query = if identifier.contains('@') {
         "SELECT u.id, u.username, u.display_name, u.email, u.role, c.password_hash
@@ -295,6 +306,9 @@ async fn login(
 
 #[derive(Deserialize)]
 struct LoginCodeStart {
+    /// Turnstile yanıt belirteci (cf-turnstile-response).
+    #[serde(default)]
+    turnstile_token: Option<String>,
     email: String,
 }
 
@@ -311,6 +325,7 @@ async fn login_code_start(
         10,
         TEN_MINUTES,
     )?;
+    verify_captcha(&state, &headers, body.turnstile_token.as_deref()).await?;
     let email = validate::email(&body.email)?;
     // Aynı adrese dakikada bir kod: istemcinin geri sayımıyla aynı süre.
     state
@@ -431,6 +446,7 @@ async fn password_reset_start(
         10,
         TEN_MINUTES,
     )?;
+    verify_captcha(&state, &headers, body.turnstile_token.as_deref()).await?;
     let email = validate::email(&body.email)?;
     ensure_cooldown(&state, PASSWORD_RESET, &email).await?;
 
@@ -507,6 +523,18 @@ pub(super) fn client_ip(headers: &HeaderMap) -> String {
         .filter(|ip| ip.parse::<std::net::IpAddr>().is_ok())
         .unwrap_or("unknown")
         .to_owned()
+}
+
+/// Turnstile açıksa belirteci doğrular; kapalıysa (yerel geliştirme) atlar.
+async fn verify_captcha(
+    state: &AppState,
+    headers: &HeaderMap,
+    token: Option<&str>,
+) -> Result<(), AppError> {
+    match &state.turnstile {
+        Some(turnstile) => turnstile.verify(token, &client_ip(headers)).await,
+        None => Ok(()),
+    }
 }
 
 pub(super) fn rate_limit(
