@@ -162,7 +162,7 @@
 			</h1>
 
 			{#if enabled.google}
-				<Button size="lg" class="w-full" onclick={() => signUpWith('google')}
+				<Button size="auth" class="w-full" onclick={() => signUpWith('google')}
 					><GoogleIcon />Sign up with Google</Button
 				>
 
@@ -170,16 +170,16 @@
 			{/if}
 
 			<div class="space-y-3">
-				<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
+				<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('email')}
 					><MailIcon />Sign up with email</Button
 				>
 				{#if enabled.apple}
-					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
+					<Button variant="outline" size="auth" class="w-full" onclick={() => signUpWith('apple')}
 						><AppleIcon />Sign up with Apple</Button
 					>
 				{/if}
 				{#if enabled.discord}
-					<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('discord')}
+					<Button variant="outline" size="auth" class="w-full" onclick={() => signUpWith('discord')}
 						><DiscordIcon />Sign up with Discord</Button
 					>
 				{/if}
@@ -205,9 +205,9 @@
 				/>
 			</div>
 
-			<Button type="submit" size="lg" class="w-full">Continue</Button>
+			<Button type="submit" size="auth" class="w-full">Continue</Button>
 
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
+			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('providers')}
 				>Go back</Button
 			>
 		</form>
@@ -293,11 +293,11 @@
 				>
 			</div>
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}
+			<Button type="submit" size="auth" class="w-full" disabled={pending}
 				>{pending ? 'Sending code…' : 'Continue'}</Button
 			>
 
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('email')}
+			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('email')}
 				>Go back</Button
 			>
 		</form>
@@ -359,9 +359,9 @@
 				>
 			</p>
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}>Verify email</Button>
+			<Button type="submit" size="auth" class="w-full" disabled={pending}>Verify email</Button>
 
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('details')}
+			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('details')}
 				>Go back</Button
 			>
 		</form>

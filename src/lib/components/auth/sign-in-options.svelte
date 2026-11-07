@@ -65,10 +65,7 @@
 					aria-hidden="true"
 				></div>
 			{/if}
-			<Button
-				variant="outline"
-				class="h-10 w-full text-sm font-medium [&_svg:not([class*='size-'])]:size-4"
-				onclick={() => onProvider(provider.id)}
+			<Button variant="outline" size="auth" class="w-full" onclick={() => onProvider(provider.id)}
 				><provider.icon />Continue with {provider.label}</Button
 			>
 		</div>
@@ -109,7 +106,7 @@
 		</div>
 
 		<div class="pt-5">
-			<Button type="submit" class="h-10 w-full text-sm font-medium">Continue</Button>
+			<Button type="submit" size="auth" class="w-full">Continue</Button>
 		</div>
 	</form>
 

@@ -314,7 +314,8 @@
 					type="submit"
 					form="code-start"
 					variant="outline"
-					class="h-10 w-full text-sm font-medium [&_svg:not([class*='size-'])]:size-4"
+					size="auth"
+					class="w-full"
 					disabled={pending}><MailIcon />Email login code</Button
 				>
 
@@ -349,7 +350,7 @@
 			</div>
 
 			<div class="pt-5">
-				<Button type="submit" class="h-10 w-full text-sm font-medium" disabled={pending}
+				<Button type="submit" size="auth" class="w-full" disabled={pending}
 					>{pending ? 'Logging in…' : 'Log in'}</Button
 				>
 			</div>
@@ -404,16 +405,15 @@
 			</div>
 			<div class="flex flex-col gap-3 pt-5">
 				<Turnstile bind:this={captcha} bind:token={captchaToken} />
-				<Button
-					type="submit"
-					class="h-10 w-full text-sm font-medium"
-					disabled={pending || loginCode.length < 6}>Log in</Button
+				<Button type="submit" size="auth" class="w-full" disabled={pending || loginCode.length < 6}
+					>Log in</Button
 				>
 				<Button
 					type="submit"
 					form="code-start"
 					variant="outline"
-					class="h-10 w-full text-sm font-medium"
+					size="auth"
+					class="w-full"
 					disabled={resendIn > 0 || pending}
 					>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
 				>
@@ -487,11 +487,11 @@
 
 			<Turnstile bind:this={captcha} bind:token={captchaToken} />
 
-			<Button type="submit" size="lg" class="w-full" disabled={pending}
+			<Button type="submit" size="auth" class="w-full" disabled={pending}
 				>{pending ? 'Saving…' : 'Change password'}</Button
 			>
 
-			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('password')}
+			<Button variant="outline" size="auth" class="w-full" onclick={() => goTo('password')}
 				>Go back</Button
 			>
 		</form>
