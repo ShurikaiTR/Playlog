@@ -15,10 +15,10 @@
 				link: "text-primary underline-offset-4 hover:underline",
 			},
 			size: {
-				default: "h-9 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
+				default: "h-9 gap-1.5 px-3 text-subheadline has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
 				xs: "h-6 gap-1 px-2.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
 				sm: "h-8 gap-1 px-3 text-footnote has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-				lg: "h-10 gap-2 px-6 has-[>svg]:px-4 has-[>[data-slot=spinner]]:px-4 [&_svg:not([class*='size-'])]:size-5",
+				lg: "h-10 gap-2 px-6 text-body has-[>svg]:px-4 has-[>[data-slot=spinner]]:px-4 [&_svg:not([class*='size-'])]:size-5",
 				icon: "size-9",
 				"icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
 				"icon-sm": "size-8",

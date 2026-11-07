@@ -146,6 +146,7 @@
  * Typography scale (Google Sans Flex, opsz handled by the browser), following Apple's text roles:
  * text-large-title  page titles              text-title-1..3  section headings (h1-h3 by default)
  * text-headline     emphasised body (h4)     text-callout     descriptions and intro paragraphs
+ * text-body 17px / text-subheadline 15px: button text (lg / default); text-footnote 13px: sm
  * text-base / sm    body + UI (Tailwind)     text-footnote    secondary info      text-xs  captions
  * text-display: marketing hero only          text-lead: intro paragraphs
  * Titles are tight (line height 1.2-1.3), body text open (1.45-1.5), tracking tightens as size grows.
@@ -178,6 +179,10 @@
 	--text-headline--line-height: 1.35;
 	--text-headline--letter-spacing: -0.01em;
 	--text-headline--font-weight: 600;
+	--text-body: 1.0625rem;
+	--text-body--line-height: 1.45;
+	--text-subheadline: 0.9375rem;
+	--text-subheadline--line-height: 1.4;
 	--text-callout: 0.9375rem;
 	--text-callout--line-height: 1.5;
 	--text-footnote: 0.8125rem;
