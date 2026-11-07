@@ -31,14 +31,17 @@
 		aria-describedby={undefined}
 	>
 		<Dialog.Title class="sr-only">{modal?.kind === 'sign-up' ? 'Sign up' : 'Log in'}</Dialog.Title>
-		<Dialog.Close class="absolute end-4 top-4 z-10">
+		<Dialog.Close>
 			{#snippet child({ props })}
+				<!-- The class goes after the spread: the snippet's props carry their own class, which would
+				replace this one and drop rounded-xl. -->
 				<Button
 					variant="ghost"
 					size="icon-sm"
-					class="rounded-xl text-muted-foreground hover:text-foreground"
 					aria-label="Close"
-					{...props}><XIcon /></Button
+					{...props}
+					class="absolute end-4 top-4 z-10 rounded-xl text-muted-foreground hover:text-foreground"
+					><XIcon /></Button
 				>
 			{/snippet}
 		</Dialog.Close>
