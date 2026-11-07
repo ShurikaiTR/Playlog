@@ -87,7 +87,7 @@
 				</DropdownMenu.Item>
 				<DropdownMenu.Item
 					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
-					onSelect={() => openSettings('appearance')}
+					onSelect={() => openSettings('account')}
 				>
 					<SettingsIcon />Ayarlar
 				</DropdownMenu.Item>

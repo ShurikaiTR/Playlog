@@ -13,7 +13,11 @@ export type ApiUser = {
 export type ApiResult<T> =
 	{ ok: true; status: number; data: T } | { ok: false; status: number; error: string };
 
-type Options = { method?: 'GET' | 'POST'; body?: unknown; token?: string | null };
+type Options = {
+	method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+	body?: unknown;
+	token?: string | null;
+};
 
 /**
  * Calls the Rust API from the server. The visitor's address and browser are passed on so

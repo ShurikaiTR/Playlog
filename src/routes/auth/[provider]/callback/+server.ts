@@ -1,10 +1,13 @@
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { api, type ApiUser } from '#lib/server/api.js';
-import { appleDisplayName, providerParam, type Provider } from '#lib/server/oauth.js';
+import { appleDisplayName, finishLink, providerParam, type Provider } from '#lib/server/oauth.js';
 import {
 	clearCookie,
+	OAUTH_LINK_COOKIE,
+	OAUTH_LINK_RETURN_COOKIE,
 	OAUTH_PENDING_COOKIE,
 	OAUTH_STATE_COOKIE,
+	safeReturnPath,
 	setSessionCookie,
 	setShortCookie,
 	type PendingSignup
@@ -35,6 +38,25 @@ async function finish(
 ): Promise<never> {
 	const stateToken = event.cookies.get(OAUTH_STATE_COOKIE);
 	clearCookie(event.cookies, OAUTH_STATE_COOKIE);
+
+	// Connecting a provider from settings rather than signing in.
+	const linkBack = event.cookies.get(OAUTH_LINK_COOKIE);
+	if (linkBack !== undefined) {
+		clearCookie(event.cookies, OAUTH_LINK_COOKIE);
+		const link = {
+			back: safeReturnPath(linkBack),
+			code: back.code,
+			state: back.state,
+			stateToken: stateToken ?? null,
+			error: back.error
+		};
+		// Apple's cross-site POST carries no session cookie: park the code for one same-site GET.
+		if (!event.locals.token && provider === 'apple' && !back.error) {
+			setShortCookie(event.cookies, OAUTH_LINK_RETURN_COOKIE, JSON.stringify(link), 120);
+			redirect(303, `/auth/${provider}/baglan`);
+		}
+		return finishLink(event, provider, link);
+	}
 
 	// The visitor said no at the provider (or the provider failed before asking).
 	if (back.error) redirect(303, backToLogin('access_denied'));

@@ -27,6 +27,12 @@ export function clearSessionCookie(cookies: Cookies) {
 const prefixed = (name: string) => (dev ? `playthru_${name}` : `__Host-playthru_${name}`);
 export const OAUTH_STATE_COOKIE = prefixed('oauth');
 export const OAUTH_PENDING_COOKIE = prefixed('oauth_pending');
+// Set with the state cookie when a signed-in user connects a provider from settings, so the
+// callback links it instead of signing in. The API binds the user into the signed state as well.
+export const OAUTH_LINK_COOKIE = prefixed('oauth_link');
+// Apple returns with a cross-site POST, which carries no session cookie. The code is parked here
+// for one same-site GET hop that does carry it.
+export const OAUTH_LINK_RETURN_COOKIE = prefixed('oauth_link_return');
 
 export type PendingSignup = {
 	pending_token: string;
@@ -67,4 +73,10 @@ export function readPendingSignup(cookies: Cookies): PendingSignup | null {
 	} catch {
 		return null;
 	}
+}
+
+/** A same-origin path to come back to, from a query parameter; anything else falls back to `/`. */
+export function safeReturnPath(raw: string | null): string {
+	if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '/';
+	return raw.slice(0, 300);
 }
