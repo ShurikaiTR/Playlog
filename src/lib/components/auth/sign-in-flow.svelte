@@ -172,7 +172,7 @@
 		};
 	};
 
-	// "E-postama giriş kodu gönder" and "Kodu yeniden gönder" mail a sign-in code.
+	// "Email login code" and "Kodu yeniden gönder" mail a sign-in code.
 	const submitCodeStart: SubmitFunction = ({ cancel }) => {
 		if (!captchaReady()) {
 			cancel();
@@ -319,7 +319,7 @@
 				variant="outline"
 				size="lg"
 				class="w-full"
-				disabled={pending}><MailIcon />E-postama giriş kodu gönder</Button
+				disabled={pending}><MailIcon />Email login code</Button
 			>
 
 			<div class="flex items-center gap-3 py-3" aria-hidden="true">

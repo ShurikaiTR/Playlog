@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::{
     auth::{code, extractor::CurrentUser, password, role::Role, token, validate},
     error::AppError,
+    mail,
     state::AppState,
 };
 
@@ -158,6 +159,7 @@ async fn signup_start(
                 "Playthru: bu e-posta zaten kayıtlı",
                 "Bu e-posta adresiyle zaten bir Playthru hesabı var. Giriş yapabilir ya da \
                  şifreni sıfırlayabilirsin. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.",
+                None,
             )
             .await?;
         return Ok((StatusCode::ACCEPTED, CodeSent::new()));
@@ -622,28 +624,33 @@ async fn issue_code(
     .await?;
     tx.commit().await?;
 
-    let (subject, intro) = match purpose {
-        SIGNUP => (
-            "Playthru doğrulama kodun",
-            "Kaydını tamamlamak için doğrulama kodun:",
-        ),
-        LOGIN_CODE => ("Playthru giriş kodun", "Giriş yapmak için kodun:"),
-        _ => (
-            "Playthru şifre sıfırlama kodun",
-            "Şifreni sıfırlamak için kodun:",
-        ),
-    };
-    state
-        .mailer
-        .send(
-            email,
-            &format!("{subject}: {plain}"),
-            &format!(
+    let (subject, text, html) = if purpose == LOGIN_CODE {
+        let (subject, text, html) = mail::login_code_email(&plain, code::TTL_MINUTES);
+        (subject, text, Some(html))
+    } else {
+        let (subject, intro) = match purpose {
+            SIGNUP => (
+                "Playthru doğrulama kodun",
+                "Kaydını tamamlamak için doğrulama kodun:",
+            ),
+            _ => (
+                "Playthru şifre sıfırlama kodun",
+                "Şifreni sıfırlamak için kodun:",
+            ),
+        };
+        (
+            format!("{subject}: {plain}"),
+            format!(
                 "{intro}\n\n{plain}\n\nKod {} dakika geçerlidir. Bu isteği sen yapmadıysan \
                  bu e-postayı yok sayabilirsin.",
                 code::TTL_MINUTES
             ),
+            None,
         )
+    };
+    state
+        .mailer
+        .send(email, &subject, &text, html.as_deref())
         .await?;
     Ok(())
 }
