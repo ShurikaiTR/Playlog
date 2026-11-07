@@ -7,8 +7,9 @@
 	let {
 		title,
 		footer,
+		plain = false,
 		children
-	}: { title?: string; footer?: string | Snippet; children: Snippet } = $props();
+	}: { title?: string; footer?: string | Snippet; plain?: boolean; children: Snippet } = $props();
 </script>
 
 <section class="space-y-1.5">
@@ -16,7 +17,7 @@
 		<h3 class="px-4 text-footnote font-normal text-muted-foreground">{title}</h3>
 	{/if}
 	<Item.Group
-		class="gap-0 overflow-hidden rounded-2xl bg-muted/50 *:not-first:rounded-none *:not-first:border-t *:not-first:border-t-border/60 *:first:rounded-none"
+		class={["gap-0 overflow-hidden rounded-2xl *:not-first:rounded-none *:not-first:border-t *:not-first:border-t-border/60 *:first:rounded-none", !plain && "bg-muted/50"]}
 	>
 		{@render children()}
 	</Item.Group>

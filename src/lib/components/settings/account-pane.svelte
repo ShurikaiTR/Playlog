@@ -39,7 +39,7 @@
 
 {#if user}
 	<div class="space-y-6">
-		<SettingsGroup>
+		<SettingsGroup plain>
 			<SettingsRow label={name} description={user.email}>
 				{#snippet media()}<AccountAvatar {name} class="size-10" />{/snippet}
 				<Button
@@ -50,7 +50,7 @@
 				>
 			</SettingsRow>
 		</SettingsGroup>
-		<SettingsGroup>
+		<SettingsGroup plain>
 			<SettingsRow label="Oturum">
 				<Button variant="outline" class="h-11 px-5" onclick={signOut}>
 					<LogOutIcon />Çıkış yap
