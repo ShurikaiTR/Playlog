@@ -1,0 +1,64 @@
+<script lang="ts">
+	import { setMode, userPrefersMode } from 'mode-watcher';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
+	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
+	import { openFeedbackDialog, openLanguageDialog } from '#lib/settings-dialogs.svelte.js';
+	import { cn } from '#lib/utils.js';
+	import SunIcon from '@lucide/svelte/icons/sun';
+	import MoonIcon from '@lucide/svelte/icons/moon';
+	import MonitorIcon from '@lucide/svelte/icons/monitor';
+	import LanguagesIcon from '@lucide/svelte/icons/languages';
+	import FlagIcon from '@lucide/svelte/icons/flag';
+
+	// Theme, language and feedback rows, shared by the header settings menu and the sidebar account menu.
+
+	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
+	const soft =
+		'focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground';
+
+	const themes = [
+		{ value: 'light', label: 'Açık tema', icon: SunIcon },
+		{ value: 'dark', label: 'Koyu tema', icon: MoonIcon },
+		{ value: 'system', label: 'Sistem teması', icon: MonitorIcon }
+	] as const;
+</script>
+
+<div class="grid grid-cols-3 gap-1" role="group" aria-label="Tema seç">
+	{#each themes as theme (theme.value)}
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<DropdownMenu.Item
+						{...props}
+						aria-label={theme.label}
+						class={cn(
+							'h-10 cursor-pointer justify-center rounded-xl p-0',
+							soft,
+							userPrefersMode.current === theme.value && 'bg-muted text-foreground'
+						)}
+						onclick={() => setMode(theme.value)}
+					>
+						<theme.icon class="size-4" />
+					</DropdownMenu.Item>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content side="bottom" class="z-60">{theme.label}</Tooltip.Content>
+		</Tooltip.Root>
+	{/each}
+</div>
+<DropdownMenu.Group class="mt-1">
+	<DropdownMenu.Item
+		class={cn('cursor-pointer rounded-xl py-2', soft)}
+		onSelect={openLanguageDialog}
+	>
+		<LanguagesIcon />
+		Dil
+	</DropdownMenu.Item>
+	<DropdownMenu.Item
+		class={cn('cursor-pointer rounded-xl py-2', soft)}
+		onSelect={openFeedbackDialog}
+	>
+		<FlagIcon />
+		Geri bildirim
+	</DropdownMenu.Item>
+</DropdownMenu.Group>

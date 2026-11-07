@@ -5,10 +5,14 @@
 	import { showAuthTransition } from '#lib/auth-transition.svelte.js';
 	import UserIcon from '@lucide/svelte/icons/user';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
-
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import SettingsItems from './settings-items.svelte';
 
-	let { username }: { username: string } = $props();
+	// Account menu at the bottom of the sidebar for signed-in users.
+	let { user }: { user: { username: string; displayName: string | null } } = $props();
+
+	const name = $derived(user.displayName || user.username);
+	const initial = $derived(name.charAt(0).toLocaleUpperCase('tr'));
 	const sidebar = Sidebar.useSidebar();
 
 	let logoutForm = $state<HTMLFormElement | null>(null);
@@ -21,30 +25,70 @@
 
 <form bind:this={logoutForm} method="POST" action="/cikis" hidden></form>
 
-<DropdownMenu.Root>
-	<DropdownMenu.Trigger>
-		{#snippet child({ props })}
-			<Sidebar.MenuButton {...props} size="lg" tooltipContent={`@${username}`} aria-label="Hesap menüsü" class="rounded-xl">
-				<Avatar.Root class="size-8">
-					<Avatar.Fallback class="text-callout font-medium uppercase"
-						>{username.slice(0, 1)}</Avatar.Fallback
-					>
-				</Avatar.Root>
-				<span class="truncate font-medium">@{username}</span>
-				<ChevronsUpDownIcon class="ms-auto size-4" />
-			</Sidebar.MenuButton>
-		{/snippet}
-	</DropdownMenu.Trigger>
-	<DropdownMenu.Content side={sidebar.isMobile ? "top" : "right"} align="end" sideOffset={10} class="w-48">
-		<DropdownMenu.Label class="truncate text-footnote text-muted-foreground"
-			>@{username}</DropdownMenu.Label
+{#snippet avatar(size: string)}
+	<Avatar.Root class="{size} shrink-0">
+		<Avatar.Fallback class="bg-foreground text-xs font-semibold text-background"
+			>{initial}</Avatar.Fallback
 		>
-		<DropdownMenu.Separator />
-		<DropdownMenu.Item>
-			{#snippet child({ props })}
-				<a {...props} href={`/profil/${username}`}><UserIcon />Profilim</a>
-			{/snippet}
-		</DropdownMenu.Item>
-		<DropdownMenu.Item onSelect={logOut}><LogOutIcon />Çıkış yap</DropdownMenu.Item>
-	</DropdownMenu.Content>
-</DropdownMenu.Root>
+	</Avatar.Root>
+{/snippet}
+
+<Sidebar.Menu>
+	<Sidebar.MenuItem>
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger>
+				{#snippet child({ props })}
+					<Sidebar.MenuButton
+						{...props}
+						size="lg"
+						tooltipContent={name}
+						class="h-11 cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! data-[state=open]:bg-sidebar-accent"
+					>
+						{@render avatar('size-8')}
+						<span class="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
+							<span class="truncate font-[550]">{name}</span>
+							<span class="truncate text-xs text-muted-foreground">@{user.username}</span>
+						</span>
+						<ChevronsUpDownIcon
+							class="ms-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden"
+						/>
+					</Sidebar.MenuButton>
+				{/snippet}
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content
+				side={sidebar.isMobile ? 'top' : 'right'}
+				align="end"
+				sideOffset={8}
+				class="w-60 rounded-2xl p-2"
+			>
+				<DropdownMenu.Label
+					class="flex items-center gap-2.5 px-2 py-1.5 font-normal text-foreground"
+				>
+					{@render avatar('size-8')}
+					<span class="min-w-0 leading-tight">
+						<span class="block truncate text-sm font-medium">{name}</span>
+						<span class="block truncate text-xs text-muted-foreground">@{user.username}</span>
+					</span>
+				</DropdownMenu.Label>
+				<DropdownMenu.Separator />
+				<DropdownMenu.Item class="cursor-pointer rounded-xl py-2">
+					{#snippet child({ props })}
+						<a
+							{...props}
+							href={`/profil/${user.username}`}
+							onclick={() => sidebar.isMobile && sidebar.setOpenMobile(false)}
+						>
+							<UserIcon />Profilim
+						</a>
+					{/snippet}
+				</DropdownMenu.Item>
+				<DropdownMenu.Separator />
+				<SettingsItems />
+				<DropdownMenu.Separator />
+				<DropdownMenu.Item class="cursor-pointer rounded-xl py-2" onSelect={logOut}>
+					<LogOutIcon />Çıkış yap
+				</DropdownMenu.Item>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
+	</Sidebar.MenuItem>
+</Sidebar.Menu>

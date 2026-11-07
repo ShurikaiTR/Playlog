@@ -2,10 +2,6 @@
 	import { page } from "$app/state";
 	import * as Sidebar from "#lib/components/ui/sidebar/index.js";
 	import type { Component } from "svelte";
-	import { Button } from "#lib/components/ui/button/index.js";
-	import SettingsMenu from "./settings-menu.svelte";
-	import UserMenu from "./user-menu.svelte";
-	import LogInIcon from "@lucide/svelte/icons/log-in";
 	import CompassIcon from "@lucide/svelte/icons/compass";
 	import HeartIcon from "@lucide/svelte/icons/heart";
 	import HouseIcon from "@lucide/svelte/icons/house";
@@ -17,6 +13,7 @@
 	import TagIcon from "@lucide/svelte/icons/tag";
 	import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
 	import UsersIcon from "@lucide/svelte/icons/users";
+	import UserMenu from "./user-menu.svelte";
 
 	interface Item {
 		label: string;
@@ -127,32 +124,11 @@
 		{/each}
 	</Sidebar.Content>
 
-	<Sidebar.Footer class="p-2">
-		<div class="flex items-center gap-1 group-data-[collapsible=icon]:flex-col-reverse">
-			{#if page.data.user}
-				<Sidebar.Menu class="min-w-0 flex-1">
-					<Sidebar.MenuItem>
-						<UserMenu username={page.data.user.username} />
-					</Sidebar.MenuItem>
-				</Sidebar.Menu>
-			{:else}
-				<div class="flex min-w-0 flex-1 gap-2 group-data-[collapsible=icon]:hidden">
-					<Button href="/giris" variant="outline" size="lg" class="flex-1">Giriş yap</Button>
-					<Button href="/kayit-ol" size="lg" class="flex-1">Kayıt ol</Button>
-				</div>
-				<Button
-					href="/giris"
-					variant="outline"
-					size="icon-lg"
-					class="hidden rounded-full group-data-[collapsible=icon]:inline-flex"
-					aria-label="Giriş yap"
-				>
-					<LogInIcon class="size-5" />
-				</Button>
-			{/if}
-			<SettingsMenu side={sidebar.isMobile ? "top" : "right"} />
-		</div>
-	</Sidebar.Footer>
+	{#if page.data.user}
+		<Sidebar.Footer class="p-2">
+			<UserMenu user={page.data.user} />
+		</Sidebar.Footer>
+	{/if}
 
 	<Sidebar.Rail />
 </Sidebar.Root>
