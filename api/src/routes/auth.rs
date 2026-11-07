@@ -624,33 +624,15 @@ async fn issue_code(
     .await?;
     tx.commit().await?;
 
-    let (subject, text, html) = if purpose == LOGIN_CODE {
-        let (subject, text, html) = mail::login_code_email(&plain, code::TTL_MINUTES);
-        (subject, text, Some(html))
-    } else {
-        let (subject, intro) = match purpose {
-            SIGNUP => (
-                "Playthru doğrulama kodun",
-                "Kaydını tamamlamak için doğrulama kodun:",
-            ),
-            _ => (
-                "Playthru şifre sıfırlama kodun",
-                "Şifreni sıfırlamak için kodun:",
-            ),
-        };
-        (
-            format!("{subject}: {plain}"),
-            format!(
-                "{intro}\n\n{plain}\n\nKod {} dakika geçerlidir. Bu isteği sen yapmadıysan \
-                 bu e-postayı yok sayabilirsin.",
-                code::TTL_MINUTES
-            ),
-            None,
-        )
+    let copy = match purpose {
+        LOGIN_CODE => &mail::LOGIN_CODE_COPY,
+        SIGNUP => &mail::SIGNUP_CODE_COPY,
+        _ => &mail::RESET_CODE_COPY,
     };
+    let (subject, text, html) = mail::code_email(copy, &plain, code::TTL_MINUTES);
     state
         .mailer
-        .send(email, &subject, &text, html.as_deref())
+        .send(email, &subject, &text, Some(&html))
         .await?;
     Ok(())
 }
