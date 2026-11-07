@@ -8,6 +8,7 @@
 	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { onDestroy, onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -27,7 +28,7 @@
 
 	// The page moves from the provider list to an email step, then a password step.
 	// "Şifreni mi unuttun?" mails a code and opens the reset step.
-	let step = $state<'providers' | 'password' | 'reset'>('providers');
+	let step = $state<'providers' | 'password' | 'reset' | 'code'>('providers');
 	let showPassword = $state(false);
 	// A message from a Google/Discord attempt that sent the visitor back here.
 	// svelte-ignore state_referenced_locally
@@ -35,6 +36,7 @@
 	let email = $state('');
 	let password = $state('');
 	let resetCode = $state('');
+	let loginCode = $state('');
 	let newPassword = $state('');
 	let resendIn = $state(0);
 	let pending = $state(false);
@@ -84,10 +86,6 @@
 	function goTo(next: typeof step) {
 		statusMessage = '';
 		step = next;
-	}
-
-	function showEmailCodeMessage() {
-		statusMessage = 'E-postayla giriş kodu henüz kullanılamıyor. Şifrenle giriş yapabilirsin.';
 	}
 
 	// Counts down the "resend code" wait; the API allows a new code once a minute.
@@ -153,6 +151,58 @@
 		};
 	};
 
+	// "E-postama giriş kodu gönder" and "Kodu yeniden gönder" mail a sign-in code.
+	const submitCodeStart: SubmitFunction = ({ cancel }) => {
+		if (!email.trim()) {
+			statusMessage = 'Önce e-posta adresini gir.';
+			cancel();
+			return;
+		}
+		pending = true;
+		statusMessage = '';
+		return async ({ result }) => {
+			pending = false;
+			if (result.type !== 'success') {
+				statusMessage = failure(result.type === 'failure' ? result.data : undefined);
+				return;
+			}
+			startResendCountdown();
+			if (step === 'code') {
+				statusMessage = 'Yeni kod gönderildi.';
+			} else {
+				loginCode = '';
+				goTo('code');
+			}
+		};
+	};
+
+	// Signs in with the emailed code.
+	const submitCodeVerify: SubmitFunction = ({ cancel }) => {
+		if (loginCode.length < 6) {
+			cancel();
+			return;
+		}
+		pending = true;
+		statusMessage = '';
+		showAuthTransition({
+			title: 'Giriş yapılıyor',
+			description: 'Kodun doğrulanıyor, lütfen bekle…'
+		});
+		return async ({ result }) => {
+			pending = false;
+			if (result.type === 'redirect') {
+				rememberProvider('email');
+				await applyAction(result);
+				hideAuthTransition();
+				return;
+			}
+			hideAuthTransition();
+			const data = result.type === 'failure' ? result.data : undefined;
+			if (data?.code === 'invalid_code') loginCode = '';
+			statusMessage = failure(data);
+		};
+	};
+
 	// Sets the new password from the reset step.
 	const submitReset: SubmitFunction = ({ cancel }) => {
 		if (resetCode.length < 6) {
@@ -184,6 +234,16 @@
 		action="/sign-in?/resetStart"
 		hidden
 		use:enhance={submitResetStart}
+	>
+		<input type="hidden" name="email" value={email} />
+	</form>
+
+	<form
+		id="code-start"
+		method="POST"
+		action="/sign-in?/codeStart"
+		hidden
+		use:enhance={submitCodeStart}
 	>
 		<input type="hidden" name="email" value={email} />
 	</form>
@@ -224,8 +284,13 @@
 					required
 				/>
 			</div>
-			<Button variant="outline" size="lg" class="w-full" onclick={showEmailCodeMessage}
-				><MailIcon />E-postama giriş kodu gönder</Button
+			<Button
+				type="submit"
+				form="code-start"
+				variant="outline"
+				size="lg"
+				class="w-full"
+				disabled={pending}><MailIcon />E-postama giriş kodu gönder</Button
 			>
 
 			<div class="flex items-center gap-3 py-3" aria-hidden="true">
@@ -279,6 +344,72 @@
 			<Button variant="outline" size="lg" class="w-full" onclick={() => goTo('providers')}
 				>Geri dön</Button
 			>
+		</form>
+	{:else if step === 'code'}
+		<form
+			method="POST"
+			action="/sign-in?/codeVerify"
+			class="relative"
+			use:enhance={submitCodeVerify}
+			in:fade={{ duration: 150 }}
+		>
+			<Button
+				variant="ghost"
+				size="icon"
+				class="absolute -top-11 -left-2 size-8 rounded-xl text-muted-foreground hover:text-foreground"
+				aria-label="Geri dön"
+				onclick={() => goTo('password')}><ArrowLeftIcon /></Button
+			>
+			<input type="hidden" name="email" value={email} />
+			<div class="flex flex-col gap-3">
+				<h1 class="text-center text-title-2 font-semibold tracking-tight text-balance text-primary">
+					Giriş kodunu gir
+				</h1>
+				<p class="text-center text-footnote text-pretty text-muted-foreground">
+					<span class="font-medium text-foreground">{email}</span> adresine 6 haneli bir kod gönderdik.
+				</p>
+				<div class="flex justify-center pt-3">
+					<InputOTP.Root
+						name="code"
+						maxlength={6}
+						bind:value={loginCode}
+						pattern="^[0-9]*$"
+						pasteTransformer={(text) => text.replace(/\D/g, '')}
+						autofocus
+					>
+						{#snippet children({ cells })}
+							<InputOTP.Group class="gap-1 sm:gap-2">
+								{#each cells.slice(0, 3) as cell (cell)}
+									<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+								{/each}
+							</InputOTP.Group>
+							<InputOTP.Separator />
+							<InputOTP.Group class="gap-1 sm:gap-2">
+								{#each cells.slice(3, 6) as cell (cell)}
+									<InputOTP.Slot {cell} class="h-11 w-9 rounded-xl text-base sm:h-12 sm:w-11" />
+								{/each}
+							</InputOTP.Group>
+						{/snippet}
+					</InputOTP.Root>
+				</div>
+			</div>
+			<div class="flex flex-col gap-3 pt-5">
+				<Button
+					type="submit"
+					class="h-10 w-full text-sm font-medium"
+					disabled={pending || loginCode.length < 6}>Giriş yap</Button
+				>
+				<Button
+					type="submit"
+					form="code-start"
+					variant="outline"
+					class="h-10 w-full text-sm font-medium"
+					disabled={resendIn > 0 || pending}
+					>{resendIn > 0
+						? `Kodu ${resendIn}s içinde yeniden gönder`
+						: 'Kodu yeniden gönder'}</Button
+				>
+			</div>
 		</form>
 	{:else}
 		<form

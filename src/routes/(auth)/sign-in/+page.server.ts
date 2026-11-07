@@ -16,6 +16,11 @@ export const load: PageServerLoad = async (event) => {
 
 const text = (data: FormData, key: string) => String(data.get(key) ?? '').trim();
 
+const codeError = (result: { status: number; error: string }) =>
+	result.status === 404
+		? 'E-postayla giriş kodu henüz kullanılamıyor. Şifrenle giriş yapabilirsin.'
+		: authErrorMessage(result.error);
+
 export const actions: Actions = {
 	login: async (event) => {
 		const data = await event.request.formData();
@@ -57,5 +62,35 @@ export const actions: Actions = {
 			return fail(result.status, { error: authErrorMessage(result.error), code: result.error });
 		}
 		return { resetDone: true };
+	},
+
+	// Emails a one-time sign-in code. A 404 means the API has no code login yet.
+	codeStart: async (event) => {
+		const data = await event.request.formData();
+		const email = text(data, 'email');
+		if (!email) return fail(400, { error: 'Önce e-posta adresini gir.' });
+
+		const result = await api(event, '/v1/auth/login-code/start', { body: { email } });
+		if (!result.ok) return fail(result.status, { error: codeError(result) });
+		return { codeSent: true };
+	},
+
+	codeVerify: async (event) => {
+		const data = await event.request.formData();
+		const email = text(data, 'email');
+		const code = text(data, 'code').replace(/\D/g, '');
+		if (code.length !== 6) return fail(400, { error: 'E-postana gelen 6 haneli kodu gir.' });
+
+		const result = await api<{ token: string; user: ApiUser }>(
+			event,
+			'/v1/auth/login-code/verify',
+			{
+				body: { email, code }
+			}
+		);
+		if (!result.ok) return fail(result.status, { error: codeError(result), code: result.error });
+
+		setSessionCookie(event.cookies, result.data.token);
+		redirect(303, '/');
 	}
 };
