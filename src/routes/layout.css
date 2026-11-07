@@ -195,7 +195,8 @@
 	/* Inside an InputGroup the wrapper draws the outline, not the control. */
 	&:not([data-slot='input-group-control']) {
 		box-shadow: 0 0 0 1px var(--field-border);
-		&:hover:not(:disabled, [aria-invalid='true']) {
+		/* Hover never replaces the focus or error line. */
+		&:hover:not(:disabled, :focus-visible, [aria-invalid='true']) {
 			box-shadow: 0 0 0 1px var(--field-border-hover);
 		}
 		&:focus-visible {
@@ -213,7 +214,9 @@
 /* The same outline on a wrapper (InputGroup), following the control inside it. */
 @utility field-outline-within {
 	box-shadow: 0 0 0 1px var(--field-border);
-	&:hover:not(:has(:disabled, [aria-invalid='true'])) {
+	&:hover:not(
+			:has(:disabled, [aria-invalid='true'], [data-slot='input-group-control']:focus-visible)
+		) {
 		box-shadow: 0 0 0 1px var(--field-border-hover);
 	}
 	&:has([data-slot='input-group-control']:focus-visible) {

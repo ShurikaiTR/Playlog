@@ -21,9 +21,7 @@
 		</a>
 	</header>
 
-	<!-- Anchored near the top, not centred: steps and messages change the form height, and a
-	     centred form would move every field each time. -->
-	<main class="flex flex-1 justify-center pt-[clamp(3rem,14vh,8rem)] pb-12">
+	<main class="flex flex-1 items-center justify-center py-12">
 		<div class="w-full max-w-sm">{@render children()}</div>
 	</main>
 
