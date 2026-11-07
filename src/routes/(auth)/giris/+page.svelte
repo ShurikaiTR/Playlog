@@ -228,11 +228,11 @@
 				<Label for="login-email">E-posta</Label>
 				<Input
 					id="login-email"
+					name="email"
 					type="email"
 					bind:value={email}
 					autocomplete="email"
 					placeholder="sen@ornek.com"
-					class="h-12 rounded-full px-5"
 					required
 					autofocus
 				/>
@@ -263,7 +263,6 @@
 					type="email"
 					bind:value={email}
 					autocomplete="email"
-					class="h-12 rounded-full px-5"
 					required
 				/>
 			</div>
@@ -290,7 +289,7 @@
 						disabled={pending}>Şifreni mi unuttun?</Button
 					>
 				</div>
-				<InputGroup.Root class="h-12 rounded-full pl-2">
+				<InputGroup.Root>
 					<InputGroup.Input
 						id="login-password"
 						name="password"
@@ -383,7 +382,7 @@
 
 			<div class="space-y-2">
 				<Label for="reset-password">Yeni şifre</Label>
-				<InputGroup.Root class="h-12 rounded-full pl-2">
+				<InputGroup.Root>
 					<InputGroup.Input
 						id="reset-password"
 						name="password"

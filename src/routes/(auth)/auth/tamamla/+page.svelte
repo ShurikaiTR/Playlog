@@ -66,7 +66,6 @@
 				minlength={3}
 				maxlength={30}
 				autocomplete="username"
-				class="h-12 rounded-full px-5"
 				required
 				autofocus
 			/>

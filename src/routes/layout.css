@@ -10,6 +10,10 @@
 	/* Light mode: white tooltip. Dark mode overrides it with the sidebar hover colour. */
 	--tooltip: oklch(0.985 0 0);
 	--tooltip-foreground: oklch(0.145 0 0);
+	/* Form field outlines (box-shadow, so focus never shifts layout), mixed from --foreground. */
+	--field-border: color-mix(in oklch, var(--foreground) 18%, transparent);
+	--field-border-hover: color-mix(in oklch, var(--foreground) 45%, transparent);
+	--field-border-strong: var(--foreground);
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);
 	--card: oklch(1 0 0);
@@ -79,6 +83,10 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--tooltip: var(--sidebar-accent);
 	--tooltip-foreground: var(--sidebar-accent-foreground);
+	/* Redeclared so the mix uses this theme's --foreground; the focus line is a little softer. */
+	--field-border: color-mix(in oklch, var(--foreground) 18%, transparent);
+	--field-border-hover: color-mix(in oklch, var(--foreground) 45%, transparent);
+	--field-border-strong: color-mix(in oklch, var(--foreground) 87%, transparent);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
 }
@@ -169,6 +177,55 @@
 	--text-footnote--line-height: 1.35;
 	--text-lead: 1.25rem;
 	--text-lead--line-height: 1.6;
+}
+
+/*
+ * Form field outline shared by Input, Textarea, Select and InputGroup: 1px line, darker on hover,
+ * 2px on keyboard/text focus, destructive colour when aria-invalid. Drawn with box-shadow instead of
+ * a border so the 1px -> 2px change never moves the text.
+ */
+@utility field-outline {
+	/* Inside an InputGroup the wrapper draws the outline, not the control. */
+	&:not([data-slot='input-group-control']) {
+		box-shadow: 0 0 0 1px var(--field-border);
+		transition: box-shadow 180ms ease-out;
+		&:hover:not(:disabled, [aria-invalid='true']) {
+			box-shadow: 0 0 0 1px var(--field-border-hover);
+		}
+		&:focus-visible {
+			box-shadow: 0 0 0 2px var(--field-border-strong);
+		}
+		&[aria-invalid='true'] {
+			box-shadow: 0 0 0 1px var(--destructive);
+		}
+		&[aria-invalid='true']:focus-visible {
+			box-shadow: 0 0 0 2px var(--destructive);
+		}
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+}
+
+/* The same outline on a wrapper (InputGroup), following the control inside it. */
+@utility field-outline-within {
+	box-shadow: 0 0 0 1px var(--field-border);
+	transition: box-shadow 180ms ease-out;
+	&:hover:not(:has(:disabled, [aria-invalid='true'])) {
+		box-shadow: 0 0 0 1px var(--field-border-hover);
+	}
+	&:has([data-slot='input-group-control']:focus-visible) {
+		box-shadow: 0 0 0 2px var(--field-border-strong);
+	}
+	&:has([aria-invalid='true']) {
+		box-shadow: 0 0 0 1px var(--destructive);
+	}
+	&:has([aria-invalid='true']:focus-visible) {
+		box-shadow: 0 0 0 2px var(--destructive);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
 }
 
 @utility measure {

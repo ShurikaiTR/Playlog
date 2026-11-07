@@ -161,11 +161,11 @@
 				<Label for="signup-email">E-posta</Label>
 				<Input
 					id="signup-email"
+					name="email"
 					type="email"
 					bind:value={email}
 					autocomplete="email"
 					placeholder="sen@ornek.com"
-					class="h-12 rounded-full px-5"
 					required
 					autofocus
 				/>
@@ -207,8 +207,7 @@
 						bind:value={displayName}
 						maxlength={40}
 						autocomplete="nickname"
-						class="h-12 rounded-full px-5"
-						autofocus
+							autofocus
 					/>
 				</div>
 				<div class="space-y-2">
@@ -220,14 +219,13 @@
 						minlength={3}
 						maxlength={30}
 						autocomplete="username"
-						class="h-12 rounded-full px-5"
-						required
+							required
 					/>
 				</div>
 			</div>
 			<div class="space-y-2">
 				<Label for="signup-password">Şifre</Label>
-				<InputGroup.Root class="h-12 rounded-full pl-2">
+				<InputGroup.Root>
 					<InputGroup.Input
 						id="signup-password"
 						name="password"

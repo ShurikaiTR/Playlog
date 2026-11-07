@@ -18,7 +18,7 @@
 	let visible = $state(false);
 </script>
 
-<InputGroup.Root class="h-11">
+<InputGroup.Root>
 	<InputGroup.Input
 		{id}
 		bind:value
