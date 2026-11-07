@@ -103,23 +103,23 @@ pub const LOGIN_CODE_COPY: CodeEmailCopy = CodeEmailCopy {
 };
 
 pub const SIGNUP_CODE_COPY: CodeEmailCopy = CodeEmailCopy {
-    lang: "tr",
-    subject: "Playthru doğrulama kodun",
-    title: "E-postanı doğrula",
-    greeting: "Merhaba,",
-    instruction: "Kaydını tamamlamak için aşağıdaki kodu kullan. Kod {ttl} dakika geçerlidir.",
-    ignore: "Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.",
-    team: "Playthru Ekibi",
+    lang: "en",
+    subject: "Your Playthru verification code",
+    title: "Verify your email",
+    greeting: "Hi,",
+    instruction: "Use the code below to verify your email. It expires in {ttl} minutes.",
+    ignore: "If you didn't request this, you can ignore this email.",
+    team: "Playthru Team",
 };
 
 pub const RESET_CODE_COPY: CodeEmailCopy = CodeEmailCopy {
-    lang: "tr",
-    subject: "Playthru şifre sıfırlama kodun",
-    title: "Şifreni sıfırla",
-    greeting: "Merhaba,",
-    instruction: "Şifreni sıfırlamak için aşağıdaki kodu kullan. Kod {ttl} dakika geçerlidir.",
-    ignore: "Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.",
-    team: "Playthru Ekibi",
+    lang: "en",
+    subject: "Your Playthru password reset code",
+    title: "Reset your password",
+    greeting: "Hi,",
+    instruction: "Use the code below to reset your password. It expires in {ttl} minutes.",
+    ignore: "If you didn't request this, you can ignore this email.",
+    team: "Playthru Team",
 };
 
 /// Kodu 123-456 biçiminde gösterir. `code` yalnızca rakamdır (`code::generate`).
@@ -183,6 +183,30 @@ pub fn code_email(copy: &CodeEmailCopy, code: &str, ttl_minutes: i64) -> (String
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn signup_and_reset_emails_are_english_with_the_same_lines() {
+        for (copy, line) in [
+            (
+                &SIGNUP_CODE_COPY,
+                "Use the code below to verify your email.",
+            ),
+            (
+                &RESET_CODE_COPY,
+                "Use the code below to reset your password.",
+            ),
+        ] {
+            let (subject, text, html) = code_email(copy, "042917", 10);
+            assert!(subject.contains("042917"));
+            for body in [&text, &html] {
+                assert!(body.contains("Hi,"));
+                assert!(body.contains(line));
+                assert!(body.contains("expires in 10 minutes"));
+                assert!(body.contains("you can ignore this email"));
+                assert!(body.contains("Playthru Team"));
+            }
+        }
+    }
 
     #[test]
     fn code_is_grouped_as_three_dash_three() {
