@@ -49,7 +49,7 @@
 					>
 						{@render avatar('size-8')}
 						<span class="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
-							<span class="truncate font-[550]">{name}</span>
+							<span class="truncate text-callout font-[550]">{name}</span>
 							<span class="truncate text-footnote text-muted-foreground">@{user.username}</span>
 						</span>
 					</Sidebar.MenuButton>

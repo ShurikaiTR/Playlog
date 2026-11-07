@@ -65,7 +65,7 @@
 	class="overflow-hidden [&_[data-slot=sidebar-inner]]:overflow-hidden [&_[data-slot=sidebar-inner]]:rounded-2xl"
 >
 	<Sidebar.Header class="p-2">
-		<div class="group/brand relative flex h-10 items-center gap-2 overflow-hidden px-1">
+		<div class="group/brand relative flex h-10 items-center pointer-coarse:h-11 gap-2 overflow-hidden px-1">
 			<a
 				href="/"
 				class="text-primary focus-visible:ring-ring/50 flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-[3px] group-data-[collapsible=icon]:hidden"

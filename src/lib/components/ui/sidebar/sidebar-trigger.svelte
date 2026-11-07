@@ -34,7 +34,7 @@
 				data-slot="sidebar-trigger"
 				variant="ghost"
 				size="icon-xs"
-				class={cn('text-muted-foreground hover:text-primary hover:bg-foreground/8 dark:hover:bg-foreground/12 size-8 cursor-pointer rounded-xl transition-colors duration-100', className)}
+				class={cn('text-muted-foreground hover:text-primary hover:bg-foreground/8 dark:hover:bg-foreground/12 size-8 pointer-coarse:size-11 cursor-pointer rounded-xl transition-colors duration-100', className)}
 				type="button"
 				{...mergedProps}
 			>
