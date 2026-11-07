@@ -77,7 +77,7 @@ export async function finishLink(
 	link: LinkReturn
 ): Promise<never> {
 	if (link.error) redirect(303, linkResultPath(link.back, { error: 'access_denied' }));
-	if (!event.locals.token) redirect(303, '/giris');
+	if (!event.locals.token) redirect(303, '/sign-in');
 	if (!link.code || !link.state || !link.stateToken) {
 		redirect(303, linkResultPath(link.back, { error: 'invalid_state' }));
 	}

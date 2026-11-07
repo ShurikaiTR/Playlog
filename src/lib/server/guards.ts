@@ -8,7 +8,7 @@ import type { ApiUser } from './api.js';
  * role again on every call, so this only keeps the page itself from rendering.
  */
 export function requireRole(locals: App.Locals, min: Exclude<Role, 'user'>): ApiUser {
-	if (!locals.user) redirect(303, '/giris');
+	if (!locals.user) redirect(303, '/sign-in');
 	if (!hasRole(locals.user.role, min)) error(403, 'Bu sayfaya erişim yetkin yok');
 	return locals.user;
 }

@@ -419,6 +419,6 @@
 	<p class="mt-8 text-center text-footnote text-muted-foreground">
 		Hesabın yok mu?
 
-		<a href="/kayit-ol" class="font-medium text-foreground hover:underline">Hesap oluştur</a>
+		<a href="/sign-up" class="font-medium text-foreground hover:underline">Hesap oluştur</a>
 	</p>
 </div>

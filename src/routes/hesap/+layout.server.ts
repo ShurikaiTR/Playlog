@@ -7,14 +7,14 @@ type Providers = Account['available'];
 
 export const load: LayoutServerLoad = async (event) => {
 	const token = event.locals.token;
-	if (!event.locals.user || !token) redirect(303, '/giris');
+	if (!event.locals.user || !token) redirect(303, '/sign-in');
 
 	const [account, providers] = await Promise.all([
 		api<Omit<Account, 'available'>>(event, '/v1/account', { method: 'GET', token }),
 		api<Providers>(event, '/v1/auth/oauth/providers', { method: 'GET' })
 	]);
 	if (!account.ok) {
-		if (account.status === 401) redirect(303, '/giris');
+		if (account.status === 401) redirect(303, '/sign-in');
 		error(503, 'Hesap bilgilerin şu an yüklenemedi. Biraz sonra tekrar dene.');
 	}
 	return {

@@ -28,7 +28,7 @@ export const GET: RequestHandler = async (event) => {
 		`/v1/auth/oauth/${provider}/start`,
 		{ body: {} }
 	);
-	if (!result.ok) redirect(303, `/giris?hata=${encodeURIComponent(result.error)}`);
+	if (!result.ok) redirect(303, `/sign-in?hata=${encodeURIComponent(result.error)}`);
 
 	setShortCookie(event.cookies, OAUTH_STATE_COOKIE, result.data.state_token, 600, {
 		crossSitePost: provider === 'apple'
@@ -38,7 +38,7 @@ export const GET: RequestHandler = async (event) => {
 
 async function startLink(event: Parameters<RequestHandler>[0], provider: Provider): Promise<never> {
 	const back = safeReturnPath(event.url.searchParams.get('geri'));
-	if (!event.locals.token) redirect(303, '/giris');
+	if (!event.locals.token) redirect(303, '/sign-in');
 
 	const result = await api<{ authorization_url: string; state_token: string }>(
 		event,

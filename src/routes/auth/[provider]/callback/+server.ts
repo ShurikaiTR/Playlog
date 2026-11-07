@@ -25,7 +25,7 @@ type ProviderReturn = {
 	displayName?: string | null;
 };
 
-const backToLogin = (code: string) => `/giris?hata=${encodeURIComponent(code)}`;
+const backToLogin = (code: string) => `/sign-in?hata=${encodeURIComponent(code)}`;
 
 const field = (value: FormDataEntryValue | string | null) =>
 	typeof value === 'string' ? value : null;

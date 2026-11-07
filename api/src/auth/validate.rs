@@ -5,6 +5,8 @@ const RESERVED_USERNAMES: &[&str] = &[
     "api",
     "auth",
     "giris",
+    "sign-in",
+    "sign-up",
     "kayit-ol",
     "kayit_ol",
     "kesfet",

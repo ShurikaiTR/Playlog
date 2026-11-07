@@ -23,8 +23,8 @@
 			{#if !page.data.user}
 				<div class="ml-auto flex items-center gap-2">
 					<SettingsMenu />
-					<Button href="/giris" variant="outline" size="lg">Giriş yap</Button>
-					<Button href="/kayit-ol" size="lg">Kayıt ol</Button>
+					<Button href="/sign-in" variant="outline" size="lg">Giriş yap</Button>
+					<Button href="/sign-up" size="lg">Kayıt ol</Button>
 				</div>
 			{/if}
 		</header>

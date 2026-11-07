@@ -343,6 +343,6 @@
 	<p class="mt-8 text-center text-footnote text-muted-foreground">
 		Zaten hesabın var mı?
 
-		<a href={'/giris'} class="font-medium text-foreground hover:underline">Giriş yap</a>
+		<a href={'/sign-in'} class="font-medium text-foreground hover:underline">Giriş yap</a>
 	</p>
 </div>
