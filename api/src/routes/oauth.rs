@@ -15,7 +15,7 @@ use super::auth::{
     rate_limit,
 };
 use crate::{
-    auth::validate,
+    auth::{role::Role, validate},
     error::AppError,
     oauth::{PendingClaims, Provider, now},
     state::AppState,
@@ -92,6 +92,7 @@ struct UserRow {
     username: String,
     display_name: Option<String>,
     email: String,
+    role: Role,
 }
 
 impl From<UserRow> for UserView {
@@ -101,6 +102,7 @@ impl From<UserRow> for UserView {
             username: row.username,
             display_name: row.display_name,
             email: row.email,
+            role: row.role,
         }
     }
 }
@@ -136,7 +138,7 @@ async fn callback(
 
     // 1) Bu sağlayıcı hesabı zaten bağlı mı?
     let linked: Option<UserRow> = sqlx::query_as(
-        "SELECT u.id, u.username, u.display_name, u.email
+        "SELECT u.id, u.username, u.display_name, u.email, u.role
            FROM oauth_accounts o JOIN users u ON u.id = o.user_id
           WHERE o.provider = $1::oauth_provider AND o.provider_account_id = $2",
     )
@@ -160,11 +162,12 @@ async fn callback(
     };
 
     // 2) Aynı e-postayla hesap varsa bağla (e-posta doğrulandığı için güvenli).
-    let existing: Option<UserRow> =
-        sqlx::query_as("SELECT id, username, display_name, email FROM users WHERE email = $1")
-            .bind(&email)
-            .fetch_optional(&mut *tx)
-            .await?;
+    let existing: Option<UserRow> = sqlx::query_as(
+        "SELECT id, username, display_name, email, role FROM users WHERE email = $1",
+    )
+    .bind(&email)
+    .fetch_optional(&mut *tx)
+    .await?;
     if let Some(user) = existing {
         sqlx::query(
             "INSERT INTO oauth_accounts (user_id, provider, provider_account_id)
@@ -255,6 +258,7 @@ async fn complete(
             username,
             display_name: pending.display_name,
             email: pending.email,
+            role: Role::User,
         },
     }))
 }

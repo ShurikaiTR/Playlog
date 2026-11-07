@@ -6,7 +6,11 @@ use axum_extra::{
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::{auth::token, error::AppError, state::AppState};
+use crate::{
+    auth::{role::Role, token},
+    error::AppError,
+    state::AppState,
+};
 
 /// `Authorization: Bearer <id>.<gizli parça>` başlığından doğrulanmış kullanıcı.
 /// Başlığı SvelteKit sunucusu, tarayıcıdaki oturum çerezinden alıp ekler.
@@ -16,6 +20,7 @@ pub struct CurrentUser {
     pub username: String,
     pub display_name: Option<String>,
     pub email: String,
+    pub role: Role,
 }
 
 #[derive(FromRow)]
@@ -25,6 +30,7 @@ struct SessionRow {
     username: String,
     display_name: Option<String>,
     email: String,
+    role: Role,
 }
 
 impl FromRequestParts<AppState> for CurrentUser {
@@ -44,7 +50,7 @@ impl FromRequestParts<AppState> for CurrentUser {
 
         // Mutlak ömür 90 gün; boşta kalma süresi `expires_at` ile (30 gün) denetlenir.
         let row: SessionRow = sqlx::query_as(
-            "SELECT s.verifier_hash, u.id AS user_id, u.username, u.display_name, u.email
+            "SELECT s.verifier_hash, u.id AS user_id, u.username, u.display_name, u.email, u.role
                FROM sessions s
                JOIN users u ON u.id = s.user_id
               WHERE s.id = $1
@@ -76,6 +82,7 @@ impl FromRequestParts<AppState> for CurrentUser {
             username: row.username,
             display_name: row.display_name,
             email: row.email,
+            role: row.role,
         })
     }
 }

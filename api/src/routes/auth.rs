@@ -13,7 +13,7 @@ use sqlx::{FromRow, PgConnection};
 use uuid::Uuid;
 
 use crate::{
-    auth::{code, extractor::CurrentUser, password, token, validate},
+    auth::{code, extractor::CurrentUser, password, role::Role, token, validate},
     error::AppError,
     state::AppState,
 };
@@ -92,6 +92,7 @@ pub(super) struct UserView {
     pub(super) username: String,
     pub(super) display_name: Option<String>,
     pub(super) email: String,
+    pub(super) role: Role,
 }
 
 #[derive(Serialize)]
@@ -216,6 +217,8 @@ async fn signup_verify(
             username,
             display_name,
             email,
+            // Yeni hesap her zaman sütunun varsayılanı olan 'user' rolüyle açılır.
+            role: Role::User,
         },
     }))
 }
@@ -229,6 +232,7 @@ struct LoginRow {
     display_name: Option<String>,
     email: String,
     password_hash: Option<String>,
+    role: Role,
 }
 
 async fn login(
@@ -244,11 +248,11 @@ async fn login(
     rate_limit(&state, &id_key, 8, FIFTEEN_MINUTES)?;
     // Sabit sorgular: dinamik SQL kullanılmaz, her ikisi de benzersiz indeksten çalışır.
     let query = if identifier.contains('@') {
-        "SELECT u.id, u.username, u.display_name, u.email, c.password_hash
+        "SELECT u.id, u.username, u.display_name, u.email, u.role, c.password_hash
            FROM users u LEFT JOIN credentials c ON c.user_id = u.id
           WHERE u.email = $1"
     } else {
-        "SELECT u.id, u.username, u.display_name, u.email, c.password_hash
+        "SELECT u.id, u.username, u.display_name, u.email, u.role, c.password_hash
            FROM users u LEFT JOIN credentials c ON c.user_id = u.id
           WHERE u.username = $1"
     };
@@ -279,6 +283,7 @@ async fn login(
             username: row.username,
             display_name: row.display_name,
             email: row.email,
+            role: row.role,
         },
     }))
 }
@@ -297,6 +302,7 @@ async fn me(user: CurrentUser) -> Json<UserView> {
         username: user.username,
         display_name: user.display_name,
         email: user.email,
+        role: user.role,
     })
 }
 

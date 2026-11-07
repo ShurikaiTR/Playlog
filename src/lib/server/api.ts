@@ -1,11 +1,13 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { API_URL } from '$app/env/private';
+import type { Role } from '#lib/roles.js';
 
 export type ApiUser = {
 	id: string;
 	username: string;
 	email: string;
 	display_name: string | null;
+	role: Role;
 };
 
 export type ApiResult<T> =

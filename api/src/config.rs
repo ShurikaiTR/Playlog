@@ -17,6 +17,8 @@ pub struct Config {
     pub public_url: Option<String>,
     pub google: Option<Credentials>,
     pub discord: Option<Credentials>,
+    /// Hiç admin yoksa açılışta bu e-postalı (doğrulanmış) hesap admin yapılır.
+    pub admin_email: Option<String>,
 }
 
 impl Config {
@@ -49,6 +51,7 @@ impl Config {
             public_url: env_non_empty("PUBLIC_URL"),
             google: credentials("GOOGLE")?,
             discord: credentials("DISCORD")?,
+            admin_email: env_non_empty("ADMIN_EMAIL").map(|v| v.trim().to_lowercase()),
         })
     }
 }

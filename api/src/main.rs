@@ -14,7 +14,13 @@ use tokio::net::TcpListener;
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::EnvFilter;
 
-use crate::{auth::password, config::Config, mail::Mailer, oauth::OAuth, state::AppState};
+use crate::{
+    auth::{password, role},
+    config::Config,
+    mail::Mailer,
+    oauth::OAuth,
+    state::AppState,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -35,6 +41,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Migration dosyaları derleme anında binary'ye gömülür; açılışta uygulanır.
     sqlx::migrate!("./migrations").run(&pool).await?;
+
+    if let Some(email) = &config.admin_email {
+        role::bootstrap_admin(&pool, email).await?;
+    }
 
     let app = routes::router()
         .layer(TraceLayer::new_for_http())

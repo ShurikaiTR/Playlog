@@ -12,6 +12,10 @@ pub enum AppError {
     Validation(&'static str),
     /// Kimlik doğrulama gerekli ya da bilgiler hatalı.
     Unauthorized(&'static str),
+    /// Oturum var ama rol bu işlem için yetmiyor.
+    Forbidden(&'static str),
+    /// İstenen kayıt yok.
+    NotFound(&'static str),
     /// Çakışma (örn. kullanıcı adı alınmış).
     Conflict(&'static str),
     /// Çok fazla deneme.
@@ -30,6 +34,8 @@ impl IntoResponse for AppError {
         let (status, code) = match self {
             Self::Validation(code) => (StatusCode::UNPROCESSABLE_ENTITY, code),
             Self::Unauthorized(code) => (StatusCode::UNAUTHORIZED, code),
+            Self::Forbidden(code) => (StatusCode::FORBIDDEN, code),
+            Self::NotFound(code) => (StatusCode::NOT_FOUND, code),
             Self::Conflict(code) => (StatusCode::CONFLICT, code),
             Self::TooManyRequests(code) => (StatusCode::TOO_MANY_REQUESTS, code),
             Self::Internal(err) => {
