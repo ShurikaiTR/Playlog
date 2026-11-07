@@ -1,10 +1,12 @@
 <script lang="ts">
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import PaletteIcon from '@lucide/svelte/icons/palette';
 	import { resetMode, setMode, userPrefersMode } from 'mode-watcher';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
 	import { settingsDialog, type SettingsSection } from '#lib/settings-dialog.svelte.js';
+	import { languageChoice, languages, openLanguageDialog } from '#lib/settings-dialogs.svelte.js';
 	import { cn } from '#lib/utils.js';
 
 	// Hesap, Profil and Veri ve gizlilik join here once the API has endpoints for them.
@@ -22,6 +24,10 @@
 		if (value === 'system') resetMode();
 		else setMode(value);
 	}
+
+	const languageLabel = $derived(
+		languages.find((option) => option.value === languageChoice.value)?.label ?? 'Türkçe'
+	);
 </script>
 
 <!-- A tiny app window drawn with the theme tokens of the surrounding .light/.dark scope. -->
@@ -46,12 +52,12 @@
 	>
 		<ScrollArea orientation="horizontal" class="border-b border-border md:border-r md:border-b-0">
 			<nav class="flex gap-1 p-3 md:flex-col" aria-label="Ayar bölümleri">
-				<p class="hidden px-2.5 pt-1 pb-1.5 text-xs text-muted-foreground md:block">Genel</p>
+				<p class="hidden px-2.5 pt-1 pb-1.5 text-footnote text-muted-foreground md:block">Genel</p>
 				{#each sections as item (item.id)}
 					<Button
 						variant="ghost"
 						class={cn(
-							'cursor-pointer justify-start gap-2.5 rounded-lg text-[0.9375rem]',
+							'cursor-pointer justify-start gap-2.5 rounded-lg text-callout',
 							settingsDialog.section === item.id && 'bg-muted'
 						)}
 						aria-current={settingsDialog.section === item.id ? 'page' : undefined}
@@ -64,10 +70,10 @@
 		</ScrollArea>
 
 		<ScrollArea class="min-h-0">
-			<div class="p-6 text-[0.9375rem]">
+			<div class="p-6 text-callout">
 				{#if settingsDialog.section === 'appearance'}
-					<Dialog.Title class="mb-6 text-lg font-semibold">Görünüm</Dialog.Title>
-					<Dialog.Description class="sr-only">Sitenin teması.</Dialog.Description>
+					<Dialog.Title class="mb-6 text-headline">Görünüm</Dialog.Title>
+					<Dialog.Description class="sr-only">Sitenin teması ve dili.</Dialog.Description>
 
 					<div class="flex flex-wrap items-start justify-between gap-4">
 						<span>Tema</span>
@@ -101,12 +107,27 @@
 										{/if}
 									</span>
 									<span
-										class={cn('text-sm', selected ? 'text-foreground' : 'text-muted-foreground')}
-										>{theme.label}</span
+										class={cn(
+											'text-footnote',
+											selected ? 'text-foreground' : 'text-muted-foreground'
+										)}>{theme.label}</span
 									>
 								</button>
 							{/each}
 						</div>
+					</div>
+
+					<div class="mt-6 flex items-center justify-between gap-4 border-t border-border pt-6">
+						<span>Dil</span>
+						<Button
+							variant="outline"
+							class="cursor-pointer gap-2 rounded-xl text-callout"
+							aria-haspopup="dialog"
+							onclick={openLanguageDialog}
+						>
+							{languageLabel}
+							<ChevronDownIcon class="size-4 text-muted-foreground" aria-hidden="true" />
+						</Button>
 					</div>
 				{/if}
 			</div>

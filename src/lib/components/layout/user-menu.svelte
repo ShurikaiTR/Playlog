@@ -50,7 +50,7 @@
 						{@render avatar('size-8')}
 						<span class="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
 							<span class="truncate font-[550]">{name}</span>
-							<span class="truncate text-xs text-muted-foreground">@{user.username}</span>
+							<span class="truncate text-footnote text-muted-foreground">@{user.username}</span>
 						</span>
 					</Sidebar.MenuButton>
 				{/snippet}
@@ -70,12 +70,12 @@
 				>
 					{@render avatar('size-8')}
 					<span class="min-w-0 leading-tight">
-						<span class="block truncate text-sm font-medium">{name}</span>
-						<span class="block truncate text-xs text-muted-foreground">@{user.username}</span>
+						<span class="block truncate text-callout font-medium">{name}</span>
+						<span class="block truncate text-footnote text-muted-foreground">@{user.username}</span>
 					</span>
 				</DropdownMenu.Label>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item class="cursor-pointer rounded-xl py-2">
+				<DropdownMenu.Item class="min-h-11 cursor-pointer rounded-xl py-2 text-callout">
 					{#snippet child({ props })}
 						<a
 							{...props}
@@ -87,15 +87,18 @@
 					{/snippet}
 				</DropdownMenu.Item>
 				<DropdownMenu.Item
-					class="cursor-pointer rounded-xl py-2"
+					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
 					onSelect={() => openSettings('appearance')}
 				>
 					<SettingsIcon />Ayarlar
 				</DropdownMenu.Item>
 				<DropdownMenu.Separator />
-				<SettingsItems theme={false} />
+				<SettingsItems theme={false} language={false} />
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item class="cursor-pointer rounded-xl py-2" onSelect={logOut}>
+				<DropdownMenu.Item
+					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
+					onSelect={logOut}
+				>
 					<LogOutIcon />Çıkış yap
 				</DropdownMenu.Item>
 			</DropdownMenu.Content>

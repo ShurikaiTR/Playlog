@@ -11,8 +11,11 @@
 	import FlagIcon from '@lucide/svelte/icons/flag';
 
 	// Theme, language and feedback rows, shared by the header settings menu and the sidebar account menu.
-	// Signed-in users change the theme in the settings dialog instead, so the account menu hides that row.
-	let { theme: showTheme = true }: { theme?: boolean } = $props();
+	// Signed-in users change the theme and language in the settings dialog instead, so the account menu hides those rows.
+	let {
+		theme: showTheme = true,
+		language: showLanguage = true
+	}: { theme?: boolean; language?: boolean } = $props();
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft =
@@ -35,7 +38,7 @@
 							{...props}
 							aria-label={theme.label}
 							class={cn(
-								'h-10 cursor-pointer justify-center rounded-xl p-0',
+								'h-11 cursor-pointer justify-center rounded-xl p-0',
 								soft,
 								userPrefersMode.current === theme.value && 'bg-muted text-foreground'
 							)}
@@ -51,15 +54,17 @@
 	</div>
 {/if}
 <DropdownMenu.Group class={cn(showTheme && 'mt-1')}>
+	{#if showLanguage}
+		<DropdownMenu.Item
+			class={cn('min-h-11 cursor-pointer rounded-xl py-2 text-callout', soft)}
+			onSelect={openLanguageDialog}
+		>
+			<LanguagesIcon />
+			Dil
+		</DropdownMenu.Item>
+	{/if}
 	<DropdownMenu.Item
-		class={cn('cursor-pointer rounded-xl py-2', soft)}
-		onSelect={openLanguageDialog}
-	>
-		<LanguagesIcon />
-		Dil
-	</DropdownMenu.Item>
-	<DropdownMenu.Item
-		class={cn('cursor-pointer rounded-xl py-2', soft)}
+		class={cn('min-h-11 cursor-pointer rounded-xl py-2 text-callout', soft)}
 		onSelect={openFeedbackDialog}
 	>
 		<FlagIcon />

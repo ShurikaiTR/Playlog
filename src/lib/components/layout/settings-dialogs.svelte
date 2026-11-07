@@ -3,23 +3,17 @@
 	import { toast } from 'svelte-sonner';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Command from '#lib/components/ui/command/index.js';
-	import { settingsDialogs } from '#lib/settings-dialogs.svelte.js';
+	import { languageChoice, languages, settingsDialogs } from '#lib/settings-dialogs.svelte.js';
 	import FeedbackForm from './feedback-form.svelte';
 
-	// TODO: placeholder, the app is Turkish only for now. The choice is just remembered until translations exist.
-	const languages = [
-		{ value: 'tr', label: 'Türkçe', turkish: 'Türkçe' },
-		{ value: 'en', label: 'English', turkish: 'İngilizce' }
-	];
-	let language = $state('tr');
 	onMount(() => {
 		try {
-			language = localStorage.getItem('playlog-language') ?? 'tr';
+			languageChoice.value = localStorage.getItem('playlog-language') ?? 'tr';
 		} catch {}
 	});
 
 	function chooseLanguage(value: string) {
-		language = value;
+		languageChoice.value = value;
 		settingsDialogs.language = false;
 		try {
 			localStorage.setItem('playlog-language', value);
@@ -32,6 +26,8 @@
 	bind:open={settingsDialogs.language}
 	title="Dil seçici"
 	description="Sitenin dilini seç"
+	class="z-60"
+	overlayClass="z-60"
 >
 	<Command.Input placeholder="Dil ara" />
 	<Command.List class="max-h-none p-1">
@@ -40,12 +36,12 @@
 			<!-- The highlight is an inset pill behind the row, not the row itself. -->
 			<Command.Item
 				value="{option.label} {option.turkish}"
-				data-checked={option.value === language}
+				data-checked={option.value === languageChoice.value}
 				class="relative isolate cursor-pointer gap-2 rounded-none px-3.5 py-3 after:absolute after:inset-x-1 after:inset-y-0 after:-z-10 after:rounded-lg after:bg-transparent after:transition-colors after:duration-75 in-data-[slot=dialog-content]:rounded-none data-selected:bg-transparent data-selected:after:bg-muted not-data-[checked=true]:[&>svg]:hidden"
 				onSelect={() => chooseLanguage(option.value)}
 			>
 				{option.label}
-				{#if option.value === language}
+				{#if option.value === languageChoice.value}
 					<span class="sr-only">(seçili)</span>
 				{:else}
 					<span class="ms-auto text-muted-foreground">{option.turkish}</span>

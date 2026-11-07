@@ -13,12 +13,14 @@
 		description = "Search for a command to run...",
 		showCloseButton = false,
 		portalProps,
+		overlayClass,
 		children,
 		class: className,
 		...restProps
 	}: WithoutChildrenOrChild<DialogPrimitive.RootProps> &
 		WithoutChildrenOrChild<CommandPrimitive.RootProps> & {
 			portalProps?: DialogPrimitive.PortalProps;
+			overlayClass?: string;
 			children: Snippet;
 			title?: string;
 			description?: string;
@@ -36,6 +38,7 @@
 		class={cn("w-[400px] max-h-[min(85dvh,640px)] flex flex-col overflow-hidden p-0 sm:max-w-[400px]", className)}
 		{showCloseButton}
 		{portalProps}
+		{overlayClass}
 	>
 		<Command {...restProps} class="rounded-none bg-transparent p-0" bind:value bind:ref {children} />
 	</Dialog.Content>
