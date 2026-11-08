@@ -17,8 +17,9 @@ const messages: Record<string, string> = {
 	invalid_state: 'Your login session expired. Please try again.',
 	invalid_pending: 'Your sign-up expired. Please start over.',
 	access_denied: 'Login was cancelled.',
+	// The provider sent no email, or one it has not verified (Discord: verify it in Discord first).
 	email_unverified:
-		'An account with this email already exists. Log in with your email and password first.',
+		"We couldn't get a verified email from that account. Verify your email with the provider, or use another way to sign up.",
 	unknown_provider: "That login method isn't available right now. You can continue with email.",
 	unavailable: "We can't reach the server right now. Try again in a moment."
 };
