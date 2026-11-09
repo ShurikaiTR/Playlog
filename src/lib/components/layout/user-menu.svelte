@@ -45,9 +45,9 @@
 						{...props}
 						size="lg"
 						tooltipContent={name}
-						class="group/user h-auto min-h-10 cursor-pointer gap-1.5 p-1.5 pe-2 hover:bg-transparent pointer-coarse:min-h-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1! data-[state=open]:bg-foreground/8 dark:hover:bg-transparent dark:data-[state=open]:bg-foreground/12"
+						class="h-auto min-h-10 cursor-pointer gap-1.5 p-1.5 pe-2 pointer-coarse:min-h-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1! data-[state=open]:bg-foreground/8 dark:data-[state=open]:bg-foreground/12"
 					>
-						{@render avatar('size-7 transition-opacity duration-150 group-hover/user:opacity-75')}
+						{@render avatar('size-7')}
 						<span class="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
 							<span class="truncate">{name}</span>
 						</span>
