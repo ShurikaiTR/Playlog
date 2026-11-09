@@ -48,6 +48,10 @@ const messages: Record<string, string> = {
 	last_sign_in_method:
 		'Bu hesapta başka bir giriş yöntemin yok. Devam etmek için önce başka bir giriş yöntemi ekle.',
 	last_admin: 'Son yönetici hesabı silinemez. Önce yönetici yetkisini başka birine ver.',
+	email_taken: 'Bu e-posta başka bir hesapta kullanılıyor. Farklı bir adres dene.',
+	invalid_email: 'Geçerli bir e-posta adresi gir.',
+	invalid_code: 'Kod hatalı ya da süresi dolmuş. Yeni bir kod isteyebilirsin.',
+	code_cooldown: 'Yeni kod istemeden önce bir dakika bekle.',
 	provider_already_linked: 'Bu hesap zaten bağlı.',
 	provider_linked_elsewhere: 'Bu hesap başka bir Playthru hesabına bağlı.',
 	not_linked: 'Bu hesap bağlı değil.',
@@ -70,7 +74,7 @@ export const NEW_PASSWORD_HINT = 'Şifre 8-128 karakter olmalı.';
 
 /** Calls the account endpoints under /api/hesap; failures come back as an error code. */
 export async function accountRequest(
-	method: 'PUT' | 'DELETE',
+	method: 'POST' | 'PUT' | 'DELETE',
 	path: string,
 	body?: unknown
 ): Promise<{ ok: true } | { ok: false; error: string }> {

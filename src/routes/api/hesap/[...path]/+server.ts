@@ -7,12 +7,13 @@ import type { RequestHandler } from './$types';
 // token. Only the listed calls pass; connecting a provider is a browser redirect under /auth and
 // sessions are form actions on /hesap/oturumlar. Other sites can't call these: a JSON body or a
 // PUT/DELETE needs a CORS preflight this app never allows.
-const allowed: Record<'PUT' | 'DELETE', RegExp> = {
+const allowed: Record<'POST' | 'PUT' | 'DELETE', RegExp> = {
+	POST: /^email-code$/,
 	PUT: /^(profile|password)$/,
 	DELETE: /^(|sign-in-methods\/(google|discord|apple))$/
 };
 
-async function forward(event: RequestEvent, method: 'PUT' | 'DELETE') {
+async function forward(event: RequestEvent, method: 'POST' | 'PUT' | 'DELETE') {
 	const path = (event.params as { path: string }).path;
 	if (!allowed[method].test(path)) return json({ error: 'not_found' }, { status: 404 });
 	const token = event.locals.token;
@@ -40,5 +41,6 @@ async function forward(event: RequestEvent, method: 'PUT' | 'DELETE') {
 	return new Response(null, { status: 204 });
 }
 
+export const POST: RequestHandler = (event) => forward(event, 'POST');
 export const PUT: RequestHandler = (event) => forward(event, 'PUT');
 export const DELETE: RequestHandler = (event) => forward(event, 'DELETE');

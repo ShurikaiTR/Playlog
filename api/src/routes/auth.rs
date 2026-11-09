@@ -24,6 +24,7 @@ pub(super) const TEN_MINUTES: Duration = Duration::from_secs(600);
 const FIFTEEN_MINUTES: Duration = Duration::from_secs(900);
 const PASSWORD_RESET: &str = "password_reset";
 const LOGIN_CODE: &str = "login_code";
+pub(super) const EMAIL_CHANGE: &str = "email_change";
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -593,7 +594,7 @@ async fn ensure_cooldown(
 }
 
 /// Önceki kullanılmamış kodları iptal eder, yeni kodu kaydeder ve e-postayla yollar.
-async fn issue_code(
+pub(super) async fn issue_code(
     state: &AppState,
     purpose: &'static str,
     email: &str,
@@ -626,7 +627,7 @@ async fn issue_code(
 
     let copy = match purpose {
         LOGIN_CODE => &mail::LOGIN_CODE_COPY,
-        SIGNUP => &mail::SIGNUP_CODE_COPY,
+        SIGNUP | EMAIL_CHANGE => &mail::SIGNUP_CODE_COPY,
         _ => &mail::RESET_CODE_COPY,
     };
     let (subject, text, html) = mail::code_email(copy, &plain, code::TTL_MINUTES);
@@ -640,7 +641,7 @@ async fn issue_code(
 /// Etkin kodu kilitleyip doğrular.
 /// - Kod doğruysa: kodu tüketir, `Some(pending)` döner.
 /// - Yanlışsa ya da kod yoksa: deneme sayacını artırır, `None` döner (çağıran commit eder).
-async fn consume_code(
+pub(super) async fn consume_code(
     state: &AppState,
     tx: &mut PgConnection,
     purpose: &'static str,

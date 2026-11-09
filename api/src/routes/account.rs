@@ -15,7 +15,10 @@ use sqlx::{FromRow, PgConnection};
 use uuid::Uuid;
 
 use super::{
-    auth::{TEN_MINUTES, UserView, map_unique_violation, rate_limit},
+    auth::{
+        EMAIL_CHANGE, TEN_MINUTES, UserView, consume_code, issue_code, map_unique_violation,
+        rate_limit,
+    },
     oauth::provider_of,
 };
 use crate::{
@@ -33,6 +36,7 @@ pub fn router() -> Router<AppState> {
         .route("/export", get(export))
         .route("/profile", put(update_profile))
         .route("/password", put(set_password))
+        .route("/email-code", post(email_code))
         .route("/sessions", get(sessions).delete(revoke_other_sessions))
         .route("/sessions/{id}", delete(revoke_session))
         .route("/sign-in-methods/{provider}", delete(unlink))
@@ -160,6 +164,11 @@ struct PasswordChange {
     /// Şifresi olan hesapta zorunludur; yalnızca sosyal girişi olan hesap ilk şifresini belirlerken boştur.
     current_password: Option<String>,
     new_password: String,
+    /// Şifreyle birlikte giriş e-postası da değişecekse yeni adres ve ona gelen kod.
+    #[serde(default)]
+    email: Option<String>,
+    #[serde(default)]
+    code: Option<String>,
     /// Bu cihaz dışındaki oturumlar kapatılsın mı (varsayılan: evet).
     #[serde(default = "yes")]
     sign_out_others: bool,
@@ -196,8 +205,41 @@ async fn set_password(
         }
     }
 
+    let new_email = match body.email.as_deref() {
+        Some(raw) => Some(validate::email(raw)?),
+        None => None,
+    };
     let new_hash = password::hash(body.new_password).await?;
     let mut tx = state.db.begin().await?;
+    if let Some(email) = new_email {
+        let current: String =
+            sqlx::query_scalar("SELECT email FROM users WHERE id = $1 FOR UPDATE")
+                .bind(user.user_id)
+                .fetch_one(&mut *tx)
+                .await?;
+        // Adres değişmediyse (sağlayıcıdan gelen e-posta) kod gerekmez; değiştiyse sahibi olduğu kanıtlanmalı.
+        if email != current {
+            let code_input = validate::code(body.code.as_deref().unwrap_or_default())?;
+            let pending = consume_code(&state, &mut tx, EMAIL_CHANGE, &email, code_input).await?;
+            let valid = pending
+                .flatten()
+                .and_then(|p| p.get("user_id").and_then(|v| v.as_str().map(str::to_owned)))
+                .is_some_and(|id| id == user.user_id.to_string());
+            if !valid {
+                // Yanlış kod: deneme sayacı kalıcı olsun.
+                tx.commit().await?;
+                return Err(AppError::Unauthorized("invalid_code"));
+            }
+            sqlx::query(
+                "UPDATE users SET email = $2, email_verified_at = now(), updated_at = now() WHERE id = $1",
+            )
+            .bind(user.user_id)
+            .bind(&email)
+            .execute(&mut *tx)
+            .await
+            .map_err(map_unique_violation)?;
+        }
+    }
     sqlx::query(
         "INSERT INTO credentials (user_id, password_hash) VALUES ($1, $2)
          ON CONFLICT (user_id)
@@ -212,6 +254,46 @@ async fn set_password(
         delete_other_sessions(&mut tx, user.user_id, user.session_id).await?;
     }
     tx.commit().await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Deserialize)]
+struct EmailCodeRequest {
+    email: String,
+}
+
+/// Giriş e-postası olarak seçilen yeni adrese doğrulama kodu yollar. Başka hesabın adresi reddedilir.
+async fn email_code(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Json(body): Json<EmailCodeRequest>,
+) -> Result<StatusCode, AppError> {
+    rate_limit(
+        &state,
+        &format!("account:email-code:{}", user.user_id),
+        5,
+        FIFTEEN_MINUTES,
+    )?;
+    let email = validate::email(&body.email)?;
+    state
+        .limiter
+        .hit(
+            &format!("account:email-code:addr:{email}"),
+            1,
+            Duration::from_secs(60),
+        )
+        .map_err(|_| AppError::TooManyRequests("code_cooldown"))?;
+    let taken: bool =
+        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM users WHERE email = $1 AND id <> $2)")
+            .bind(&email)
+            .bind(user.user_id)
+            .fetch_one(&state.db)
+            .await?;
+    if taken {
+        return Err(AppError::Conflict("email_taken"));
+    }
+    let pending = serde_json::json!({ "user_id": user.user_id });
+    issue_code(&state, EMAIL_CHANGE, &email, Some(pending)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
