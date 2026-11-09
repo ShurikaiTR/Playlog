@@ -129,9 +129,9 @@
 						{#if group === groups[0]}
 							<!-- On the icon rail the header button is hidden, so search gets a row of its own. -->
 							<Sidebar.MenuItem class="hidden group-data-[collapsible=icon]:block">
-								<Sidebar.MenuButton tooltipContent="Ara" class="cursor-pointer font-[550]" onclick={search}>
-									<div data-sidebar="icon" class="flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
-										<SearchIcon class="size-4!" />
+								<Sidebar.MenuButton tooltipContent="Ara" class="cursor-pointer" onclick={search}>
+									<div data-sidebar="icon" aria-hidden="true">
+										<SearchIcon />
 									</div>
 									<span>Search</span>
 								</Sidebar.MenuButton>
@@ -142,7 +142,6 @@
 								<Sidebar.MenuButton
 									isActive={isActive(item.href)}
 									tooltipContent={item.label}
-									class="font-[550]"
 								>
 									{#snippet child({ props })}
 										<a
@@ -153,10 +152,9 @@
 										>
 											<div
 												data-sidebar="icon"
-												class="flex size-6 shrink-0 items-center justify-center"
 												aria-hidden="true"
 											>
-												<item.icon class="size-4!" />
+												<item.icon />
 											</div>
 											<span>{item.label}</span>
 										</a>
