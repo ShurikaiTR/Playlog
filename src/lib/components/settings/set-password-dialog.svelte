@@ -9,14 +9,16 @@
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
 	import { accountErrorMessage, accountRequest, NEW_PASSWORD_HINT } from '#lib/account.js';
 
-	// Adds email + password sign-in to an account that only uses social sign-in. The email starts as
-	// the provider's address; a different one must be confirmed with a code before it is saved.
+	// Adds email + password sign-in to an account that only uses social sign-in. Accounts that
+	// already have an email (Google, Discord) only choose a password; one without (Steam) also gives
+	// an email, which is confirmed with an emailed code before it is saved.
 	let {
 		open = $bindable(false),
 		email: accountEmail,
 		onSaved
 	}: { open?: boolean; email: string | null; onSaved?: () => void } = $props();
 
+	const hasEmail = $derived(accountEmail !== null);
 	let email = $state('');
 	let password = $state('');
 	let code = $state('');
@@ -26,13 +28,10 @@
 
 	// The form is cleared whenever the dialog closes, however it was closed.
 	function reset() {
-		email = accountEmail ?? '';
+		email = '';
 		password = code = error = '';
 		step = 'form';
 	}
-	$effect(() => {
-		if (open) email = accountEmail ?? '';
-	});
 
 	function close() {
 		open = false;
@@ -40,12 +39,13 @@
 	}
 
 	const normalized = $derived(email.trim().toLowerCase());
-	const changed = $derived(normalized !== (accountEmail ?? '').toLowerCase());
+	// Only an account without an email sets one here, and that always needs the code.
+	const changed = $derived(!hasEmail);
 
 	async function save() {
 		const result = await accountRequest('PUT', '/password', {
 			new_password: password,
-			email: normalized,
+			email: changed ? normalized : undefined,
 			code: changed ? code : undefined
 		});
 		pending = false;
@@ -61,7 +61,7 @@
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		const length = [...password].length;
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+		if (changed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
 			error = accountErrorMessage('invalid_email');
 			return;
 		}
@@ -96,7 +96,11 @@
 			<Dialog.Title class="text-headline">E-posta ve şifre ile giriş</Dialog.Title>
 			<Dialog.Description>
 				{#if step === 'form'}
-					Giriş için kullanacağın e-postayı ve bir şifre belirle.
+					{#if hasEmail}
+						<strong>{accountEmail}</strong> ve bu şifreyle de giriş yapabilirsin.
+					{:else}
+						Giriş için kullanacağın e-postayı ve bir şifre belirle.
+					{/if}
 				{:else}
 					<strong>{normalized}</strong> adresine 6 haneli bir kod gönderdik.
 				{/if}
@@ -104,22 +108,25 @@
 		</Dialog.Header>
 		{#if step === 'form'}
 			<form class="space-y-4" onsubmit={submit} novalidate>
-				<div class="space-y-2">
-					<Label for="set-email">E-posta</Label>
-					<Input
-						id="set-email"
-						type="email"
-						name="username"
-						bind:value={email}
-						autocomplete="username"
-						class="h-11"
-					/>
-					{#if changed}
+				{#if hasEmail}
+					<!-- Lets password managers pair the new password with the account. -->
+					<input type="text" name="username" value={accountEmail} autocomplete="username" hidden />
+				{:else}
+					<div class="space-y-2">
+						<Label for="set-email">E-posta</Label>
+						<Input
+							id="set-email"
+							type="email"
+							name="username"
+							bind:value={email}
+							autocomplete="username"
+							class="h-11"
+						/>
 						<p class="px-4 text-footnote text-muted-foreground">
 							Bu adrese bir doğrulama kodu göndereceğiz.
 						</p>
-					{/if}
-				</div>
+					</div>
+				{/if}
 				<div class="space-y-2">
 					<Label for="set-new-password">Yeni şifre</Label>
 					<PasswordInput id="set-new-password" bind:value={password} autocomplete="new-password" />
