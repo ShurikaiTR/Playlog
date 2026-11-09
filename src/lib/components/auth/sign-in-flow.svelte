@@ -2,6 +2,7 @@
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import AppleIcon from '#lib/components/icons/apple.svelte';
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
+	import SteamIcon from '#lib/components/icons/steam.svelte';
 	import SignInOptions from '#lib/components/auth/sign-in-options.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 	import { hideAuthTransition, showAuthTransition } from '#lib/auth-transition.svelte.js';
@@ -21,7 +22,7 @@
 	import { Separator } from '#lib/components/ui/separator/index.js';
 
 	type Props = {
-		enabled: Record<'google' | 'apple' | 'discord', boolean>;
+		enabled: Record<'google' | 'apple' | 'discord' | 'steam', boolean>;
 		notice?: string | null;
 		/** Where to go after logging in (a same-origin path, already validated). */
 		returnTo?: string;
@@ -53,11 +54,12 @@
 		return false;
 	}
 
-	type ProviderId = 'google' | 'apple' | 'discord' | 'email';
+	type ProviderId = 'google' | 'apple' | 'discord' | 'steam' | 'email';
 	const providers: { id: ProviderId; label: string; icon: typeof GoogleIcon }[] = [
 		{ id: 'google', label: 'Google', icon: GoogleIcon },
 		{ id: 'apple', label: 'Apple', icon: AppleIcon },
 		{ id: 'discord', label: 'Discord', icon: DiscordIcon },
+		{ id: 'steam', label: 'Steam', icon: SteamIcon },
 		{ id: 'email', label: 'Email', icon: MailIcon }
 	];
 	// E-mail always works; the others only when their keys are configured on the API.

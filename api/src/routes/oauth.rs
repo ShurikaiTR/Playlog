@@ -1,4 +1,6 @@
-//! Google / Discord / Apple girişi. SvelteKit yönlendirmeleri yapar, bu uçlar yalnızca iç ağdan çağrılır.
+//! Google / Discord / Apple / Steam girişi. SvelteKit yönlendirmeleri yapar, bu uçlar yalnızca iç ağdan çağrılır.
+
+use std::collections::HashMap;
 
 use axum::{
     Json, Router,
@@ -35,6 +37,7 @@ struct Providers {
     google: bool,
     discord: bool,
     apple: bool,
+    steam: bool,
 }
 
 async fn providers(State(state): State<AppState>) -> Json<Providers> {
@@ -42,6 +45,7 @@ async fn providers(State(state): State<AppState>) -> Json<Providers> {
         google: state.oauth.enabled(Provider::Google),
         discord: state.oauth.enabled(Provider::Discord),
         apple: state.oauth.enabled(Provider::Apple),
+        steam: state.oauth.enabled(Provider::Steam),
     })
 }
 
@@ -53,6 +57,8 @@ struct StartResponse {
 
 #[derive(Deserialize)]
 struct CallbackBody {
+    /// Steam'de kod yoktur; dönüş `openid` alanlarındadır.
+    #[serde(default)]
     code: String,
     state: String,
     state_token: String,
@@ -60,6 +66,9 @@ struct CallbackBody {
     /// Doğrulanmamış bir ipucudur, sadece görünen ad önerisi olarak kullanılır.
     #[serde(default)]
     display_name: Option<String>,
+    /// Yalnızca Steam: dönüş adresindeki `openid.*` alanları, olduğu gibi.
+    #[serde(default)]
+    openid: HashMap<String, String>,
 }
 
 #[derive(Deserialize)]
@@ -76,7 +85,7 @@ enum CallbackResponse {
     SignedIn(SessionResponse),
     UsernameRequired {
         pending_token: String,
-        email: String,
+        email: Option<String>,
         suggested_username: String,
         display_name: Option<String>,
     },
@@ -112,7 +121,7 @@ struct UserRow {
     id: Uuid,
     username: String,
     display_name: Option<String>,
-    email: String,
+    email: Option<String>,
     role: Role,
 }
 
@@ -144,7 +153,13 @@ async fn callback(
 
     let mut identity = match state
         .oauth
-        .finish(provider, body.code, &body.state, &body.state_token)
+        .finish(
+            provider,
+            body.code,
+            &body.state,
+            &body.state_token,
+            &body.openid,
+        )
         .await
     {
         // Bağlama akışının belirteci girişte geçmez (yalnızca /v1/account üzerinden).
@@ -182,19 +197,26 @@ async fn callback(
         })));
     }
 
-    // Kayıt ve bağlama yalnızca sağlayıcının doğruladığı e-postayla yapılır.
+    // Kayıt ve bağlama yalnızca sağlayıcının doğruladığı e-postayla yapılır. Steam e-posta vermez:
+    // o hesap e-postasız açılır ve hiçbir hesapla e-posta üzerinden eşleşmez.
     let email = match (identity.email, identity.email_verified) {
-        (Some(email), true) => validate::email(&email)?,
+        (Some(email), true) => Some(validate::email(&email)?),
+        _ if provider == Provider::Steam => None,
         _ => return Err(AppError::Conflict("email_unverified")),
     };
 
     // 2) Aynı e-postayla hesap varsa bağla (e-posta doğrulandığı için güvenli).
-    let existing: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, display_name, email, role FROM users WHERE email = $1",
-    )
-    .bind(&email)
-    .fetch_optional(&mut *tx)
-    .await?;
+    let existing: Option<UserRow> = match &email {
+        Some(email) => {
+            sqlx::query_as(
+                "SELECT id, username, display_name, email, role FROM users WHERE email = $1",
+            )
+            .bind(email)
+            .fetch_optional(&mut *tx)
+            .await?
+        }
+        None => None,
+    };
     if let Some(user) = existing {
         sqlx::query(
             "INSERT INTO oauth_accounts (user_id, provider, provider_account_id)
@@ -217,12 +239,14 @@ async fn callback(
 
     // 3) Yeni kullanıcı: kullanıcı adını seçmesi gerekir.
     let display_name = clean_display_name(identity.display_name.as_deref());
-    let suggested_username = suggest_username(&state, display_name.as_deref(), &email).await?;
+    let suggested_username =
+        suggest_username(&state, display_name.as_deref(), email.as_deref()).await?;
     let pending_token = state.oauth.sign_pending(&PendingClaims {
         provider: provider.as_str().into(),
         subject: identity.subject,
         email: email.clone(),
         display_name: display_name.clone(),
+        avatar_url: identity.avatar_url,
         exp: now() + crate::oauth::OAuth::pending_ttl(),
     })?;
     Ok(Json(CallbackResponse::UsernameRequired {
@@ -252,14 +276,17 @@ async fn complete(
 
     let mut tx = state.db.begin().await?;
     let user_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO users (username, email, email_verified_at, display_name, marketing_opt_in_at)
-         VALUES ($1, $2, now(), $3, CASE WHEN $4 THEN now() END)
+        "INSERT INTO users
+             (username, email, email_verified_at, display_name, marketing_opt_in_at, avatar_url)
+         VALUES ($1, $2::text, CASE WHEN $2::text IS NOT NULL THEN now() END, $3,
+                 CASE WHEN $4 THEN now() END, $5)
          RETURNING id",
     )
     .bind(&username)
     .bind(&pending.email)
     .bind(&pending.display_name)
     .bind(body.marketing_opt_in)
+    .bind(&pending.avatar_url)
     .fetch_one(&mut *tx)
     .await
     .map_err(map_unique_violation)?;
@@ -300,9 +327,11 @@ fn clean_display_name(raw: Option<&str>) -> Option<String> {
 async fn suggest_username(
     state: &AppState,
     display_name: Option<&str>,
-    email: &str,
+    email: Option<&str>,
 ) -> Result<String, AppError> {
-    let source = display_name.unwrap_or_else(|| email.split('@').next().unwrap_or("oyuncu"));
+    let source = display_name
+        .or_else(|| email.and_then(|email| email.split('@').next()))
+        .unwrap_or("oyuncu");
     let mut base: String = source
         .to_lowercase()
         .chars()

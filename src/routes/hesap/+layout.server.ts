@@ -21,7 +21,9 @@ export const load: LayoutServerLoad = async (event) => {
 		account: {
 			...account.data,
 			// Providers without keys on the server are listed but can't be connected yet.
-			available: providers.ok ? providers.data : { google: false, discord: false, apple: false }
+			available: providers.ok
+				? providers.data
+				: { google: false, discord: false, apple: false, steam: false }
 		} satisfies Account
 	};
 };

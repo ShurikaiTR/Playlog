@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
                 config.google,
                 config.discord,
                 config.apple,
+                config.steam_api_key,
                 &config.code_secret,
             )?
             .into(),

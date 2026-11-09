@@ -15,7 +15,7 @@
 		open = $bindable(false),
 		email: accountEmail,
 		onSaved
-	}: { open?: boolean; email: string; onSaved?: () => void } = $props();
+	}: { open?: boolean; email: string | null; onSaved?: () => void } = $props();
 
 	let email = $state('');
 	let password = $state('');
@@ -26,12 +26,12 @@
 
 	// The form is cleared whenever the dialog closes, however it was closed.
 	function reset() {
-		email = accountEmail;
+		email = accountEmail ?? '';
 		password = code = error = '';
 		step = 'form';
 	}
 	$effect(() => {
-		if (open) email = accountEmail;
+		if (open) email = accountEmail ?? '';
 	});
 
 	function close() {
@@ -40,7 +40,7 @@
 	}
 
 	const normalized = $derived(email.trim().toLowerCase());
-	const changed = $derived(normalized !== accountEmail.toLowerCase());
+	const changed = $derived(normalized !== (accountEmail ?? '').toLowerCase());
 
 	async function save() {
 		const result = await accountRequest('PUT', '/password', {

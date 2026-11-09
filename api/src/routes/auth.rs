@@ -105,7 +105,8 @@ pub(super) struct UserView {
     pub(super) id: Uuid,
     pub(super) username: String,
     pub(super) display_name: Option<String>,
-    pub(super) email: String,
+    /// Steam ile açılan hesapta e-posta yoktur (sonradan eklenebilir).
+    pub(super) email: Option<String>,
     pub(super) role: Role,
 }
 
@@ -232,7 +233,7 @@ async fn signup_verify(
             id: user_id,
             username,
             display_name,
-            email,
+            email: Some(email),
             // Yeni hesap her zaman sütunun varsayılanı olan 'user' rolüyle açılır.
             role: Role::User,
         },
@@ -246,7 +247,7 @@ struct LoginRow {
     id: Uuid,
     username: String,
     display_name: Option<String>,
-    email: String,
+    email: Option<String>,
     password_hash: Option<String>,
     role: Role,
 }
@@ -357,7 +358,7 @@ struct CodeLoginRow {
     id: Uuid,
     username: String,
     display_name: Option<String>,
-    email: String,
+    email: Option<String>,
     role: Role,
 }
 

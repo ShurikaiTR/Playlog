@@ -20,7 +20,7 @@ export async function openAuthModal(event: MouseEvent, kind: AuthKind) {
 	const result = await preloadData(href);
 	if (result.type === 'loaded' && result.status === 200) {
 		const data = result.data as {
-			providers: Record<'google' | 'apple' | 'discord', boolean>;
+			providers: Record<'google' | 'apple' | 'discord' | 'steam', boolean>;
 			notice?: string | null;
 			returnTo: string;
 		};

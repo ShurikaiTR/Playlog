@@ -27,7 +27,7 @@
 {#if user}
 	<div class="space-y-6">
 		<SettingsGroup plain>
-			<SettingsRow label={name} description={user.email}>
+			<SettingsRow label={name} description={user.email ?? undefined}>
 				{#snippet media()}<AccountAvatar {name} class="size-10" />{/snippet}
 				<Button
 					href={resolve('/hesap')}

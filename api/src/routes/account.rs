@@ -1,7 +1,7 @@
 //! Hesap ayarları uçları: bilgiler, kişisel bilgiler, şifre, giriş yöntemleri, oturumlar ve
 //! hesabı silme. Hepsi oturum ister ve yalnızca oturum sahibinin kayıtlarına dokunur.
 
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use axum::{
     Json, Router,
@@ -51,7 +51,7 @@ struct AccountView {
     id: Uuid,
     username: String,
     display_name: Option<String>,
-    email: String,
+    email: Option<String>,
     avatar_url: Option<String>,
     role: Role,
     created_at: DateTime<Utc>,
@@ -101,12 +101,12 @@ async fn account(
     }))
 }
 
-/// Bağlı sağlayıcılar. Eski 'steam' değeri artık desteklenmediği için listelenmez.
+/// Bağlı sağlayıcılar.
 async fn linked_accounts(db: &sqlx::PgPool, user_id: Uuid) -> Result<Vec<LinkedAccount>, AppError> {
     Ok(sqlx::query_as(
         "SELECT provider::text AS provider, created_at
            FROM oauth_accounts
-          WHERE user_id = $1 AND provider IN ('google', 'discord', 'apple')
+          WHERE user_id = $1 AND provider IN ('google', 'discord', 'apple', 'steam')
           ORDER BY created_at",
     )
     .bind(user_id)
@@ -209,16 +209,21 @@ async fn set_password(
         Some(raw) => Some(validate::email(raw)?),
         None => None,
     };
+    // E-postası olmayan hesap (Steam) e-posta ile giriş açarken adresini de vermelidir.
+    if new_email.is_none() && user.email.is_none() {
+        return Err(AppError::Validation("invalid_email"));
+    }
     let new_hash = password::hash(body.new_password).await?;
     let mut tx = state.db.begin().await?;
     if let Some(email) = new_email {
-        let current: String =
+        let current: Option<String> =
             sqlx::query_scalar("SELECT email FROM users WHERE id = $1 FOR UPDATE")
                 .bind(user.user_id)
                 .fetch_one(&mut *tx)
                 .await?;
-        // Adres değişmediyse (sağlayıcıdan gelen e-posta) kod gerekmez; değiştiyse sahibi olduğu kanıtlanmalı.
-        if email != current {
+        // Adres değişmediyse (sağlayıcıdan gelen e-posta) kod gerekmez; değiştiyse (ya da hiç yoksa)
+        // sahibi olduğu kanıtlanmalı.
+        if current.as_deref() != Some(email.as_str()) {
             let code_input = validate::code(body.code.as_deref().unwrap_or_default())?;
             let pending = consume_code(&state, &mut tx, EMAIL_CHANGE, &email, code_input).await?;
             let valid = pending
@@ -450,9 +455,13 @@ async fn link_start(
 
 #[derive(Deserialize)]
 struct LinkCallback {
+    #[serde(default)]
     code: String,
     state: String,
     state_token: String,
+    /// Yalnızca Steam: dönüş adresindeki `openid.*` alanları.
+    #[serde(default)]
+    openid: HashMap<String, String>,
 }
 
 async fn link_callback(
@@ -471,7 +480,13 @@ async fn link_callback(
 
     let identity = match state
         .oauth
-        .finish(provider, body.code, &body.state, &body.state_token)
+        .finish(
+            provider,
+            body.code,
+            &body.state,
+            &body.state_token,
+            &body.openid,
+        )
         .await
     {
         // Akışı bu kullanıcı başlatmış olmalı; giriş akışının belirteci burada geçmez.
@@ -596,7 +611,7 @@ struct ExportAccount {
     id: Uuid,
     username: String,
     display_name: Option<String>,
-    email: String,
+    email: Option<String>,
     email_verified_at: Option<DateTime<Utc>>,
     avatar_url: Option<String>,
     role: Role,

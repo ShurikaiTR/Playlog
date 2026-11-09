@@ -18,6 +18,9 @@ pub struct Config {
     pub google: Option<Credentials>,
     pub discord: Option<Credentials>,
     pub apple: Option<AppleConfig>,
+    /// Steam Web API anahtarı; tanımlıysa Steam ile giriş açılır (kimlik doğrulaması anahtarsız yapılır,
+    /// anahtar görünen ad ve avatarı almak içindir).
+    pub steam_api_key: Option<String>,
     /// Hiç admin yoksa açılışta bu e-postalı (doğrulanmış) hesap admin yapılır.
     pub admin_email: Option<String>,
     /// Cloudflare Turnstile sırrı; tanımlıysa kayıt, giriş ve kod isteklerinde doğrulama zorunlu olur.
@@ -57,6 +60,7 @@ impl Config {
             google: credentials("GOOGLE")?,
             discord: credentials("DISCORD")?,
             apple: apple()?,
+            steam_api_key: env_non_empty("STEAM_API_KEY"),
             admin_email: env_non_empty("ADMIN_EMAIL").map(|v| v.trim().to_lowercase()),
             turnstile_secret: env_non_empty("TURNSTILE_SECRET"),
             turnstile_hostnames: env_non_empty("TURNSTILE_HOSTNAMES")

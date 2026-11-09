@@ -12,7 +12,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U playthru"]
+      test: ['CMD-SHELL', 'pg_isready -U playthru']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -39,6 +39,7 @@ services:
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      STEAM_API_KEY: ${STEAM_API_KEY:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       # Cloudflare Turnstile: sır yalnızca burada (api); boşsa doğrulama kapalıdır.
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
@@ -64,7 +65,7 @@ services:
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
     ports:
       # Yalnızca aynı makinedeki vekil erişir; Docker yayımlanan portlarda güvenlik duvarını atlar.
-      - "127.0.0.1:3000:3000"
+      - '127.0.0.1:3000:3000'
 
 volumes:
   pgdata:

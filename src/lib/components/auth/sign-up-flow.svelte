@@ -17,6 +17,7 @@
 	import { Separator } from '#lib/components/ui/separator/index.js';
 	import AppleIcon from '#lib/components/icons/apple.svelte';
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
+	import SteamIcon from '#lib/components/icons/steam.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import AuthShell from '#lib/components/auth/auth-shell.svelte';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
@@ -25,7 +26,7 @@
 	// Sign-up options, then email, then the account details (which mails the code), then the code.
 	// The right code creates the account and signs in.
 	type Props = {
-		enabled: Record<'google' | 'apple' | 'discord', boolean>;
+		enabled: Record<'google' | 'apple' | 'discord' | 'steam', boolean>;
 		/** Where to go after signing up (a same-origin path, already validated). */
 		returnTo?: string;
 		/** Set when the form sits in a modal, to swap to the other auth modal instead of navigating. */
@@ -54,8 +55,8 @@
 		return false;
 	}
 
-	// Google, Apple and Discord share the sign-in route; a new account then picks a username.
-	function signUpWith(provider: 'google' | 'apple' | 'discord') {
+	// Google, Apple, Discord and Steam share the sign-in route; a new account then picks a username.
+	function signUpWith(provider: 'google' | 'apple' | 'discord' | 'steam') {
 		window.location.assign(`/auth/${provider}/start?return_to=${encodeURIComponent(returnTo)}`);
 	}
 
@@ -202,6 +203,11 @@
 								size="lg"
 								class="w-full"
 								onclick={() => signUpWith('discord')}><DiscordIcon />Sign up with Discord</Button
+							>
+						{/if}
+						{#if enabled.steam}
+							<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('steam')}
+								><SteamIcon />Sign up with Steam</Button
 							>
 						{/if}
 

@@ -19,7 +19,7 @@ pub struct CurrentUser {
     pub user_id: Uuid,
     pub username: String,
     pub display_name: Option<String>,
-    pub email: String,
+    pub email: Option<String>,
     pub role: Role,
 }
 
@@ -29,7 +29,7 @@ struct SessionRow {
     user_id: Uuid,
     username: String,
     display_name: Option<String>,
-    email: String,
+    email: Option<String>,
     role: Role,
 }
 

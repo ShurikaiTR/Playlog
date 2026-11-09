@@ -15,6 +15,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import AppleIcon from '#lib/components/icons/apple.svelte';
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
+	import SteamIcon from '#lib/components/icons/steam.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 	import AccountAvatar from '#lib/components/settings/account-avatar.svelte';
@@ -38,7 +39,7 @@
 
 	const account = $derived(data.account);
 	const name = $derived(account.display_name || account.username);
-	const icons = { apple: AppleIcon, google: GoogleIcon, discord: DiscordIcon };
+	const icons = { apple: AppleIcon, google: GoogleIcon, discord: DiscordIcon, steam: SteamIcon };
 
 	// ---------- Profile ----------
 
@@ -165,7 +166,7 @@
 			</div>
 			<Button variant="outline" class="h-11 px-5" onclick={openProfile}>Değiştir</Button>
 		</div>
-		<SettingsRow label="E-posta" value={account.email} />
+		<SettingsRow label="E-posta" value={account.email ?? 'Eklenmedi'} />
 		<SettingsRow label="Hesap oluşturma" value={formatDate(account.created_at)} />
 		<SettingsRow label="Tema">
 			<div class="flex gap-1" role="group" aria-label="Tema seç">

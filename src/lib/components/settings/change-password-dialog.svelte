@@ -11,7 +11,7 @@
 		open = $bindable(false),
 		email,
 		onChanged
-	}: { open?: boolean; email: string; onChanged?: () => void } = $props();
+	}: { open?: boolean; email: string | null; onChanged?: () => void } = $props();
 
 	let currentPassword = $state('');
 	let newPassword = $state('');
@@ -63,7 +63,7 @@
 			>
 		</Dialog.Header>
 		<form class="space-y-4" onsubmit={submit} novalidate>
-			<input type="text" name="username" value={email} autocomplete="username" hidden />
+			<input type="text" name="username" value={email ?? ''} autocomplete="username" hidden />
 			<div class="space-y-2">
 				<Label for="change-current-password">Mevcut şifre</Label>
 				<PasswordInput id="change-current-password" bind:value={currentPassword} />

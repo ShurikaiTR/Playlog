@@ -5,7 +5,7 @@ import type { Role } from '#lib/roles.js';
 export type ApiUser = {
 	id: string;
 	username: string;
-	email: string;
+	email: string | null;
 	display_name: string | null;
 	role: Role;
 };

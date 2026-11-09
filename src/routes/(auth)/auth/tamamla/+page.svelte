@@ -48,12 +48,14 @@
 	<form method="POST" class="space-y-4" use:enhance={submit}>
 		<div class="mb-8 text-center">
 			<h1 class="text-title-1 text-balance text-primary">Finish signing up</h1>
-			<span
-				class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
-			>
-				<MailIcon class="size-4 shrink-0" />
-				<span class="truncate">{data.email}</span>
-			</span>
+			{#if data.email}
+				<span
+					class="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-1.5 text-footnote"
+				>
+					<MailIcon class="size-4 shrink-0" />
+					<span class="truncate">{data.email}</span>
+				</span>
+			{/if}
 		</div>
 		<input type="hidden" name="marketing_opt_in" value={wantsUpdates ? 'true' : ''} />
 

@@ -1,10 +1,11 @@
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
 import { api } from './api.js';
 
-export type Provider = 'google' | 'discord' | 'apple';
+export type Provider = 'google' | 'discord' | 'apple' | 'steam';
 
 export function providerParam(value: string): Provider {
-	if (value === 'google' || value === 'discord' || value === 'apple') return value;
+	if (value === 'google' || value === 'discord' || value === 'apple' || value === 'steam')
+		return value;
 	error(404, 'Sayfa bulunamadı');
 }
 
@@ -12,7 +13,8 @@ export function providerParam(value: string): Provider {
 export const PROVIDER_ORIGINS = [
 	'https://accounts.google.com',
 	'https://discord.com',
-	'https://appleid.apple.com'
+	'https://appleid.apple.com',
+	'https://steamcommunity.com'
 ];
 
 /**
@@ -44,8 +46,13 @@ export async function enabledProviders(
 ): Promise<EnabledProviders> {
 	const result = await api<EnabledProviders>(event, '/v1/auth/oauth/providers', { method: 'GET' });
 	return result.ok
-		? { google: result.data.google, discord: result.data.discord, apple: result.data.apple }
-		: { google: false, discord: false, apple: false };
+		? {
+				google: result.data.google,
+				discord: result.data.discord,
+				apple: result.data.apple,
+				steam: result.data.steam
+			}
+		: { google: false, discord: false, apple: false, steam: false };
 }
 
 /**
@@ -68,7 +75,19 @@ export type LinkReturn = {
 	state: string | null;
 	stateToken: string | null;
 	error: string | null;
+	/** Steam (OpenID 2.0) returns signed `openid.*` fields instead of a code. */
+	openid?: Record<string, string> | null;
 };
+
+/** The `openid.*` query fields of a Steam return, or null when it carries none. */
+export function steamReturn(params: URLSearchParams): Record<string, string> | null {
+	const fields: Record<string, string> = {};
+	for (const [key, value] of params) {
+		if (key.startsWith('openid.') && Object.keys(fields).length < 40)
+			fields[key] = value.slice(0, 2000);
+	}
+	return fields['openid.mode'] === 'id_res' ? fields : null;
+}
 
 /** Ends a connect-from-settings flow; always redirects back to the page it started from. */
 export async function finishLink(
@@ -78,11 +97,16 @@ export async function finishLink(
 ): Promise<never> {
 	if (link.error) redirect(303, linkResultPath(link.back, { error: 'access_denied' }));
 	if (!event.locals.token) redirect(303, '/sign-in');
-	if (!link.code || !link.state || !link.stateToken) {
+	if ((!link.code && !link.openid) || !link.state || !link.stateToken) {
 		redirect(303, linkResultPath(link.back, { error: 'invalid_state' }));
 	}
 	const result = await api(event, `/v1/account/sign-in-methods/${provider}/callback`, {
-		body: { code: link.code, state: link.state, state_token: link.stateToken },
+		body: {
+			code: link.code ?? '',
+			state: link.state,
+			state_token: link.stateToken,
+			openid: link.openid ?? {}
+		},
 		token: event.locals.token
 	});
 	redirect(

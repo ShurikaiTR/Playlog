@@ -1,12 +1,13 @@
 // Shapes and Turkish copy for the account page (/hesap).
 
-export type Provider = 'google' | 'discord' | 'apple';
+export type Provider = 'google' | 'discord' | 'apple' | 'steam';
 
 export type Account = {
 	id: string;
 	username: string;
 	display_name: string | null;
-	email: string;
+	/** Null for accounts created with Steam, which gives no email. */
+	email: string | null;
 	avatar_url: string | null;
 	created_at: string;
 	has_password: boolean;
@@ -28,7 +29,8 @@ export type Device = {
 export const providers: { id: Provider; label: string }[] = [
 	{ id: 'apple', label: 'Apple' },
 	{ id: 'google', label: 'Google' },
-	{ id: 'discord', label: 'Discord' }
+	{ id: 'discord', label: 'Discord' },
+	{ id: 'steam', label: 'Steam' }
 ];
 
 export const providerLabel = (id: Provider) =>

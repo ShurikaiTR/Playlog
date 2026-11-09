@@ -38,7 +38,8 @@ export const OAUTH_RETURN_COOKIE = prefixed('oauth_return');
 
 export type PendingSignup = {
 	pending_token: string;
-	email: string;
+	/** Steam gives no email, so a Steam sign-up has none. */
+	email: string | null;
 	suggested_username: string | null;
 	display_name: string | null;
 };
