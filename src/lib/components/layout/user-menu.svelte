@@ -74,7 +74,7 @@
 					</span>
 				</DropdownMenu.Label>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item class="min-h-11 cursor-pointer rounded-xl py-2 text-callout">
+				<DropdownMenu.Item class="cursor-pointer">
 					{#snippet child({ props })}
 						<a
 							{...props}
@@ -86,7 +86,7 @@
 					{/snippet}
 				</DropdownMenu.Item>
 				<DropdownMenu.Item
-					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
+					class="cursor-pointer"
 					onSelect={() => openSettings('account')}
 				>
 					<SettingsIcon />Settings
@@ -95,7 +95,7 @@
 				<SettingsItems theme={false} language={false} />
 				<DropdownMenu.Separator />
 				<DropdownMenu.Item
-					class="min-h-11 cursor-pointer rounded-xl py-2 text-callout"
+					class="cursor-pointer"
 					onSelect={logOut}
 				>
 					<LogOutIcon />Log out

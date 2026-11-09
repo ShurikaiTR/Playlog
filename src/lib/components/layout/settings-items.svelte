@@ -56,7 +56,7 @@
 <DropdownMenu.Group class={cn(showTheme && 'mt-1')}>
 	{#if showLanguage}
 		<DropdownMenu.Item
-			class={cn('min-h-11 cursor-pointer rounded-xl py-2 text-callout', soft)}
+			class={cn('cursor-pointer', soft)}
 			onSelect={openLanguageDialog}
 		>
 			<LanguagesIcon />
@@ -64,7 +64,7 @@
 		</DropdownMenu.Item>
 	{/if}
 	<DropdownMenu.Item
-		class={cn('min-h-11 cursor-pointer rounded-xl py-2 text-callout', soft)}
+		class={cn('cursor-pointer', soft)}
 		onSelect={openFeedbackDialog}
 	>
 		<FlagIcon />
