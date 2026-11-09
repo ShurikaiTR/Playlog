@@ -6,8 +6,6 @@
 	import { settingsDialog } from '#lib/settings-dialog.svelte.js';
 	import AccountAvatar from './account-avatar.svelte';
 	import ScreenHeader from './screen-header.svelte';
-	import SettingsGroup from './settings-group.svelte';
-	import SettingsRow from './settings-row.svelte';
 
 	// The account section of the settings window: who is signed in, "Yönet" for the /hesap page.
 	const user = $derived(page.data.user);
@@ -25,18 +23,25 @@
 <ScreenHeader title="Hesap" />
 
 {#if user}
-	<div class="space-y-6">
-		<SettingsGroup plain>
-			<SettingsRow label={name} description={user.email ?? undefined}>
-				{#snippet media()}<AccountAvatar {name} class="size-10" />{/snippet}
-				<Button
-					href={resolve('/hesap')}
-					variant="outline"
-					size="sm"
-					class="rounded-xl px-4"
-					onclick={manage}>Yönet</Button
-				>
-			</SettingsRow>
-		</SettingsGroup>
+	<div class="flex flex-col gap-6">
+		<div class="flex items-center justify-between gap-4 px-5">
+			<div class="flex min-w-0 items-center gap-3">
+				<AccountAvatar {name} class="size-9" />
+				<div class="min-w-0 leading-tight">
+					<p class="truncate text-sm font-medium">{name}</p>
+					{#if user.email}
+						<p class="truncate text-xs text-muted-foreground">{user.email}</p>
+					{/if}
+				</div>
+			</div>
+			<Button
+				href={resolve('/hesap')}
+				variant="outline"
+				size="action"
+				class="shrink-0"
+				onclick={manage}>Yönet</Button
+			>
+		</div>
+		<hr class="mx-5 border-border" />
 	</div>
 {/if}
