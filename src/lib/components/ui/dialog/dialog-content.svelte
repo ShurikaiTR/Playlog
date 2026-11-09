@@ -15,6 +15,7 @@
 		children,
 		showCloseButton = true,
 		overlayClass,
+		onOpenAutoFocus,
 		...restProps
 	}: WithoutChildrenOrChild<DialogPrimitive.ContentProps> & {
 		portalProps?: WithoutChildrenOrChild<ComponentProps<typeof DialogPortal>>;
@@ -28,6 +29,13 @@
 	<Dialog.Overlay class={overlayClass} />
 	<DialogPrimitive.Content
 		bind:ref
+		tabindex={-1}
+		onOpenAutoFocus={(event) => {
+			// Park focus on the dialog itself without scrolling. Safari does not focus buttons on click, so the focus trap would otherwise pull focus back to the trigger behind the dialog and scroll the page to it.
+			event.preventDefault();
+			ref?.focus({ preventScroll: true });
+			onOpenAutoFocus?.(event);
+		}}
 		data-slot="dialog-content"
 		class={cn(
 			'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%_-_2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-4 text-sm text-popover-foreground ring-0 duration-200 outline-none sm:max-w-[520px] dark:ring-1 dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
