@@ -19,7 +19,7 @@
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
 	const soft =
-		'focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground';
+		'focus:bg-muted focus:text-foreground';
 
 	const themes = [
 		{ value: 'light', label: 'Light theme', icon: SunIcon },
