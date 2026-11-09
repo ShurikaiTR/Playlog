@@ -247,8 +247,13 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
+	html {
+		@apply bg-background;
+		overscroll-behavior: none;
+	}
 	body {
-		@apply antialiased bg-background text-foreground;
+		@apply bg-background text-foreground antialiased;
+		overscroll-behavior: none;
 		overflow-wrap: break-word;
 	}
 	h1 {
