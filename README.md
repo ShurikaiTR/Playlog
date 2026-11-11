@@ -32,7 +32,7 @@ tarayıcı ──> Cloudflare Tunnel ──> web (SvelteKit, SSR) ──> api (R
 │   │       ├── components/
 │   │       │   ├── ui/         shadcn-svelte bileşenleri (elle düzenlenmez)
 │   │       │   ├── icons/      Marka ve platform ikonları
-│   │       │   └── layout/     Uygulama kabuğu, kenar çubuğu, alt bilgi
+│   │       │   └── layout/     Uygulama kabuğu, kenar çubuğu, alt bilgi, duyarlı panel
 │   │       ├── server/         Yalnızca sunucuda çalışan kod: API istemcisi, oturum, OAuth
 │   │       └── hooks/          Paylaşılan reaktif yardımcılar
 │   └── static/             Olduğu gibi sunulan dosyalar
@@ -85,6 +85,9 @@ npm run dev
 kodlarını oradan okuyabilirsin.
 
 ## Denetimler
+
+Aşağıdaki komutların hepsini GitHub Actions her PR'da ve `main`'e her push'ta çalıştırır
+(`.github/workflows/ci.yml`).
 
 ```bash
 # web/
