@@ -1,4 +1,4 @@
-import { allGameDetails } from "#lib/games.js";
+import { allGameDetails } from "#lib/features/games/games.js";
 import type { PageLoad } from "./$types";
 
 // Every genre with how many games carry it, most common first.

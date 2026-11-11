@@ -3,7 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Command from '#lib/components/ui/command/index.js';
-	import { languageChoice, languages, settingsDialogs } from '#lib/settings-dialogs.svelte.js';
+	import { languageChoice, languages, settingsDialogs } from './settings-dialogs-state.svelte.js';
 	import FeedbackForm from './feedback-form.svelte';
 
 	onMount(() => {

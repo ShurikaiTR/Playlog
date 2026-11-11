@@ -1,8 +1,8 @@
 <script lang="ts">
-	import HomeHero from '#lib/components/home-hero.svelte';
-	import GameRow from '#lib/components/game-row.svelte';
-	import { heroSlides } from '#lib/hero-slides.js';
-	import { trendingGames, upcomingGames } from '#lib/games.js';
+	import HomeHero from '#lib/features/home/home-hero.svelte';
+	import GameRow from '#lib/features/games/game-row.svelte';
+	import { heroSlides } from '#lib/features/home/hero-slides.js';
+	import { trendingGames, upcomingGames } from '#lib/features/games/games.js';
 </script>
 
 <HomeHero slides={heroSlides} />

@@ -1,5 +1,5 @@
 import { error, redirect } from '@sveltejs/kit';
-import { hasRole, type Role } from '#lib/roles.js';
+import { hasRole, type Role } from '#lib/features/auth/roles.js';
 import type { ApiUser } from './api.js';
 
 /**

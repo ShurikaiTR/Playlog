@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Game } from "#lib/games.js";
+	import type { Game } from "./games.js";
 
 	let { game }: { game: Game } = $props();
 </script>

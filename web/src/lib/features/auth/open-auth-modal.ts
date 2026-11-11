@@ -1,6 +1,6 @@
 import { goto, preloadData, pushState } from '$app/navigation';
 import { page } from '$app/state';
-import { authHref, safeReturnPath, type AuthKind } from '#lib/return-to.js';
+import { authHref, safeReturnPath, type AuthKind } from './return-to.js';
 
 export type { AuthKind };
 

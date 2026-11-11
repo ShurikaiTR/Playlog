@@ -1,4 +1,4 @@
-import { allGameDetails } from "./games.js";
+import { allGameDetails } from "#lib/features/games/games.js";
 
 export type Person = { name: string; username: string; image?: string };
 

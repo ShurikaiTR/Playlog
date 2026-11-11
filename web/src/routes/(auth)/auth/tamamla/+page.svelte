@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { hideAuthTransition, showAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { hideAuthTransition, showAuthTransition } from '#lib/features/auth/auth-transition.svelte.js';
 	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';

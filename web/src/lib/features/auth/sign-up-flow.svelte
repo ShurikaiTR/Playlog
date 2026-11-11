@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { hideAuthTransition, showAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { hideAuthTransition, showAuthTransition } from './auth-transition.svelte.js';
 	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import Turnstile from './turnstile.svelte';
-	import { authHref } from '#lib/return-to.js';
+	import { authHref } from './return-to.js';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
@@ -19,8 +19,8 @@
 	import DiscordIcon from '#lib/components/icons/discord.svelte';
 	import SteamIcon from '#lib/components/icons/steam.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
-	import AuthShell from '#lib/components/auth/auth-shell.svelte';
-	import PasswordInput from '#lib/components/auth/password-input.svelte';
+	import AuthShell from './auth-shell.svelte';
+	import PasswordInput from './password-input.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 
 	// Sign-up options, then email, then the account details (which mails the code), then the code.

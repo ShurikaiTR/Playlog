@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Button } from '#lib/components/ui/button/index.js';
-	import ChangePasswordDialog from '#lib/components/settings/change-password-dialog.svelte';
-	import SetPasswordDialog from '#lib/components/settings/set-password-dialog.svelte';
-	import SettingsGroup from '#lib/components/settings/settings-group.svelte';
-	import SettingsRow from '#lib/components/settings/settings-row.svelte';
+	import ChangePasswordDialog from '#lib/features/account/change-password-dialog.svelte';
+	import SetPasswordDialog from '#lib/features/account/set-password-dialog.svelte';
+	import SettingsGroup from '#lib/features/settings/settings-group.svelte';
+	import SettingsRow from '#lib/features/settings/settings-row.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

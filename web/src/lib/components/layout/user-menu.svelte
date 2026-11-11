@@ -2,13 +2,13 @@
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
-	import { showAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { showAuthTransition } from '#lib/features/auth/auth-transition.svelte.js';
 	import UserIcon from '@lucide/svelte/icons/user';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
-	import { openSettings } from '#lib/settings-dialog.svelte.js';
+	import { openSettings } from '#lib/features/settings/settings-dialog-state.svelte.js';
 	import { cn } from '#lib/utils.js';
-	import SettingsItems from './settings-items.svelte';
+	import SettingsItems from '#lib/features/settings/settings-items.svelte';
 
 	// Account menu at the bottom of the sidebar for signed-in users.
 	let { user }: { user: { username: string; displayName: string | null } } = $props();

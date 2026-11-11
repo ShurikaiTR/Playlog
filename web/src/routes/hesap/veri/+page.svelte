@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Button } from '#lib/components/ui/button/index.js';
-	import DeleteAccountDialog from '#lib/components/settings/delete-account-dialog.svelte';
-	import SettingsGroup from '#lib/components/settings/settings-group.svelte';
-	import SettingsRow from '#lib/components/settings/settings-row.svelte';
+	import DeleteAccountDialog from '#lib/features/account/delete-account-dialog.svelte';
+	import SettingsGroup from '#lib/features/settings/settings-group.svelte';
+	import SettingsRow from '#lib/features/settings/settings-row.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

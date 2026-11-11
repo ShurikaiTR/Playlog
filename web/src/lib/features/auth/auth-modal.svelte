@@ -4,7 +4,7 @@
 	import XIcon from '@lucide/svelte/icons/x';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
-	import { authHref } from '#lib/return-to.js';
+	import { authHref } from './return-to.js';
 	import SignInFlow from './sign-in-flow.svelte';
 	import SignUpFlow from './sign-up-flow.svelte';
 

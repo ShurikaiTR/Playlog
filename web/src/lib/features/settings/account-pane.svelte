@@ -3,8 +3,8 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { settingsDialog } from '#lib/settings-dialog.svelte.js';
-	import AccountAvatar from './account-avatar.svelte';
+	import { settingsDialog } from './settings-dialog-state.svelte.js';
+	import AccountAvatar from '#lib/features/account/account-avatar.svelte';
 	import ScreenHeader from './screen-header.svelte';
 
 	// The account section of the settings window: who is signed in, "Yönet" for the /hesap page.

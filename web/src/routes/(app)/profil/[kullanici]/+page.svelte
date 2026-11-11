@@ -6,7 +6,7 @@
 	import { Button } from "#lib/components/ui/button/index.js";
 	import * as Item from "#lib/components/ui/item/index.js";
 	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
-	import { listHref, ownLists } from "#lib/user-lists.svelte.js";
+	import { listHref, ownLists } from "#lib/features/lists/user-lists.svelte.js";
 	import ClockIcon from "@lucide/svelte/icons/clock-3";
 	import GamepadIcon from "@lucide/svelte/icons/gamepad-2";
 	import HeartIcon from "@lucide/svelte/icons/heart";

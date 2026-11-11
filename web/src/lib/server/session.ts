@@ -78,4 +78,4 @@ export function readPendingSignup(cookies: Cookies): PendingSignup | null {
 	}
 }
 
-export { safeReturnPath } from '#lib/return-to.js';
+export { safeReturnPath } from '#lib/features/auth/return-to.js';

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
-	import type { HeroSlide } from "#lib/hero-slides.js";
+	import type { HeroSlide } from "./hero-slides.js";
 	import { Button } from "#lib/components/ui/button/index.js";
 
 	let { slides }: { slides: HeroSlide[] } = $props();

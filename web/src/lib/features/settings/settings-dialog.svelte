@@ -8,18 +8,18 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
-	import AccountAvatar from '#lib/components/settings/account-avatar.svelte';
-	import AccountPane from '#lib/components/settings/account-pane.svelte';
-	import ScreenHeader from '#lib/components/settings/screen-header.svelte';
-	import SettingsGroup from '#lib/components/settings/settings-group.svelte';
-	import SettingsRow from '#lib/components/settings/settings-row.svelte';
+	import AccountAvatar from '#lib/features/account/account-avatar.svelte';
+	import AccountPane from './account-pane.svelte';
+	import ScreenHeader from './screen-header.svelte';
+	import SettingsGroup from './settings-group.svelte';
+	import SettingsRow from './settings-row.svelte';
 	import { IsMobile } from '#lib/hooks/is-mobile.svelte.js';
 	import {
 		settingsDialog,
 		showSection,
 		type SettingsSection
-	} from '#lib/settings-dialog.svelte.js';
-	import { languageChoice, languages, openLanguageDialog } from '#lib/settings-dialogs.svelte.js';
+	} from './settings-dialog-state.svelte.js';
+	import { languageChoice, languages, openLanguageDialog } from './settings-dialogs-state.svelte.js';
 	import { cn } from '#lib/utils.js';
 
 	// System Settings layout: the section list beside the open section on wide screens; on phones

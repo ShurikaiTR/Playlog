@@ -8,9 +8,9 @@
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import SettingsGroup from '#lib/components/settings/settings-group.svelte';
-	import SettingsRow from '#lib/components/settings/settings-row.svelte';
-	import { accountErrorMessage, describeDevice, formatMediumDate } from '#lib/account.js';
+	import SettingsGroup from '#lib/features/settings/settings-group.svelte';
+	import SettingsRow from '#lib/features/settings/settings-row.svelte';
+	import { accountErrorMessage, describeDevice, formatMediumDate } from '#lib/features/account/account.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
-	import { showAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { showAuthTransition } from '#lib/features/auth/auth-transition.svelte.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
-	import PasswordInput from '#lib/components/auth/password-input.svelte';
-	import { accountErrorMessage, accountRequest } from '#lib/account.js';
+	import PasswordInput from '#lib/features/auth/password-input.svelte';
+	import { accountErrorMessage, accountRequest } from './account.js';
 
 	// Password accounts confirm with their password; social-only accounts need a recent sign-in.
 	let { open = $bindable(false), hasPassword }: { open?: boolean; hasPassword: boolean } = $props();

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import GameCard from '#lib/components/game-card.svelte';
+	import GameCard from '#lib/features/games/game-card.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Slider } from '#lib/components/ui/slider/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-	import { sorts } from '#lib/games.js';
+	import { sorts } from '#lib/features/games/games.js';
 	import { cn } from '#lib/utils.js';
 	import ArrowUpDownIcon from '@lucide/svelte/icons/arrow-up-down';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';

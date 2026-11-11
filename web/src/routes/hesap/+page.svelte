@@ -18,11 +18,11 @@
 	import SteamIcon from '#lib/components/icons/steam.svelte';
 	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
-	import AccountAvatar from '#lib/components/settings/account-avatar.svelte';
-	import ChangePasswordDialog from '#lib/components/settings/change-password-dialog.svelte';
-	import SetPasswordDialog from '#lib/components/settings/set-password-dialog.svelte';
-	import SettingsGroup from '#lib/components/settings/settings-group.svelte';
-	import SettingsRow from '#lib/components/settings/settings-row.svelte';
+	import AccountAvatar from '#lib/features/account/account-avatar.svelte';
+	import ChangePasswordDialog from '#lib/features/account/change-password-dialog.svelte';
+	import SetPasswordDialog from '#lib/features/account/set-password-dialog.svelte';
+	import SettingsGroup from '#lib/features/settings/settings-group.svelte';
+	import SettingsRow from '#lib/features/settings/settings-row.svelte';
 	import {
 		accountErrorMessage,
 		accountRequest,
@@ -31,7 +31,7 @@
 		providers,
 		providerSignInLabel,
 		type Provider
-	} from '#lib/account.js';
+	} from '#lib/features/account/account.js';
 	import { cn } from '#lib/utils.js';
 	import type { PageProps } from './$types';
 

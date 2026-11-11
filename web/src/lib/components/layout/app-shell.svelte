@@ -3,13 +3,13 @@
 	import { Button } from "#lib/components/ui/button/index.js";
 	import * as Sidebar from "#lib/components/ui/sidebar/index.js";
 	import AppSidebar from "./app-sidebar.svelte";
-	import Footer from "#lib/components/footer.svelte";
-	import SettingsMenu from "./settings-menu.svelte";
-	import SettingsDialogs from "./settings-dialogs.svelte";
+	import Footer from "./footer.svelte";
+	import SettingsMenu from "#lib/features/settings/settings-menu.svelte";
+	import SettingsDialogs from "#lib/features/settings/settings-dialogs.svelte";
 	import SearchDialog from "#lib/features/search/search-dialog.svelte";
 	import { page } from "$app/state";
-	import { currentReturnPath, openAuthModal } from "#lib/auth-modal.js";
-	import { authHref } from "#lib/return-to.js";
+	import { currentReturnPath, openAuthModal } from "#lib/features/auth/open-auth-modal.js";
+	import { authHref } from "#lib/features/auth/return-to.js";
 
 	let { children }: { children: Snippet } = $props();
 	const returnPath = $derived(currentReturnPath());

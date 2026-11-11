@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SignUpFlow from '#lib/components/auth/sign-up-flow.svelte';
+	import SignUpFlow from '#lib/features/auth/sign-up-flow.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

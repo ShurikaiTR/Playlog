@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import UserListPage from "#lib/components/user-list-page.svelte";
-	import { findList } from "#lib/user-lists.svelte.js";
+	import UserListPage from "#lib/features/lists/user-list-page.svelte";
+	import { findList } from "#lib/features/lists/user-lists.svelte.js";
 
 	const list = $derived(findList(page.params.id ?? ""));
 </script>

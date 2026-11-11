@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { getProfile, hasProfile, viewerUsername } from "#lib/profiles.js";
+import { getProfile, hasProfile, viewerUsername } from "#lib/features/profiles/profiles.js";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = ({ params }) => {

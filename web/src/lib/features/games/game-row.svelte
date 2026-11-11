@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Game } from "#lib/games.js";
+	import type { Game } from "./games.js";
 	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-	import GameCard from "#lib/components/game-card.svelte";
+	import GameCard from "./game-card.svelte";
 
 	let { title, href, games }: { title: string; href: string; games: Game[] } = $props();
 	const headingId = $derived(`row-${href.replace(/\W+/g, "-")}`);

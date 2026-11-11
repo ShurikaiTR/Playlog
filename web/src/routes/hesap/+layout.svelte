@@ -7,7 +7,7 @@
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 	import MonitorSmartphoneIcon from '@lucide/svelte/icons/monitor-smartphone';
 	import UserRoundIcon from '@lucide/svelte/icons/user-round';
-	import { showAuthTransition } from '#lib/auth-transition.svelte.js';
+	import { showAuthTransition } from '#lib/features/auth/auth-transition.svelte.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
 	import { cn } from '#lib/utils.js';

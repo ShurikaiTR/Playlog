@@ -1,4 +1,4 @@
-import { allGameDetails, sorts } from "#lib/games.js";
+import { allGameDetails, sorts } from "#lib/features/games/games.js";
 import type { PageLoad } from "./$types";
 
 const platformOptions = ["PC", "PlayStation", "Xbox", "Switch", "Mobil"];

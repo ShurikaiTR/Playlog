@@ -1,4 +1,4 @@
-import { moodGames, moods } from "#lib/games.js";
+import { moodGames, moods } from "#lib/features/games/games.js";
 import type { PageServerLoad } from "./$types";
 
 // Without a chosen mood the page opens on a random one, picked once per request on the server so

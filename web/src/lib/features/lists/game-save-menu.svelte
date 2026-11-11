@@ -4,7 +4,7 @@
 	import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
 	import { Input } from "#lib/components/ui/input/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
-	import { createList, customLists, hasGame, listByKind, setGame, setStatus, statusOf, type UserList } from "#lib/user-lists.svelte.js";
+	import { createList, customLists, hasGame, listByKind, setGame, setStatus, statusOf, type UserList } from "./user-lists.svelte.js";
 	import { cn } from "#lib/utils.js";
 	import { toast } from "svelte-sonner";
 	import BanIcon from "@lucide/svelte/icons/ban";

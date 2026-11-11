@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { getGameDetail } from "#lib/games.js";
+import { getGameDetail } from "#lib/features/games/games.js";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = ({ params }) => {

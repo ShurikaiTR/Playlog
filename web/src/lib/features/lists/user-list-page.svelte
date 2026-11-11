@@ -9,7 +9,7 @@
 	import { Label } from "#lib/components/ui/label/index.js";
 	import * as Select from "#lib/components/ui/select/index.js";
 	import { Textarea } from "#lib/components/ui/textarea/index.js";
-	import { setGame, type UserList } from "#lib/user-lists.svelte.js";
+	import { setGame, type UserList } from "./user-lists.svelte.js";
 	import { toast } from "svelte-sonner";
 	import ArrowDownWideNarrowIcon from "@lucide/svelte/icons/arrow-down-wide-narrow";
 	import ArrowUpRightIcon from "@lucide/svelte/icons/arrow-up-right";

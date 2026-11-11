@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SignInFlow from '#lib/components/auth/sign-in-flow.svelte';
+	import SignInFlow from '#lib/features/auth/sign-in-flow.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

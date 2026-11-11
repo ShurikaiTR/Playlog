@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import { authTransition } from '#lib/auth-transition.svelte.js';
+	import { authTransition } from './auth-transition.svelte.js';
 </script>
 
 {#if authTransition.current}

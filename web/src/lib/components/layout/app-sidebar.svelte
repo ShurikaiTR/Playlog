@@ -19,7 +19,7 @@
 	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
 	import { openSearch } from "#lib/features/search/search-state.svelte.js";
 	import UserMenu from "./user-menu.svelte";
-	import SettingsDialog from "./settings-dialog.svelte";
+	import SettingsDialog from "#lib/features/settings/settings-dialog.svelte";
 
 	interface Item {
 		label: string;

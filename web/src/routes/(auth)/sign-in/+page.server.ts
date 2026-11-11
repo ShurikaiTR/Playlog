@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { authErrorMessage } from '#lib/auth-errors.js';
+import { authErrorMessage } from '#lib/features/auth/auth-errors.js';
 import { api, type ApiUser } from '#lib/server/api.js';
 import { enabledProviders } from '#lib/server/oauth.js';
 import { safeReturnPath, setSessionCookie } from '#lib/server/session.js';

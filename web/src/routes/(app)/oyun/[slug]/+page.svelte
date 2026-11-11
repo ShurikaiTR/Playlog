@@ -23,12 +23,12 @@
 	import * as Tooltip from "#lib/components/ui/tooltip/index.js";
 	import * as Table from "#lib/components/ui/table/index.js";
 	import { Separator } from "#lib/components/ui/separator/index.js";
-	import GameSaveMenu from "#lib/components/game-save-menu.svelte";
-	import { gameRating, myReviews, toListGame } from "#lib/user-lists.svelte.js";
+	import GameSaveMenu from "#lib/features/lists/game-save-menu.svelte";
+	import { gameRating, myReviews, toListGame } from "#lib/features/lists/user-lists.svelte.js";
 	import * as Carousel from "#lib/components/ui/carousel/index.js";
 	import type { CarouselAPI } from "#lib/components/ui/carousel/context.js";
-	import GameRow from "#lib/components/game-row.svelte";
-	import { ageDescription, allGameDetails, trendingGames } from "#lib/games.js";
+	import GameRow from "#lib/features/games/game-row.svelte";
+	import { ageDescription, allGameDetails, trendingGames } from "#lib/features/games/games.js";
 	import FlagIcon from "@lucide/svelte/icons/flag";
 	import ThumbsUpIcon from "@lucide/svelte/icons/thumbs-up";
 	import EyeOffIcon from "@lucide/svelte/icons/eye-off";

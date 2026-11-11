@@ -2,7 +2,7 @@
 	import { setMode, userPrefersMode } from 'mode-watcher';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
-	import { openFeedbackDialog, openLanguageDialog } from '#lib/settings-dialogs.svelte.js';
+	import { openFeedbackDialog, openLanguageDialog } from './settings-dialogs-state.svelte.js';
 	import { cn } from '#lib/utils.js';
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';

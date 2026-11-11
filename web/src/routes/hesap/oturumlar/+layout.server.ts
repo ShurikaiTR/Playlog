@@ -1,5 +1,5 @@
 import { error, redirect } from '@sveltejs/kit';
-import type { Device } from '#lib/account.js';
+import type { Device } from '#lib/features/account/account.js';
 import { api } from '#lib/server/api.js';
 import type { LayoutServerLoad } from './$types';
 

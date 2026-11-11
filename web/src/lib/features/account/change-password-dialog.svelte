@@ -4,8 +4,8 @@
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import PasswordInput from '#lib/components/auth/password-input.svelte';
-	import { accountErrorMessage, accountRequest, NEW_PASSWORD_HINT } from '#lib/account.js';
+	import PasswordInput from '#lib/features/auth/password-input.svelte';
+	import { accountErrorMessage, accountRequest, NEW_PASSWORD_HINT } from './account.js';
 
 	let {
 		open = $bindable(false),
