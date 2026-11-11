@@ -1,5 +1,7 @@
 {
 	"files.associations": {
 		"*.css": "tailwindcss"
-	}
+	},
+	"eslint.workingDirectories": ["web"],
+	"rust-analyzer.linkedProjects": ["api/Cargo.toml"]
 }

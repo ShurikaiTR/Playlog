@@ -47,7 +47,7 @@ services:
       RUST_LOG: info
 
   web:
-    build: .
+    build: ./web
     restart: unless-stopped
     depends_on:
       - api

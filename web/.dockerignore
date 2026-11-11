@@ -1,9 +1,5 @@
 node_modules
 build
 .svelte-kit
-.git
-.claude
-.logo-backup
-api
 .env
 .env.*
