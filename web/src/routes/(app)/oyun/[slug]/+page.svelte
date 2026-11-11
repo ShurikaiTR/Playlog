@@ -7,7 +7,6 @@
 	import { Progress } from "#lib/components/ui/progress/index.js";
 	import { Switch } from "#lib/components/ui/switch/index.js";
 	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
-	import * as Select from "#lib/components/ui/select/index.js";
 	import { AspectRatio } from "#lib/components/ui/aspect-ratio/index.js";
 	import * as Empty from "#lib/components/ui/empty/index.js";
 	import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
@@ -25,8 +24,8 @@
 	import { Separator } from "#lib/components/ui/separator/index.js";
 	import GameSaveMenu from "#lib/features/lists/game-save-menu.svelte";
 	import { gameRating, myReviews, toListGame } from "#lib/features/lists/user-lists.svelte.js";
-	import * as Carousel from "#lib/components/ui/carousel/index.js";
-	import type { CarouselAPI } from "#lib/components/ui/carousel/context.js";
+	import GameGalleryDialog from "#lib/features/games/game-gallery-dialog.svelte";
+	import GameReportDialog from "#lib/features/games/game-report-dialog.svelte";
 	import GameRow from "#lib/features/games/game-row.svelte";
 	import { ageDescription, allGameDetails, trendingGames } from "#lib/features/games/games.js";
 	import FlagIcon from "@lucide/svelte/icons/flag";
@@ -48,7 +47,7 @@
 	import LanguagesIcon from "@lucide/svelte/icons/languages";
 	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
 	import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
-import PlayIcon from "@lucide/svelte/icons/play";
+	import PlayIcon from "@lucide/svelte/icons/play";
 	import { Button } from "#lib/components/ui/button/index.js";
 
 	let { data } = $props();
@@ -56,29 +55,10 @@ import PlayIcon from "@lucide/svelte/icons/play";
 
 	let galleryOpen = $state(false);
 	let galleryStart = $state(0);
-	let galleryApi = $state<CarouselAPI>();
 	function openGallery(index: number) {
 		galleryStart = index;
 		galleryOpen = true;
 	}
-	// The carousel mounts with the dialog; jump to the clicked screenshot as soon as it is ready.
-	let galleryIndex = $state(0);
-	let canPrev = $state(false);
-	let canNext = $state(false);
-	$effect(() => {
-		const api = galleryApi;
-		if (!galleryOpen || !api) return;
-		api.scrollTo(galleryStart, true);
-		galleryIndex = galleryStart;
-		const onSelect = () => {
-			galleryIndex = api.selectedScrollSnap();
-			canPrev = api.canScrollPrev();
-			canNext = api.canScrollNext();
-		};
-		onSelect();
-		api.on("select", onSelect);
-		return () => api.off("select", onSelect);
-	});
 
 	const languageColumns = [
 		{ key: "interface", label: "Arayüz", icon: MonitorIcon },
@@ -155,14 +135,6 @@ import PlayIcon from "@lucide/svelte/icons/play";
 	let languagesOpen = $state(false);
 	let requirementsOpen = $state(false);
 	let reportOpen = $state(false);
-	let reportReason = $state("");
-	let reportDetails = $state("");
-	let reportNotice = $state("");
-
-	function submitReport(event: SubmitEvent) {
-		event.preventDefault();
-		reportNotice = "Bildirimler şu anda kullanılamıyor. Bildirimin gönderilmedi.";
-	}
 
 	let reviewsSheetOpen = $state(false);
 	let reviewSheetOpen = $state(false);
@@ -328,10 +300,7 @@ import PlayIcon from "@lucide/svelte/icons/play";
 							</DropdownMenu.Trigger>
 							<DropdownMenu.Content align="start">
 								<DropdownMenu.Item
-									onSelect={() => {
-										reportNotice = "";
-										reportOpen = true;
-									}}
+									onSelect={() => (reportOpen = true)}
 								>
 									<FlagIcon /> Sorun bildir
 								</DropdownMenu.Item>
@@ -648,68 +617,7 @@ import PlayIcon from "@lucide/svelte/icons/play";
 		</div>
 	</div>
 
-	<!-- Preview: the picture on the dimmed page, round arrows at the screen edges. Clicking the empty area or pressing Esc closes it. -->
-	<Dialog.Root bind:open={galleryOpen}>
-		<Dialog.Content
-			class="top-0 left-0 grid h-svh max-h-none w-screen max-w-none translate-x-0 translate-y-0 place-items-center overflow-visible rounded-none bg-transparent p-0 shadow-none ring-0 sm:max-w-none dark:ring-0"
-			overlayClass="bg-black/80 supports-backdrop-filter:backdrop-blur-md"
-			showCloseButton={false}
-			aria-describedby={undefined}
-			onOpenAutoFocus={(event) => event.preventDefault()}
-			onclick={(event) => event.target === event.currentTarget && (galleryOpen = false)}
-			onkeydown={(event) => {
-				// The arrow buttons handle the keys themselves when focused.
-				if (event.defaultPrevented) return;
-				if (event.key === "ArrowLeft") galleryApi?.scrollPrev();
-				else if (event.key === "ArrowRight") galleryApi?.scrollNext();
-			}}
-		>
-			<Dialog.Title class="sr-only">{game.title} ekran görüntüleri</Dialog.Title>
-			<Carousel.Root
-				setApi={(api) => (galleryApi = api)}
-				opts={{ startIndex: galleryStart }}
-				class="w-[min(92vw,calc(78svh*16/9))]"
-			>
-				<Carousel.Content>
-					{#each galleryItems as item, i (i)}
-						<Carousel.Item>
-							<AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-xl shadow-2xl">
-								{#if item.kind === "video"}
-									<!-- Only the slide that is showing holds the player, so leaving it stops the sound. -->
-									{#if galleryOpen && galleryIndex === i}
-										<iframe
-											title="{game.title} fragmanı"
-											src="https://www.youtube-nocookie.com/embed/{item.src}?autoplay=1&rel=0"
-											allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
-											allowfullscreen
-											class="size-full"
-										></iframe>
-									{/if}
-								{:else}
-									<img src={item.src} alt="{game.title} ekran görüntüsü {i + 1 - trailerCount} / {screenshots.length}" class="size-full object-cover" />
-								{/if}
-							</AspectRatio>
-						</Carousel.Item>
-					{/each}
-				</Carousel.Content>
-			</Carousel.Root>
-			{#each [{ dir: -1, label: "Önceki görsel", can: canPrev, pos: "start-5" }, { dir: 1, label: "Sonraki görsel", can: canNext, pos: "end-5" }] as arrow (arrow.dir)}
-				<Button
-					variant="ghost"
-					size="icon"
-					class="{arrow.pos} group/arrow fixed inset-y-0 my-auto size-10 cursor-pointer rounded-full border-0 bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white active:bg-black/70"
-					disabled={!arrow.can}
-					aria-label={arrow.label}
-					onclick={() => (arrow.dir < 0 ? galleryApi?.scrollPrev() : galleryApi?.scrollNext())}
-				>
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={cn("size-5", arrow.dir < 0 && "rotate-180")} aria-hidden="true">
-						<line x1="5" y1="12" x2="19" y2="12" class="origin-right scale-x-0 [transform-box:fill-box] transition-transform duration-150 group-hover/arrow:scale-x-100" />
-						<polyline points="11 8 15 12 11 16" class="transition-transform duration-150 group-hover/arrow:translate-x-1" />
-					</svg>
-				</Button>
-			{/each}
-		</Dialog.Content>
-	</Dialog.Root>
+	<GameGalleryDialog title={game.title} items={galleryItems} start={galleryStart} bind:open={galleryOpen} />
 
 	<!-- All reviews, like the anime page: a side drawer with a sort tab and one card per review. -->
 	<Sheet.Root bind:open={reviewsSheetOpen}>
@@ -737,38 +645,7 @@ import PlayIcon from "@lucide/svelte/icons/play";
 		</Sheet.Content>
 	</Sheet.Root>
 
-	<Dialog.Root bind:open={reportOpen}>
-		<Dialog.Content>
-			<Dialog.Header>
-				<Dialog.Title>Sorun bildir</Dialog.Title>
-				<Dialog.Description>{game.title} bilgilerinde neyin düzeltilmesi gerektiğini bize anlat.</Dialog.Description>
-			</Dialog.Header>
-			<form class="space-y-4" onsubmit={submitReport}>
-				<div class="space-y-2">
-					<Label for="report-reason">Neden</Label>
-					<Select.Root type="single" bind:value={reportReason}>
-						<Select.Trigger id="report-reason" class="h-10 w-full">
-							<span data-slot="select-value">{reportReason || "Bir neden seç"}</span>
-						</Select.Trigger>
-						<Select.Content class="rounded-xl">
-							{#each ["Yanlış bilgi", "Yanlış görsel", "Eksik bilgi", "Diğer"] as reason (reason)}
-								<Select.Item value={reason} class="rounded-lg">{reason}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				</div>
-				<div class="space-y-2">
-					<Label for="report-details">Ayrıntılar</Label>
-					<Textarea id="report-details" bind:value={reportDetails} placeholder="Sorunu anlat…" class="min-h-24 resize-y" />
-				</div>
-				{#if reportNotice}<p class="text-muted-foreground text-xs leading-5" role="status">{reportNotice}</p>{/if}
-				<Dialog.Footer>
-					<Button type="button" variant="outline" class="cursor-pointer" onclick={() => (reportOpen = false)}>Vazgeç</Button>
-					<Button type="submit" class="cursor-pointer">Bildirimi gönder</Button>
-				</Dialog.Footer>
-			</form>
-		</Dialog.Content>
-	</Dialog.Root>
+	<GameReportDialog title={game.title} bind:open={reportOpen} />
 
 	<Dialog.Root bind:open={reviewSheetOpen}>
 		<Dialog.Content onOpenAutoFocus={(event) => event.preventDefault()}>
