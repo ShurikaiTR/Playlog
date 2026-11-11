@@ -1,4 +1,9 @@
-import { allGameDetails, trendingGames, upcomingGames, type GameDetail } from '#lib/features/games/games.js';
+import {
+	allGameDetails,
+	trendingGames,
+	upcomingGames,
+	type GameDetail
+} from '#lib/features/games/games.js';
 import { allProfiles, type Profile } from '#lib/features/profiles/profiles.js';
 
 // Search over the placeholder catalog. Swap these two functions for API calls once real data exists;

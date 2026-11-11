@@ -1,16 +1,16 @@
 <script lang="ts">
-	import * as Dialog from "#lib/components/ui/dialog/index.js";
-	import { cn, type WithoutChildrenOrChild } from "#lib/utils.js";
-	import Command from "./command.svelte";
-	import type { Command as CommandPrimitive, Dialog as DialogPrimitive } from "bits-ui";
-	import type { Snippet } from "svelte";
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
+	import Command from './command.svelte';
+	import type { Command as CommandPrimitive, Dialog as DialogPrimitive } from 'bits-ui';
+	import type { Snippet } from 'svelte';
 
 	let {
 		open = $bindable(false),
 		ref = $bindable(null),
-		value = $bindable(""),
-		title = "Command Palette",
-		description = "Search for a command to run...",
+		value = $bindable(''),
+		title = 'Command Palette',
+		description = 'Search for a command to run...',
 		showCloseButton = false,
 		portalProps,
 		overlayClass,
@@ -35,11 +35,20 @@
 		<Dialog.Description>{description}</Dialog.Description>
 	</Dialog.Header>
 	<Dialog.Content
-		class={cn("w-[400px] max-h-[min(85dvh,640px)] flex flex-col overflow-hidden p-0 sm:max-w-[400px]", className)}
+		class={cn(
+			'flex max-h-[min(85dvh,640px)] w-[400px] flex-col overflow-hidden p-0 sm:max-w-[400px]',
+			className
+		)}
 		{showCloseButton}
 		{portalProps}
 		{overlayClass}
 	>
-		<Command {...restProps} class="rounded-none bg-transparent p-0" bind:value bind:ref {children} />
+		<Command
+			{...restProps}
+			class="rounded-none bg-transparent p-0"
+			bind:value
+			bind:ref
+			{children}
+		/>
 	</Dialog.Content>
 </Dialog.Root>

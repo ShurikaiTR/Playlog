@@ -54,21 +54,55 @@
 	);
 	const chosen = $derived([
 		...lists.flatMap(({ key, label }) =>
-			data.filters[key].map((value) => ({ id: key + value, label: value, group: label, remove: () => toggle(key, value) }))
+			data.filters[key].map((value) => ({
+				id: key + value,
+				label: value,
+				group: label,
+				remove: () => toggle(key, value)
+			}))
 		),
 		...(yearsChanged
-			? [{ id: 'yil', label: `${data.filters.yilmin}–${data.filters.yilmax}`, group: 'Çıkış yılı', remove: () => update({ yilmin: data.minYear, yilmax: data.maxYear }) }]
+			? [
+					{
+						id: 'yil',
+						label: `${data.filters.yilmin}–${data.filters.yilmax}`,
+						group: 'Çıkış yılı',
+						remove: () => update({ yilmin: data.minYear, yilmax: data.maxYear })
+					}
+				]
 			: []),
 		...(data.filters.yakinda
-			? [{ id: 'yakinda', label: 'Yakında çıkacaklar', group: 'Çıkış yılı', remove: () => update({ yakinda: false }) }]
+			? [
+					{
+						id: 'yakinda',
+						label: 'Yakında çıkacaklar',
+						group: 'Çıkış yılı',
+						remove: () => update({ yakinda: false })
+					}
+				]
 			: []),
 		...(data.filters.puan > 0
-			? [{ id: 'puan', label: `Puan ${data.filters.puan}+`, group: 'Topluluk puanı', remove: () => update({ puan: 0 }) }]
+			? [
+					{
+						id: 'puan',
+						label: `Puan ${data.filters.puan}+`,
+						group: 'Topluluk puanı',
+						remove: () => update({ puan: 0 })
+					}
+				]
 			: [])
 	]);
 	const filtered = $derived(chosen.length > 0);
 	const clearAll = () =>
-		update({ platform: [], tur: [], mod: [], yilmin: data.minYear, yilmax: data.maxYear, yakinda: false, puan: 0 });
+		update({
+			platform: [],
+			tur: [],
+			mod: [],
+			yilmin: data.minYear,
+			yilmax: data.maxYear,
+			yakinda: false,
+			puan: 0
+		});
 
 	const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
 	// Each card shows its first genre and score under the title.
@@ -132,7 +166,9 @@
 				onclick={() => toggle(key, option)}
 				class={cn(
 					optionClass,
-					on ? 'border-transparent bg-primary text-primary-foreground' : 'text-primary hover:bg-muted'
+					on
+						? 'border-transparent bg-primary text-primary-foreground'
+						: 'text-primary hover:bg-muted'
 				)}
 			>
 				{option}
@@ -161,7 +197,9 @@
 				aria-label="Çıkış yılı aralığı"
 			/>
 		</div>
-		<label class="flex min-h-9 cursor-pointer items-center justify-between gap-3 text-sm text-primary">
+		<label
+			class="flex min-h-9 cursor-pointer items-center justify-between gap-3 text-sm text-primary"
+		>
 			Yakında çıkacaklar
 			<Switch
 				checked={data.filters.yakinda}
@@ -192,12 +230,16 @@
 	<div class="divide-y border-y">
 		{@render section('platform', 'Platform', data.filters.platform.length, platformBody)}
 		{@render section('tur', 'Tür', data.filters.tur.length, genreBody)}
-		{@render section('yil', 'Çıkış yılı', (yearsChanged ? 1 : 0) + (data.filters.yakinda ? 1 : 0), yearBody)}
+		{@render section(
+			'yil',
+			'Çıkış yılı',
+			(yearsChanged ? 1 : 0) + (data.filters.yakinda ? 1 : 0),
+			yearBody
+		)}
 		{@render section('puan', 'Topluluk puanı', data.filters.puan > 0 ? 1 : 0, scoreBody)}
 		{@render section('mod', 'Oyun modu', data.filters.mod.length, modeBody)}
 	</div>
 {/snippet}
-
 
 <div lang="tr" class="min-w-0 px-4 pb-20 md:px-8 md:pb-24">
 	<header class="pt-2 pb-6 md:pt-4">

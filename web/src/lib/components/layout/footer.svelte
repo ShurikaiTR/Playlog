@@ -1,6 +1,6 @@
 <footer class="mt-8 border-t">
 	<div
-		class="text-muted-foreground flex w-full flex-col gap-4 px-4 py-8 text-footnote sm:flex-row sm:items-center sm:justify-between md:px-8"
+		class="flex w-full flex-col gap-4 px-4 py-8 text-footnote text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-8"
 	>
 		<p>© 2026 Playthru</p>
 		<nav aria-label="Footer" class="flex flex-wrap gap-x-5 gap-y-2">

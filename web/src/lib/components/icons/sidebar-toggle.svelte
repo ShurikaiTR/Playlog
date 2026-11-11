@@ -1,10 +1,17 @@
 <script lang="ts">
-	import type { SVGAttributes } from "svelte/elements";
+	import type { SVGAttributes } from 'svelte/elements';
 
 	let props: SVGAttributes<SVGSVGElement> = $props();
 </script>
 
-<svg width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+<svg
+	width="1.125rem"
+	height="1.125rem"
+	viewBox="0 0 24 24"
+	fill="none"
+	xmlns="http://www.w3.org/2000/svg"
+	{...props}
+>
 	<path
 		d="M9 17H8.09961C7.53982 17 7.25976 16.9996 7.0459 16.8906C6.85793 16.7948 6.70521 16.6421 6.60938 16.4541C6.50041 16.2402 6.5 15.9602 6.5 15.4004V8.59961C6.5 8.03982 6.50041 7.75976 6.60938 7.5459C6.70521 7.35793 6.85793 7.20521 7.0459 7.10938C7.25976 7.00041 7.53982 7 8.09961 7H9V17Z"
 		fill="currentColor"

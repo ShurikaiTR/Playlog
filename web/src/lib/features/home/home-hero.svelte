@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
-	import type { HeroSlide } from "./hero-slides.js";
-	import { Button } from "#lib/components/ui/button/index.js";
+	import { onMount } from 'svelte';
+	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
+	import type { HeroSlide } from './hero-slides.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 
 	let { slides }: { slides: HeroSlide[] } = $props();
 	const SLIDE_DURATION = 8000;
@@ -42,7 +42,7 @@
 
 	// Arrow keys step through the slides, unless the user is typing somewhere.
 	function onKeydown(event: KeyboardEvent) {
-		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+		if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
 		if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
 		const target = event.target;
 		if (
@@ -51,7 +51,7 @@
 		) {
 			return;
 		}
-		showSlide(currentIndex + (event.key === "ArrowRight" ? 1 : -1));
+		showSlide(currentIndex + (event.key === 'ArrowRight' ? 1 : -1));
 	}
 
 	// A horizontal swipe does the same on touch screens.
@@ -80,13 +80,13 @@
 	>
 		{#each slides as slide, index (slide.slug)}
 			<img
-				class={["hero-image", { active: index === currentIndex }]}
+				class={['hero-image', { active: index === currentIndex }]}
 				src={slide.image}
 				alt=""
 				aria-hidden={index !== currentIndex}
 				width="1600"
 				height="900"
-				fetchpriority={index === 0 ? "high" : "auto"}
+				fetchpriority={index === 0 ? 'high' : 'auto'}
 			/>
 		{/each}
 		<div class="hero-overlay"></div>
@@ -128,8 +128,8 @@
 
 		<nav class="slider-controls" aria-label="Öne çıkan oyunlar">
 			<p class="counter numeric" aria-live="off">
-				<span>{String(currentIndex + 1).padStart(2, "0")}</span>
-				<span class="counter-total">/ {String(slides.length).padStart(2, "0")}</span>
+				<span>{String(currentIndex + 1).padStart(2, '0')}</span>
+				<span class="counter-total">/ {String(slides.length).padStart(2, '0')}</span>
 			</p>
 			<div class="segments">
 				{#each slides as slide, index (slide.slug)}
@@ -137,7 +137,7 @@
 						type="button"
 						class={{ active: index === currentIndex }}
 						aria-label={`${index + 1}. oyun: ${slide.title}`}
-						aria-current={index === currentIndex ? "true" : undefined}
+						aria-current={index === currentIndex ? 'true' : undefined}
 						onclick={() => showSlide(index)}
 					>
 						<span
@@ -208,7 +208,11 @@
 				color-mix(in oklch, var(--background) 62%, transparent) 40%,
 				color-mix(in oklch, var(--background) 30%, transparent) 100%
 			),
-			linear-gradient(180deg, color-mix(in oklch, var(--background) 55%, transparent) 0%, transparent 22%);
+			linear-gradient(
+				180deg,
+				color-mix(in oklch, var(--background) 55%, transparent) 0%,
+				transparent 22%
+			);
 	}
 
 	/* Fills the content area, same gutters as the rows below. */
@@ -261,7 +265,7 @@
 	.rating + .genre::before {
 		margin-right: 0.65rem;
 		color: color-mix(in oklch, var(--foreground) 28%, transparent);
-		content: "•";
+		content: '•';
 	}
 
 	.rating + .genre::before {
@@ -337,7 +341,7 @@
 	}
 
 	.segments button::before {
-		content: "";
+		content: '';
 		grid-area: 1 / 1;
 		height: 3px;
 		width: 100%;

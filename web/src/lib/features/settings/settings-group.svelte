@@ -17,7 +17,10 @@
 		<h3 class="px-4 text-footnote font-normal text-muted-foreground">{title}</h3>
 	{/if}
 	<Item.Group
-		class={["gap-0 overflow-hidden rounded-2xl *:not-first:rounded-none *:not-first:border-t *:not-first:border-t-border/60 *:first:rounded-none", !plain && "bg-muted/50"]}
+		class={[
+			'gap-0 overflow-hidden rounded-2xl *:not-first:rounded-none *:not-first:border-t *:not-first:border-t-border/60 *:first:rounded-none',
+			!plain && 'bg-muted/50'
+		]}
 	>
 		{@render children()}
 	</Item.Group>

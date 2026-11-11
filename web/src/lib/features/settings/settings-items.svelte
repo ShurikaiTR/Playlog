@@ -18,8 +18,7 @@
 	}: { theme?: boolean; language?: boolean } = $props();
 
 	// A soft grey highlight instead of the menu's bold accent, so text and icons stay readable.
-	const soft =
-		'focus:bg-muted focus:text-foreground';
+	const soft = 'focus:bg-muted focus:text-foreground';
 
 	const themes = [
 		{ value: 'light', label: 'Light theme', icon: SunIcon },
@@ -55,18 +54,12 @@
 {/if}
 <DropdownMenu.Group class={cn(showTheme && 'mt-1')}>
 	{#if showLanguage}
-		<DropdownMenu.Item
-			class={cn('cursor-pointer', soft)}
-			onSelect={openLanguageDialog}
-		>
+		<DropdownMenu.Item class={cn('cursor-pointer', soft)} onSelect={openLanguageDialog}>
 			<LanguagesIcon />
 			Dil
 		</DropdownMenu.Item>
 	{/if}
-	<DropdownMenu.Item
-		class={cn('cursor-pointer', soft)}
-		onSelect={openFeedbackDialog}
-	>
+	<DropdownMenu.Item class={cn('cursor-pointer', soft)} onSelect={openFeedbackDialog}>
 		<FlagIcon />
 		Geri bildirim
 	</DropdownMenu.Item>

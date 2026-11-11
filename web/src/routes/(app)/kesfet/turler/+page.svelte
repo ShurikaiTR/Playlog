@@ -1,7 +1,7 @@
 <script lang="ts">
-	import * as Item from "#lib/components/ui/item/index.js";
-	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-	import TagIcon from "@lucide/svelte/icons/tag";
+	import * as Item from '#lib/components/ui/item/index.js';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import TagIcon from '@lucide/svelte/icons/tag';
 
 	let { data } = $props();
 </script>
@@ -13,8 +13,12 @@
 
 <div lang="tr" class="min-w-0 px-4 pb-20 md:px-8 md:pb-24">
 	<header class="pt-2 pb-6 md:pt-4">
-		<h1 class="text-primary text-[2rem] leading-tight font-medium tracking-[-0.025em] md:text-[2.5rem]">Türler</h1>
-		<p class="text-muted-foreground mt-2 text-sm leading-[1.6]">{data.genres.length} tür</p>
+		<h1
+			class="text-[2rem] leading-tight font-medium tracking-[-0.025em] text-primary md:text-[2.5rem]"
+		>
+			Türler
+		</h1>
+		<p class="mt-2 text-sm leading-[1.6] text-muted-foreground">{data.genres.length} tür</p>
 	</header>
 
 	<Item.Group class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -27,7 +31,12 @@
 							<Item.Title>{genre.name}</Item.Title>
 							<Item.Description>{genre.count} oyun</Item.Description>
 						</Item.Content>
-						<Item.Actions><ChevronRightIcon class="text-muted-foreground size-4" aria-hidden="true" /></Item.Actions>
+						<Item.Actions
+							><ChevronRightIcon
+								class="size-4 text-muted-foreground"
+								aria-hidden="true"
+							/></Item.Actions
+						>
 					</a>
 				{/snippet}
 			</Item.Root>

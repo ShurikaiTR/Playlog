@@ -420,7 +420,9 @@
 								size="lg"
 								class="w-full"
 								disabled={resend.remaining > 0 || pending}
-								>{resend.remaining > 0 ? `Resend code in ${resend.remaining}s` : 'Resend code'}</Button
+								>{resend.remaining > 0
+									? `Resend code in ${resend.remaining}s`
+									: 'Resend code'}</Button
 							>
 						</div>
 					</div>
@@ -493,7 +495,9 @@
 								size="lg"
 								class="w-full"
 								disabled={resend.remaining > 0 || pending}
-								>{resend.remaining > 0 ? `Resend code in ${resend.remaining}s` : 'Resend code'}</Button
+								>{resend.remaining > 0
+									? `Resend code in ${resend.remaining}s`
+									: 'Resend code'}</Button
 							>
 						</div>
 					</div>

@@ -55,9 +55,7 @@
 	<Dialog.Content class="w-[520px]">
 		<Dialog.Header>
 			<Dialog.Title>Feedback</Dialog.Title>
-			<Dialog.Description class="sr-only"
-				>Report a problem or share an idea.</Dialog.Description
-			>
+			<Dialog.Description class="sr-only">Report a problem or share an idea.</Dialog.Description>
 		</Dialog.Header>
 		<FeedbackForm onsent={() => (settingsDialogs.feedback = false)} />
 	</Dialog.Content>

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from "#lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '#lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -15,7 +15,7 @@
 	data-slot="input-group"
 	role="group"
 	class={cn(
-		"group/input-group field-outline-within bg-transparent h-11 rounded-full in-data-[slot=combobox-content]:shadow-none has-data-[align=block-end]:rounded-2xl has-data-[align=block-start]:rounded-2xl has-[textarea]:rounded-xl has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 relative flex w-full min-w-0 items-center outline-none has-[>textarea]:h-auto",
+		'group/input-group relative flex h-11 w-full min-w-0 items-center rounded-full bg-transparent field-outline-within outline-none in-data-[slot=combobox-content]:shadow-none has-data-[align=block-end]:rounded-2xl has-data-[align=block-start]:rounded-2xl has-[textarea]:rounded-xl has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
 		className
 	)}
 	{...props}

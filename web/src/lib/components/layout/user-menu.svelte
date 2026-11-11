@@ -45,7 +45,7 @@
 						{...props}
 						size="lg"
 						tooltipContent={name}
-						class="h-auto min-h-10 cursor-pointer gap-1.5 p-1.5 pe-2 pointer-coarse:min-h-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1! data-[state=open]:bg-foreground/8 dark:data-[state=open]:bg-foreground/12"
+						class="h-auto min-h-10 cursor-pointer gap-1.5 p-1.5 pe-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1! data-[state=open]:bg-foreground/8 dark:data-[state=open]:bg-foreground/12 pointer-coarse:min-h-11"
 					>
 						{@render avatar('size-7')}
 						<span class="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
@@ -85,19 +85,13 @@
 						</a>
 					{/snippet}
 				</DropdownMenu.Item>
-				<DropdownMenu.Item
-					class="cursor-pointer"
-					onSelect={() => openSettings('account')}
-				>
+				<DropdownMenu.Item class="cursor-pointer" onSelect={() => openSettings('account')}>
 					<SettingsIcon />Settings
 				</DropdownMenu.Item>
 				<DropdownMenu.Separator />
 				<SettingsItems theme={false} language={false} />
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item
-					class="cursor-pointer"
-					onSelect={logOut}
-				>
+				<DropdownMenu.Item class="cursor-pointer" onSelect={logOut}>
 					<LogOutIcon />Log out
 				</DropdownMenu.Item>
 			</DropdownMenu.Content>

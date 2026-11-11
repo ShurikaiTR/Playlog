@@ -1,9 +1,5 @@
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
-import {
-	isProvider,
-	type EnabledProviders,
-	type Provider
-} from '#lib/features/auth/providers.js';
+import { isProvider, type EnabledProviders, type Provider } from '#lib/features/auth/providers.js';
 import { api } from './api.js';
 
 export type { EnabledProviders, Provider };

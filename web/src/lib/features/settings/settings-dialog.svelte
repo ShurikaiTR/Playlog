@@ -19,7 +19,11 @@
 		showSection,
 		type SettingsSection
 	} from './settings-dialog-state.svelte.js';
-	import { languageChoice, languages, openLanguageDialog } from './settings-dialogs-state.svelte.js';
+	import {
+		languageChoice,
+		languages,
+		openLanguageDialog
+	} from './settings-dialogs-state.svelte.js';
 	import { cn } from '#lib/utils.js';
 
 	// System Settings layout: the section list beside the open section on wide screens; on phones
@@ -145,7 +149,11 @@
 
 						<div class="space-y-6">
 							<SettingsGroup title="Theme">
-								<div class="flex justify-around gap-3 px-4 py-4" role="group" aria-label="Choose theme">
+								<div
+									class="flex justify-around gap-3 px-4 py-4"
+									role="group"
+									aria-label="Choose theme"
+								>
 									{#each themes as theme (theme.id)}
 										{@const selected = userPrefersMode.current === theme.id}
 										<button
