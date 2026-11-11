@@ -4,7 +4,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Slider } from '#lib/components/ui/slider/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
-	import * as Sheet from '#lib/components/ui/sheet/index.js';
+	import ResponsivePanel from '#lib/components/layout/responsive-panel.svelte';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import { sorts } from '#lib/features/games/games.js';
 	import { cn } from '#lib/utils.js';
@@ -19,6 +19,8 @@
 	import type { Snippet } from 'svelte';
 
 	let { data } = $props();
+
+	let filtersOpen = $state(false);
 
 	type ListKey = 'platform' | 'tur' | 'mod';
 	type Filters = typeof data.filters;
@@ -256,52 +258,48 @@
 	</header>
 
 	<div class="flex items-center justify-end gap-2">
-		<Sheet.Root>
-			<Sheet.Trigger>
-				{#snippet child({ props })}
-					<Button
-						{...props}
-						variant="outline"
-						size="lg"
-						class="h-11 shrink-0 px-4 text-[0.9375rem]"
-					>
-						<SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
-						<span class="max-sm:sr-only">Filtrele</span>
-						{#if chosen.length > 0}
-							<span
-								class="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground tabular-nums"
-							>
-								{chosen.length}
-							</span>
-						{/if}
-					</Button>
-				{/snippet}
-			</Sheet.Trigger>
+		<Button
+			variant="outline"
+			size="lg"
+			class="h-11 shrink-0 px-4 text-[0.9375rem]"
+			aria-haspopup="dialog"
+			onclick={() => (filtersOpen = true)}
+		>
+			<SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
+			<span class="max-sm:sr-only">Filtrele</span>
+			{#if chosen.length > 0}
+				<span
+					class="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground tabular-nums"
+				>
+					{chosen.length}
+				</span>
+			{/if}
+		</Button>
 
-			<Sheet.Content side="right" class="gap-0 p-0 data-[side=right]:w-[88%]">
-				<Sheet.Header class="pr-12">
-					<Sheet.Title class="text-base font-semibold">Filtrele</Sheet.Title>
-					<Sheet.Description>Oyunları süz.</Sheet.Description>
-				</Sheet.Header>
-				<div class="min-h-0 flex-1 overflow-y-auto">{@render filterSections()}</div>
-				<Sheet.Footer class="flex-row gap-2 border-t">
-					<Button
-						variant="ghost"
-						size="lg"
-						class="h-11 px-5 text-[0.9375rem]"
-						disabled={chosen.length === 0}
-						onclick={clearAll}>Temizle</Button
-					>
-					<Sheet.Close>
-						{#snippet child({ props })}
-							<Button {...props} size="lg" class="h-11 flex-1 px-5 text-[0.9375rem]"
-								>{data.games.length} oyunu göster</Button
-							>
-						{/snippet}
-					</Sheet.Close>
-				</Sheet.Footer>
-			</Sheet.Content>
-		</Sheet.Root>
+		<ResponsivePanel
+			bind:open={filtersOpen}
+			title="Filtrele"
+			description="Oyunları süz."
+			sheetClass="p-0 data-[side=right]:w-[88%]"
+			titleClass="text-base font-semibold"
+			footerClass="flex-row gap-2 border-t"
+		>
+			<div class="min-h-0 flex-1 overflow-y-auto">{@render filterSections()}</div>
+			{#snippet footer()}
+				<Button
+					variant="ghost"
+					size="lg"
+					class="h-11 px-5 text-[0.9375rem]"
+					disabled={chosen.length === 0}
+					onclick={clearAll}>Temizle</Button
+				>
+				<Button
+					size="lg"
+					class="h-11 flex-1 px-5 text-[0.9375rem]"
+					onclick={() => (filtersOpen = false)}>{data.games.length} oyunu göster</Button
+				>
+			{/snippet}
+		</ResponsivePanel>
 
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>

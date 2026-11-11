@@ -11,7 +11,7 @@
 	import * as Empty from '#lib/components/ui/empty/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
-	import * as Sheet from '#lib/components/ui/sheet/index.js';
+	import ResponsivePanel from '#lib/components/layout/responsive-panel.svelte';
 	import * as Collapsible from '#lib/components/ui/collapsible/index.js';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
@@ -929,43 +929,43 @@
 		bind:open={galleryOpen}
 	/>
 
-	<!-- All reviews, like the anime page: a side drawer with a sort tab and one card per review. -->
-	<Sheet.Root bind:open={reviewsSheetOpen}>
-		<Sheet.Content class="w-full gap-0 sm:max-w-md [&_[data-slot=sheet-close]]:cursor-pointer">
-			<Sheet.Header class="border-b">
-				<Sheet.Title class="text-lg font-medium tracking-tight text-primary"
-					>İncelemeler</Sheet.Title
-				>
-				<Sheet.Description
-					>{game.title} için {reviews.length} inceleme · Ortalama {game.score
-						.toFixed(1)
-						.replace('.', ',')}</Sheet.Description
-				>
-				<Tabs.Root bind:value={reviewSort} class="mt-2">
-					<Tabs.List class="rounded-xl" aria-label="İncelemeleri sırala">
-						<Tabs.Trigger value="helpful" class="cursor-pointer rounded-lg px-3 text-xs"
-							>En faydalı</Tabs.Trigger
-						>
-						<Tabs.Trigger value="newest" class="cursor-pointer rounded-lg px-3 text-xs"
-							>En yeni</Tabs.Trigger
-						>
-					</Tabs.List>
-				</Tabs.Root>
-			</Sheet.Header>
-			<ScrollArea class="min-h-0 flex-1">
-				<div class="space-y-3 p-4">
-					{#each sortedReviews as review (review.key)}
-						{@render reviewCard(review)}
-					{/each}
-				</div>
-			</ScrollArea>
-			<Sheet.Footer class="border-t">
-				<Button type="button" class="cursor-pointer rounded-full" onclick={openReview}
-					>{myReview ? 'İncelemeni düzenle' : 'İnceleme yaz'}</Button
-				>
-			</Sheet.Footer>
-		</Sheet.Content>
-	</Sheet.Root>
+	<!-- All reviews: a side panel (a bottom drawer on phones) with a sort tab and one card per review. -->
+	<ResponsivePanel
+		bind:open={reviewsSheetOpen}
+		title="İncelemeler"
+		description="{game.title} için {reviews.length} inceleme · Ortalama {game.score
+			.toFixed(1)
+			.replace('.', ',')}"
+		sheetClass="w-full sm:max-w-md [&_[data-slot=sheet-close]]:cursor-pointer"
+		headerClass="border-b"
+		titleClass="text-lg font-medium tracking-tight text-primary"
+		footerClass="border-t"
+	>
+		{#snippet header()}
+			<Tabs.Root bind:value={reviewSort} class="mt-2 max-md:items-center">
+				<Tabs.List class="rounded-xl" aria-label="İncelemeleri sırala">
+					<Tabs.Trigger value="helpful" class="cursor-pointer rounded-lg px-3 text-xs"
+						>En faydalı</Tabs.Trigger
+					>
+					<Tabs.Trigger value="newest" class="cursor-pointer rounded-lg px-3 text-xs"
+						>En yeni</Tabs.Trigger
+					>
+				</Tabs.List>
+			</Tabs.Root>
+		{/snippet}
+		<div class="min-h-0 flex-1 overflow-y-auto">
+			<div class="space-y-3 p-4">
+				{#each sortedReviews as review (review.key)}
+					{@render reviewCard(review)}
+				{/each}
+			</div>
+		</div>
+		{#snippet footer()}
+			<Button type="button" class="cursor-pointer rounded-full" onclick={openReview}
+				>{myReview ? 'İncelemeni düzenle' : 'İnceleme yaz'}</Button
+			>
+		{/snippet}
+	</ResponsivePanel>
 
 	<GameReportDialog title={game.title} bind:open={reportOpen} />
 
