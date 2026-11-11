@@ -1,11 +1,15 @@
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
+import {
+	isProvider,
+	type EnabledProviders,
+	type Provider
+} from '#lib/features/auth/providers.js';
 import { api } from './api.js';
 
-export type Provider = 'google' | 'discord' | 'apple' | 'steam';
+export type { EnabledProviders, Provider };
 
 export function providerParam(value: string): Provider {
-	if (value === 'google' || value === 'discord' || value === 'apple' || value === 'steam')
-		return value;
+	if (isProvider(value)) return value;
 	error(404, 'Sayfa bulunamadı');
 }
 
@@ -34,8 +38,6 @@ export function appleDisplayName(raw: FormDataEntryValue | null): string | null 
 		return null;
 	}
 }
-
-export type EnabledProviders = Record<Provider, boolean>;
 
 /**
  * Which sign-in providers have keys configured on the API, so pages only offer those. If the API

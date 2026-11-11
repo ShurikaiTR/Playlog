@@ -1,5 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+import type { EnabledProviders } from '#lib/features/auth/providers.js';
 import type { ApiUser } from '#lib/server/api.js';
 
 declare global {
@@ -16,7 +17,7 @@ declare global {
 			/** Set while the sign-in or sign-up form is open in a modal over the current page. */
 			authModal?: {
 				kind: 'sign-in' | 'sign-up';
-				enabled: Record<'google' | 'apple' | 'discord' | 'steam', boolean>;
+				enabled: EnabledProviders;
 				notice: string | null;
 				returnTo: string;
 			};

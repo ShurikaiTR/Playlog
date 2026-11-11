@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { hideAuthTransition, showAuthTransition } from './auth-transition.svelte.js';
+	import { formErrorMessage as failure } from './auth-errors.js';
+	import { looksLikeEmail } from './validation.js';
+	import { providerIcons } from './provider-icons.js';
+	import { PROVIDERS, providerLabels, type EnabledProviders, type Provider } from './providers.js';
+	import { createResendCountdown } from './resend-countdown.svelte.js';
 	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
@@ -15,10 +20,6 @@
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
-	import AppleIcon from '#lib/components/icons/apple.svelte';
-	import DiscordIcon from '#lib/components/icons/discord.svelte';
-	import SteamIcon from '#lib/components/icons/steam.svelte';
-	import GoogleIcon from '#lib/components/icons/google.svelte';
 	import AuthShell from './auth-shell.svelte';
 	import PasswordInput from './password-input.svelte';
 	import MailIcon from '#lib/components/icons/mail.svelte';
@@ -26,7 +27,7 @@
 	// Sign-up options, then email, then the account details (which mails the code), then the code.
 	// The right code creates the account and signs in.
 	type Props = {
-		enabled: Record<'google' | 'apple' | 'discord' | 'steam', boolean>;
+		enabled: EnabledProviders;
 		/** Where to go after signing up (a same-origin path, already validated). */
 		returnTo?: string;
 		/** Set when the form sits in a modal, to swap to the other auth modal instead of navigating. */
@@ -36,7 +37,6 @@
 
 	let step = $state<'providers' | 'details' | 'verify'>('providers');
 	let code = $state('');
-	let resendIn = $state(0);
 	let showPassword = $state(false);
 	let statusMessage = $state('');
 	let displayName = $state('');
@@ -56,7 +56,7 @@
 	}
 
 	// Google, Apple, Discord and Steam share the sign-in route; a new account then picks a username.
-	function signUpWith(provider: 'google' | 'apple' | 'discord' | 'steam') {
+	function signUpWith(provider: Provider) {
 		window.location.assign(`/auth/${provider}/start?return_to=${encodeURIComponent(returnTo)}`);
 	}
 
@@ -65,27 +65,15 @@
 		step = next;
 	}
 
-	const emailValid = $derived(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()));
+	const emailValid = $derived(looksLikeEmail(email));
 
 	function submitEmail(event: SubmitEvent) {
 		event.preventDefault();
 		goTo('details');
 	}
 
-	// Counts down the "resend code" wait; the API allows a new code once a minute.
-	let countdown: ReturnType<typeof setInterval> | undefined;
-	function startResendCountdown() {
-		clearInterval(countdown);
-		resendIn = 60;
-		countdown = setInterval(() => {
-			resendIn -= 1;
-			if (resendIn <= 0) clearInterval(countdown);
-		}, 1000);
-	}
-	onDestroy(() => clearInterval(countdown));
-
-	const failure = (data: Record<string, unknown> | undefined) =>
-		typeof data?.error === 'string' ? data.error : 'Something went wrong. Please try again.';
+	const resend = createResendCountdown();
+	onDestroy(resend.stop);
 
 	// Errors that belong to the email step send the visitor back there.
 	const EMAIL_ERRORS = new Set(['invalid_email', 'email_taken']);
@@ -102,7 +90,7 @@
 			captcha?.reset();
 			pending = false;
 			if (result.type === 'success') {
-				startResendCountdown();
+				resend.start();
 				if (step === 'verify') {
 					statusMessage = 'A new code was sent.';
 				} else {
@@ -184,32 +172,14 @@
 				<form class="flex flex-1 flex-col" onsubmit={submitEmail}>
 					<div class="mt-auto flex flex-col gap-3">
 						<div class="min-h-5"></div>
-						{#if enabled.google}
-							<Button
-								variant="outline"
-								size="lg"
-								class="w-full"
-								onclick={() => signUpWith('google')}><GoogleIcon />Sign up with Google</Button
-							>
-						{/if}
-						{#if enabled.apple}
-							<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('apple')}
-								><AppleIcon />Sign up with Apple</Button
-							>
-						{/if}
-						{#if enabled.discord}
-							<Button
-								variant="outline"
-								size="lg"
-								class="w-full"
-								onclick={() => signUpWith('discord')}><DiscordIcon />Sign up with Discord</Button
-							>
-						{/if}
-						{#if enabled.steam}
-							<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith('steam')}
-								><SteamIcon />Sign up with Steam</Button
-							>
-						{/if}
+						{#each PROVIDERS as id (id)}
+							{#if enabled[id]}
+								{@const Icon = providerIcons[id]}
+								<Button variant="outline" size="lg" class="w-full" onclick={() => signUpWith(id)}
+									><Icon />Sign up with {providerLabels[id]}</Button
+								>
+							{/if}
+						{/each}
 
 						<div class="flex items-center gap-3" aria-hidden="true">
 							<Separator class="flex-1" />
@@ -364,8 +334,8 @@
 								variant="outline"
 								size="lg"
 								class="w-full"
-								disabled={resendIn > 0 || pending}
-								>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</Button
+								disabled={resend.remaining > 0 || pending}
+								>{resend.remaining > 0 ? `Resend code in ${resend.remaining}s` : 'Resend code'}</Button
 							>
 						</div>
 					</div>

@@ -13,10 +13,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import AppleIcon from '#lib/components/icons/apple.svelte';
-	import DiscordIcon from '#lib/components/icons/discord.svelte';
-	import SteamIcon from '#lib/components/icons/steam.svelte';
-	import GoogleIcon from '#lib/components/icons/google.svelte';
+	import { providerIcons } from '#lib/features/auth/provider-icons.js';
 	import MailIcon from '#lib/components/icons/mail.svelte';
 	import AccountAvatar from '#lib/features/account/account-avatar.svelte';
 	import ChangePasswordDialog from '#lib/features/account/change-password-dialog.svelte';
@@ -39,7 +36,6 @@
 
 	const account = $derived(data.account);
 	const name = $derived(account.display_name || account.username);
-	const icons = { apple: AppleIcon, google: GoogleIcon, discord: DiscordIcon, steam: SteamIcon };
 
 	// ---------- Profile ----------
 
@@ -211,7 +207,7 @@
 		</SettingsRow>
 
 		{#each providers as provider (provider.id)}
-			{@const Icon = icons[provider.id]}
+			{@const Icon = providerIcons[provider.id]}
 			{@const since = linked.get(provider.id)}
 			<SettingsRow
 				label={providerSignInLabel(provider.id)}

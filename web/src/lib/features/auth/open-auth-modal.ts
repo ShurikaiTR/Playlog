@@ -1,5 +1,6 @@
 import { goto, preloadData, pushState } from '$app/navigation';
 import { page } from '$app/state';
+import type { EnabledProviders } from './providers.js';
 import { authHref, safeReturnPath, type AuthKind } from './return-to.js';
 
 export type { AuthKind };
@@ -20,7 +21,7 @@ export async function openAuthModal(event: MouseEvent, kind: AuthKind) {
 	const result = await preloadData(href);
 	if (result.type === 'loaded' && result.status === 200) {
 		const data = result.data as {
-			providers: Record<'google' | 'apple' | 'discord' | 'steam', boolean>;
+			providers: EnabledProviders;
 			notice?: string | null;
 			returnTo: string;
 		};

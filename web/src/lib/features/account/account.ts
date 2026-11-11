@@ -1,6 +1,8 @@
 // Shapes and Turkish copy for the account page (/hesap).
 
-export type Provider = 'google' | 'discord' | 'apple' | 'steam';
+import { providerLabels, type Provider } from '#lib/features/auth/providers.js';
+
+export type { Provider };
 
 export type Account = {
 	id: string;
@@ -26,15 +28,12 @@ export type Device = {
 	current: boolean;
 };
 
-export const providers: { id: Provider; label: string }[] = [
-	{ id: 'apple', label: 'Apple' },
-	{ id: 'google', label: 'Google' },
-	{ id: 'discord', label: 'Discord' },
-	{ id: 'steam', label: 'Steam' }
-];
+// In the order the account page lists them.
+export const providers: { id: Provider; label: string }[] = (
+	['apple', 'google', 'discord', 'steam'] as const
+).map((id) => ({ id, label: providerLabels[id] }));
 
-export const providerLabel = (id: Provider) =>
-	providers.find((provider) => provider.id === id)?.label ?? id;
+export const providerLabel = (id: Provider) => providerLabels[id] ?? id;
 
 export const providerSignInLabel = (id: Provider) => `${providerLabel(id)} ile giriş`;
 

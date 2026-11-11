@@ -27,3 +27,7 @@ const messages: Record<string, string> = {
 export function authErrorMessage(code: string | undefined) {
 	return (code && messages[code]) || 'Something went wrong. Please try again.';
 }
+
+/** The message a failed form action returned (`fail(…, { error })`), or a generic one. */
+export const formErrorMessage = (data: Record<string, unknown> | undefined) =>
+	typeof data?.error === 'string' ? data.error : 'Something went wrong. Please try again.';

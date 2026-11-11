@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
+	import { looksLikeEmail } from './validation.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -34,7 +35,7 @@
 	const lastLabel = $derived(
 		lastProvider === 'email' ? 'Email' : providers.find((p) => p.id === lastProvider)?.label
 	);
-	const emailValid = $derived(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()));
+	const emailValid = $derived(looksLikeEmail(email));
 	const ringStyle = 'mask-image: radial-gradient(circle, transparent 90%, black 100%);';
 </script>
 
