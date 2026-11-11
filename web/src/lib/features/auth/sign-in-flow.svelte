@@ -9,14 +9,12 @@
 	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { onDestroy, onMount, type Component } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import Turnstile from './turnstile.svelte';
 	import { authHref } from './return-to.js';
 	import AuthShell from './auth-shell.svelte';
 	import PasswordInput from './password-input.svelte';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';

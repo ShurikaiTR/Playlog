@@ -8,13 +8,10 @@
 	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
 	import { onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import EyeIcon from '@lucide/svelte/icons/eye';
-	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import Turnstile from './turnstile.svelte';
 	import { authHref } from './return-to.js';
 	import { TURNSTILE_SITE_KEY } from '$app/env/public';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
@@ -22,7 +19,6 @@
 	import { Separator } from '#lib/components/ui/separator/index.js';
 	import AuthShell from './auth-shell.svelte';
 	import PasswordInput from './password-input.svelte';
-	import MailIcon from '#lib/components/icons/mail.svelte';
 
 	// Sign-up options, then email, then the account details (which mails the code), then the code.
 	// The right code creates the account and signs in.
@@ -37,7 +33,6 @@
 
 	let step = $state<'providers' | 'details' | 'verify'>('providers');
 	let code = $state('');
-	let showPassword = $state(false);
 	let statusMessage = $state('');
 	let displayName = $state('');
 	let username = $state('');

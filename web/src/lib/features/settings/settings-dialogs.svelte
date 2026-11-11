@@ -9,7 +9,9 @@
 	onMount(() => {
 		try {
 			languageChoice.value = localStorage.getItem('playlog-language') ?? 'tr';
-		} catch {}
+		} catch {
+			// Storage can be unavailable (private mode); the default stays.
+		}
 	});
 
 	function chooseLanguage(value: string) {
@@ -17,7 +19,9 @@
 		settingsDialogs.language = false;
 		try {
 			localStorage.setItem('playlog-language', value);
-		} catch {}
+		} catch {
+			// Ignore: the choice just won't persist.
+		}
 		if (value !== 'en') toast('More languages are coming soon');
 	}
 </script>

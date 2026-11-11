@@ -6,6 +6,8 @@
  */
 export function safeReturnPath(raw: string | null | undefined): string {
 	if (!raw || raw.length > 300 || !raw.startsWith('/') || raw.startsWith('//')) return '/';
+	// Matching control characters is the point of this check.
+	// eslint-disable-next-line no-control-regex
 	if (/[\\\u0000-\u001f\u007f]/.test(raw)) return '/';
 	try {
 		const url = new URL(raw, 'http://localhost');

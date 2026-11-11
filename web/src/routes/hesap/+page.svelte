@@ -137,8 +137,7 @@
 		if (!done && !failed) return;
 		if (done) toast.success(`${providerLabel(done as Provider)} hesabın bağlandı`);
 		else methodError = accountErrorMessage(failed ?? undefined);
-		// The current page's own URL, already resolved; only the query changes.
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		// Only the query changes; the path stays the current page.
 		replaceState(page.url.pathname, page.state);
 	});
 </script>

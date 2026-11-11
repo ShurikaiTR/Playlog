@@ -141,6 +141,8 @@
 	}
 
 	function removeItem(game: UserList['items'][number]) {
+		// `added` is dropped on purpose: the summary is the game without its list timestamp.
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { added, ...summary } = game;
 		setGame(list, summary, false);
 		flippedSlug = null;

@@ -30,6 +30,8 @@
 
 	function update(patch: Partial<Filters> & { sirala?: string }) {
 		const next = { ...data.filters, ...patch };
+		// A throwaway builder for the next URL, not reactive state.
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const params = new URLSearchParams();
 		for (const { key } of lists) for (const value of next[key]) params.append(key, value);
 		if (next.yilmin !== data.minYear) params.set('yilmin', String(next.yilmin));

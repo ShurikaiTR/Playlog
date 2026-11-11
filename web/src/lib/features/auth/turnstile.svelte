@@ -33,6 +33,8 @@
 
 	// The Managed widget. `token` is the response to post as `cf-turnstile-response`; tokens work
 	// once, so call `reset()` after every submit to get a fresh one.
+	// The rule doesn't know `token` is a bindable prop that the parent reads.
+	// eslint-disable-next-line no-useless-assignment
 	let { token = $bindable('') }: { token?: string } = $props();
 
 	let container = $state<HTMLElement>();
