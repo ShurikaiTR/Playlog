@@ -12,13 +12,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use super::auth::{
-    SessionResponse, TEN_MINUTES, UserView, client_ip, create_session, map_unique_violation,
-    rate_limit,
+use super::{
+    auth::{SessionResponse, UserView},
+    guard::{TEN_MINUTES, client_ip, rate_limit},
 };
 use crate::{
-    auth::{role::Role, validate},
-    error::AppError,
+    auth::{role::Role, session, validate},
+    error::{AppError, map_unique_violation},
     oauth::{PendingClaims, Provider, now},
     state::AppState,
 };
@@ -189,7 +189,7 @@ async fn callback(
     .fetch_optional(&mut *tx)
     .await?;
     if let Some(user) = linked {
-        let token = create_session(&mut tx, user.id, &headers).await?;
+        let token = session::create(&mut tx, user.id, &headers).await?;
         tx.commit().await?;
         return Ok(Json(CallbackResponse::SignedIn(SessionResponse {
             token,
@@ -228,7 +228,7 @@ async fn callback(
         .bind(&identity.subject)
         .execute(&mut *tx)
         .await?;
-        let token = create_session(&mut tx, user.id, &headers).await?;
+        let token = session::create(&mut tx, user.id, &headers).await?;
         tx.commit().await?;
         return Ok(Json(CallbackResponse::SignedIn(SessionResponse {
             token,
@@ -302,7 +302,7 @@ async fn complete(
     .await
     .map_err(map_unique_violation)?;
 
-    let token = create_session(&mut tx, user_id, &headers).await?;
+    let token = session::create(&mut tx, user_id, &headers).await?;
     tx.commit().await?;
 
     Ok(Json(SessionResponse {

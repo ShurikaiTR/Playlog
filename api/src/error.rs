@@ -52,3 +52,17 @@ impl<E: Into<anyhow::Error>> From<E> for AppError {
         Self::Internal(err.into())
     }
 }
+
+/// Kullanıcı adı/e-posta benzersizlik ihlalini (yarış durumu) 409'a çevirir.
+pub fn map_unique_violation(err: sqlx::Error) -> AppError {
+    if let sqlx::Error::Database(db) = &err
+        && db.is_unique_violation()
+    {
+        return match db.constraint() {
+            Some("users_username_key") => AppError::Conflict("username_taken"),
+            Some("users_email_key") => AppError::Conflict("email_taken"),
+            _ => AppError::Internal(err.into()),
+        };
+    }
+    AppError::Internal(err.into())
+}

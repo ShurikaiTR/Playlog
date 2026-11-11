@@ -1,6 +1,7 @@
 mod account;
 mod admin;
 mod auth;
+mod guard;
 mod oauth;
 
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
