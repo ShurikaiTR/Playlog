@@ -15,4 +15,6 @@ pub struct AppState {
     pub oauth: Arc<OAuth>,
     /// Yalnızca TURNSTILE_SECRET tanımlıysa var; yoksa bot doğrulaması atlanır (yerel geliştirme).
     pub turnstile: Option<Arc<Turnstile>>,
+    /// Katalog içe aktarma betiği için makine anahtarı; yalnızca içe aktarma ucunda geçer.
+    pub catalog_import_token: Option<Arc<str>>,
 }

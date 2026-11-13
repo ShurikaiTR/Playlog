@@ -2,10 +2,12 @@
 
 use axum::{
     Json, Router,
-    extract::{DefaultBodyLimit, Path, State},
+    extract::{DefaultBodyLimit, FromRequestParts, Path, State},
+    http::{header::AUTHORIZATION, request::Parts},
     routing::{get, patch, post},
 };
 use serde::{Deserialize, Serialize};
+use subtle::ConstantTimeEq;
 use uuid::Uuid;
 
 use crate::{
@@ -31,6 +33,29 @@ pub fn router() -> Router<AppState> {
         )
         .route("/games/{slug}", get(preview))
         .route("/games/{id}/status", patch(set_status))
+}
+
+/// İçe aktarmayı kimin yaptığı: admin oturumu ya da betiğin makine anahtarı.
+/// Anahtar yalnızca bu uçta geçer; başka hiçbir yönetim ucunu açmaz.
+struct Importer(String);
+
+impl FromRequestParts<AppState> for Importer {
+    type Rejection = AppError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
+        let bearer = parts
+            .headers
+            .get(AUTHORIZATION)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.strip_prefix("Bearer "));
+        if let (Some(given), Some(expected)) = (bearer, state.catalog_import_token.as_deref())
+            && bool::from(given.as_bytes().ct_eq(expected.as_bytes()))
+        {
+            return Ok(Self("import-token".into()));
+        }
+        let RequireAdmin(admin) = RequireAdmin::from_request_parts(parts, state).await?;
+        Ok(Self(admin.user_id.to_string()))
+    }
 }
 
 #[derive(Deserialize)]
@@ -64,7 +89,7 @@ struct ImportResult {
 /// diğerleri yine yazılır ve rapor hangisinin neden reddedildiğini söyler.
 async fn import(
     State(state): State<AppState>,
-    RequireAdmin(actor): RequireAdmin,
+    importer: Importer,
     Json(body): Json<ImportBody>,
 ) -> Result<Json<ImportReport>, AppError> {
     if body.games.is_empty() || body.games.len() > MAX_BATCH {
@@ -126,7 +151,7 @@ async fn import(
     }
 
     tracing::info!(
-        actor = %actor.user_id,
+        actor = %importer.0,
         created = report.created,
         updated = report.updated,
         failed = report.failed,

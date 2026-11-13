@@ -1,4 +1,4 @@
-//! Katalog uçları: oyun listesi ve oyun ayrıntısı. Yalnızca yayındaki oyunlar döner.
+//! Katalog uçları: oyun listesi, oyun ayrıntısı ve etiketler. Yalnızca yayındaki oyunlar döner.
 
 use axum::{
     Json, Router,
@@ -8,7 +8,9 @@ use axum::{
 use serde::Deserialize;
 
 use crate::{
-    catalog::read::{self, DEFAULT_PAGE, GameDetail, GamePage, ListFilter, MAX_PAGE, Sort},
+    catalog::read::{
+        self, DEFAULT_PAGE, GameDetail, GamePage, ListFilter, MAX_PAGE, Sort, TagCount, Window,
+    },
     error::AppError,
     state::AppState,
 };
@@ -19,15 +21,41 @@ pub fn router() -> Router<AppState> {
         .route("/{slug}", get(detail))
 }
 
+/// `/v1/tags`: süzgeçlerde ve tür sayfasında gösterilen etiketler.
+pub fn tags_router() -> Router<AppState> {
+    Router::new().route("/", get(tags))
+}
+
+/// Çok değerli süzgeçler virgülle ayrılır: `genres=rpg,action`.
 #[derive(Deserialize)]
 struct ListQuery {
     q: Option<String>,
-    genre: Option<String>,
-    platform: Option<String>,
-    year: Option<i32>,
+    genres: Option<String>,
+    platforms: Option<String>,
+    modes: Option<String>,
+    year_min: Option<i32>,
+    year_max: Option<i32>,
+    window: Option<String>,
     sort: Option<String>,
     limit: Option<i64>,
     offset: Option<i64>,
+}
+
+/// Süzgeç başına en fazla bu kadar değer.
+const MAX_VALUES: usize = 20;
+
+fn values(raw: Option<String>) -> Result<Vec<String>, AppError> {
+    let values: Vec<String> = raw
+        .unwrap_or_default()
+        .split(',')
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .collect();
+    if values.len() > MAX_VALUES || values.iter().any(|value| value.len() > 120) {
+        return Err(AppError::Validation("invalid_filter"));
+    }
+    Ok(values)
 }
 
 async fn list(
@@ -38,13 +66,16 @@ async fn list(
         Some(raw) => Sort::parse(raw).ok_or(AppError::Validation("invalid_sort"))?,
         None => Sort::default(),
     };
-    if query
-        .year
-        .is_some_and(|year| !(1950..=2100).contains(&year))
-    {
+    let window = query
+        .window
+        .as_deref()
+        .map(|raw| Window::parse(raw).ok_or(AppError::Validation("invalid_window")))
+        .transpose()?;
+    let year_ok = |year: Option<i32>| year.is_none_or(|year| (1950..=2100).contains(&year));
+    if !year_ok(query.year_min) || !year_ok(query.year_max) {
         return Err(AppError::Validation("invalid_year"));
     }
-    // Boş ya da aşırı uzun arama yok sayılır / reddedilir; trigram tek karakterde anlamsızdır.
+    // Boş arama yok sayılır; aşırı uzun olan reddedilir.
     let search = query
         .q
         .map(|q| q.trim().to_owned())
@@ -55,9 +86,12 @@ async fn list(
 
     let filter = ListFilter {
         query: search,
-        genre: query.genre.filter(|genre| !genre.is_empty()),
-        platform: query.platform.filter(|platform| !platform.is_empty()),
-        year: query.year,
+        genres: values(query.genres)?,
+        platforms: values(query.platforms)?,
+        modes: values(query.modes)?,
+        year_min: query.year_min,
+        year_max: query.year_max,
+        window,
         sort,
         limit: query.limit.unwrap_or(DEFAULT_PAGE).clamp(1, MAX_PAGE),
         offset: query.offset.unwrap_or(0).clamp(0, 100_000),
@@ -73,4 +107,20 @@ async fn detail(
         .await?
         .map(Json)
         .ok_or(AppError::NotFound("game_not_found"))
+}
+
+#[derive(Deserialize)]
+struct TagsQuery {
+    kind: Option<String>,
+}
+
+async fn tags(
+    State(state): State<AppState>,
+    Query(query): Query<TagsQuery>,
+) -> Result<Json<Vec<TagCount>>, AppError> {
+    let kind = query.kind.as_deref().unwrap_or("genre");
+    if !matches!(kind, "genre" | "theme" | "mode" | "perspective") {
+        return Err(AppError::Validation("invalid_kind"));
+    }
+    Ok(Json(read::tags(&state.db, kind).await?))
 }

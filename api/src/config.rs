@@ -27,6 +27,8 @@ pub struct Config {
     pub turnstile_secret: Option<String>,
     /// Turnstile yanıtında kabul edilen alan adları (virgülle ayrılmış TURNSTILE_HOSTNAMES).
     pub turnstile_hostnames: Vec<String>,
+    /// Katalog içe aktarma betiğinin anahtarı (CATALOG_IMPORT_TOKEN); yoksa yalnızca admin oturumu geçer.
+    pub catalog_import_token: Option<String>,
 }
 
 impl Config {
@@ -38,7 +40,16 @@ impl Config {
             bail!("CODE_SECRET en az 32 karakter olmalı");
         }
 
+        let catalog_import_token = env_non_empty("CATALOG_IMPORT_TOKEN");
+        if catalog_import_token
+            .as_deref()
+            .is_some_and(|token| token.len() < 32)
+        {
+            bail!("CATALOG_IMPORT_TOKEN en az 32 karakter olmalı");
+        }
+
         Ok(Self {
+            catalog_import_token,
             database_url: std::env::var("DATABASE_URL").context("DATABASE_URL tanımlı olmalı")?,
             bind_addr: std::env::var("BIND_ADDR")
                 .unwrap_or_else(|_| "0.0.0.0:8080".into())

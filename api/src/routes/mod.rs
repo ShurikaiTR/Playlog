@@ -18,6 +18,7 @@ pub fn router() -> Router<AppState> {
         .nest("/v1/account", account::router())
         .nest("/v1/admin", admin::router())
         .nest("/v1/games", games::router())
+        .nest("/v1/tags", games::tags_router())
 }
 
 #[derive(Serialize)]

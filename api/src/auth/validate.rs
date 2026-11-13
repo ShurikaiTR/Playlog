@@ -28,6 +28,22 @@ const RESERVED_USERNAMES: &[&str] = &[
     "login",
     "register",
     "settings",
+    "games",
+    "discover",
+    "genres",
+    "favorites",
+    "backlog",
+    "library",
+    "wishlist",
+    "lists",
+    "reviews",
+    "members",
+    "companies",
+    "series",
+    "platforms",
+    "search",
+    "terms",
+    "privacy",
 ];
 
 pub fn username(raw: &str) -> Result<String, AppError> {
