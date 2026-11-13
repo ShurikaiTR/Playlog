@@ -9,12 +9,15 @@ Rust API'yi iç ağdan çağırır.
 tarayıcı ──> Cloudflare Tunnel ──> web (SvelteKit, SSR) ──> api (Rust, Axum) ──> PostgreSQL 18
 ```
 
+Ürün planı, veritabanı tasarımı ve aşamalar: [docs/plan.md](docs/plan.md).
+
 ## Klasör yapısı
 
 ```
 .
 ├── compose.yaml        Üretim: web + api + db (Openship bunu çalıştırır)
 ├── .env.example        Üretim sırları (compose.yaml okur)
+├── docs/               Ürün planı ve tasarım
 ├── web/                SvelteKit uygulaması (adapter-node, Tailwind, shadcn-svelte)
 │   ├── src/
 │   │   ├── routes/         Sayfalar ve sunucu uçları
@@ -45,12 +48,14 @@ tarayıcı ──> Cloudflare Tunnel ──> web (SvelteKit, SSR) ──> api (R
         ├── state.rs        Paylaşılan uygulama durumu
         ├── auth/           Kimlik doğrulamanın çekirdeği (HTTP'den bağımsız parçalar)
         │                   şifre, oturum belirteci, oturum kayıtları, e-posta kodları, roller, doğrulama
+        ├── catalog/        Oyun kataloğu: içe aktarma, okuma sorguları, slug üretimi
         ├── oauth/          Sağlayıcı girişi: ortak akış, imzalı belirteçler, sağlayıcı başına dosya
         ├── routes/         HTTP uçları
         │   ├── auth/       /v1/auth: kayıt, giriş, şifre sıfırlama
         │   ├── account/    /v1/account: profil, şifre, oturumlar, giriş yöntemleri, silme, dışa aktarma
+        │   ├── admin/      /v1/admin: yetkililer, katalog içe aktarma ve yayın durumu
+        │   ├── games.rs    /v1/games: oyun listesi ve oyun ayrıntısı
         │   ├── oauth.rs    /v1/auth/oauth
-        │   ├── admin.rs    /v1/admin
         │   └── guard.rs    İstemci IP'si, hız sınırı, Turnstile
         ├── mail.rs         Resend ile e-posta
         ├── ratelimit.rs    Bellek içi hız sınırlayıcı
