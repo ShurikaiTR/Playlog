@@ -208,7 +208,8 @@ Tarayıcı API'ye gitmez; SvelteKit sunucusu çağırır. Tüm uçlar `/v1` alt�
 
 | Uç | Aşama | Açıklama |
 |---|---|---|
-| `GET /games` | 1 | Liste: arama (`q`), tür, platform, yıl, sıralama, sayfalama |
+| `GET /games` | 1 | Liste: `q`, `genres` (hepsi), `platforms` ve `modes` (herhangi biri), `year_min`, `year_max`, `window` (released/upcoming), `sort` (newest, soonest, title, added), `limit`, `offset` |
+| `GET /tags?kind=genre` | 1 | Etiketler ve yayındaki oyun sayıları |
 | `GET /games/{slug}` | 1 | Tüm ilişkileriyle oyun; eski slug'da yeni adresi döner |
 | `POST /admin/games/import` | 1 | Toplu ekleme/güncelleme; dış kimliğe göre eşler |
 | `PATCH /admin/games/{id}/status` | 1 | Taslak ↔ yayında ↔ gizli |
@@ -279,8 +280,8 @@ Durum sekmeleri (All, Playing, Backlog, Completed, Paused, Dropped), platform s�
 
 | # | Aşama | Çıktı |
 |---|---|---|
-| 1 | **Katalog** | Katalog tabloları, içe aktarma ve okuma uçları. *Bu belgeyle birlikte yapıldı.* |
-| 1b | Kataloğu arayüze bağlama | Ana sayfa, oyunlar, oyun sayfası ve arama gerçek veriden; İngilizce adresler |
+| 1 | **Katalog** | Katalog tabloları, içe aktarma ve okuma uçları. *Yapıldı.* |
+| 1b | **Kataloğu arayüze bağlama** | Ana sayfa, oyunlar, oyun sayfası, keşfet, türler ve arama gerçek veriden; İngilizce adresler; veri betiği. *Yapıldı.* |
 | 2 | Kütüphane | `user_games`, durum ve puan, `/library`, `/wishlist`, oyun sayfasında kişisel bölüm, varlık sayfaları |
 | 3 | İnceleme ve listeler | Kalıcı incelemeler, faydalı oyu, listeler |
 | 4 | Profil ve takip | Gerçek profil, takip, akış |
@@ -293,14 +294,35 @@ açmak, başlıklardaki "Playlog", `/terms` ve `/privacy`, dil seçicinin kaldı
 
 ## 8. Veri akışı
 
-1. **İskelet:** Wikidata'dan toplu (ad, tarih, şirket, platform, tür, dış kimlikler).
-2. **Zenginleştirme:** Steam'de olanlar için açıklama, görseller, dil desteği, gereksinimler.
-3. **Konsol özelleri:** görseller için üçüncü kaynak.
-4. **İçe aktarma:** betik bu verileri `POST /v1/admin/games/import` biçimine çevirip gönderir.
-   Kayıtlar taslak girer.
-5. **Yayın:** admin gözden geçirip yayına alır (ilk toplu yüklemede betik doğrudan yayında
-   gönderebilir).
-6. **Talep üzerine:** kullanıcıların sahip olduğu ama katalogda olmayan oyunlar kuyruğa düşer.
+Veriyi `tools/catalog/catalog.mjs` derler (Node 22+, bağımlılığı yok):
+
+1. **Wikidata:** Steam'de olan ve Vikipedi'de en çok dilde yer alan oyunlar (popülerlik ölçüsü);
+   her biri için ilk çıkış tarihi, platformlar ve seri.
+2. **Steam:** açıklama, türler, oyun modları, geliştirici/yayıncı, dil desteği, yaş sınırları, PC
+   gereksinimleri, ekran görüntüleri; kapak ve afiş adresleri Steam'in mağaza API'sinden.
+3. Çıktı, içe aktarma ucunun biçiminde bir JSON dosyasıdır; `push` bunu yüzer yüzer gönderir.
+
+```bash
+# Sunucuda (compose ağı içinde)
+docker compose run --rm catalog fetch --limit 500 --out /data/catalog.json
+docker compose run --rm catalog push /data/catalog.json
+
+# Yerelde
+node tools/catalog/catalog.mjs fetch --limit 200 --out catalog.json
+API_URL=http://localhost:8080 CATALOG_IMPORT_TOKEN=… node tools/catalog/catalog.mjs push catalog.json
+```
+
+`push`, API'nin `CATALOG_IMPORT_TOKEN` değeriyle kimlik doğrular; bu anahtar yalnızca içe aktarma
+ucunda geçer. Aynı dosyayı yeniden göndermek kopya oluşturmaz, kayıtları günceller.
+
+Bilinen sınırlar:
+
+- Yalnızca Steam'de olan oyunlar gelir. Konsol özelleri için üçüncü bir kaynak gerekiyor.
+- Platform başına çıkış tarihi yok; yalnızca ilk çıkış tarihi biliniyor.
+- Steam hangi dillerde altyazı olduğunu ayırmıyor; yalnızca arayüz ve seslendirme geliyor.
+- Fragman ve bitirme süresi henüz yok; sayfalar bu alanları veri olunca gösterir.
+- Wikidata yoğun adresleri dakikada bir isteğe düşürebiliyor; betik bekleyip yeniden dener.
+- Kaynak yanıtları `tools/catalog/.cache` altında saklanır; taze veri için klasörü silin.
 
 ### İçe aktarma biçimi
 
