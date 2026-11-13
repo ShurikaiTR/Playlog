@@ -1,4 +1,4 @@
-//! Yönetim uçları. Her uç rolünü kendi çıkarıcısıyla ister; korumasız uç yoktur.
+//! Yetkililer: liste ve rol değişikliği.
 
 use axum::{
     Json, Router,

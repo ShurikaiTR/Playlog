@@ -1,4 +1,5 @@
 mod auth;
+mod catalog;
 mod config;
 mod error;
 mod mail;

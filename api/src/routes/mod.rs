@@ -1,6 +1,7 @@
 mod account;
 mod admin;
 mod auth;
+mod games;
 mod guard;
 mod oauth;
 
@@ -16,6 +17,7 @@ pub fn router() -> Router<AppState> {
         .nest("/v1/auth/oauth", oauth::router())
         .nest("/v1/account", account::router())
         .nest("/v1/admin", admin::router())
+        .nest("/v1/games", games::router())
 }
 
 #[derive(Serialize)]
