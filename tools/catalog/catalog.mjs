@@ -83,7 +83,8 @@ function wikidataDetails(ids) {
 			(GROUP_CONCAT(DISTINCT ?platformLabel; separator="|") AS ?platforms)
 			(GROUP_CONCAT(DISTINCT ?seriesLabel; separator="|") AS ?series) WHERE {
 			VALUES ?item { ${ids.map((id) => `wd:${id}`).join(' ')} }
-			OPTIONAL { ?item wdt:P577 ?date. }
+			# "Unknown value" statements come back as blank nodes, which would win MIN() over real dates.
+			OPTIONAL { ?item wdt:P577 ?date. FILTER(isLiteral(?date)) }
 			OPTIONAL {
 				?item wdt:P400 ?platform.
 				OPTIONAL { ?platform rdfs:label ?platformLabel. FILTER(LANG(?platformLabel) = "en") }
@@ -186,6 +187,9 @@ function plainText(html) {
 		.replace(/&lt;/g, '<')
 		.replace(/&gt;/g, '>')
 		.replace(/&nbsp;/g, ' ')
+		// Control characters (other than tab and newline) are noise, and PostgreSQL refuses NUL.
+		// eslint-disable-next-line no-control-regex
+		.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '')
 		.replace(/[ \t]+/g, ' ')
 		.replace(/ ?\n ?/g, '\n')
 		.replace(/\n{3,}/g, '\n\n')
@@ -277,8 +281,22 @@ const summaryOf = (text) => {
 
 const unique = (values) => [...new Set(values.filter(Boolean))];
 
+/**
+ * The calendar day of a Wikidata timestamp ("2015-05-19T00:00:00Z"), or null for anything that
+ * is not a plausible release date. Wikidata also holds years before 1950 for a few items and
+ * placeholders for unknown dates; neither belongs in the catalog.
+ */
+function isoDate(value) {
+	const match = /^(\d{4})-(\d{2})-(\d{2})(T|$)/.exec(value ?? '');
+	if (!match) return null;
+	const day = `${match[1]}-${match[2]}-${match[3]}`;
+	const year = Number(match[1]);
+	const valid = !Number.isNaN(Date.parse(`${day}T00:00:00Z`)) && year >= 1950 && year <= 2100;
+	return valid ? day : null;
+}
+
 function toGame(wiki, details, steam, assets, status) {
-	const released = details?.released?.slice(0, 10) || null;
+	const released = isoDate(details?.released);
 	const platforms = unique([
 		...(details?.platformIds ?? '').split('|').map((uri) => PLATFORM_IDS[uri.split('/').pop()]),
 		...(details?.platforms ?? '').split('|').map((label) => PLATFORM_LABELS[label.trim()])
@@ -333,7 +351,7 @@ async function fetchCatalog({ limit, out, status }) {
 	const details = new Map();
 	for (let i = 0; i < ids.length; i += 50) {
 		const batch = ids.slice(i, i + 50);
-		const rows = await cachedJson(`wikidata-details-v2-${batch[0]}-${batch.length}`, () =>
+		const rows = await cachedJson(`wikidata-details-v3-${batch[0]}-${batch.length}`, () =>
 			wikidataDetails(batch)
 		);
 		for (const row of rows) details.set(row.item, row);
@@ -377,7 +395,10 @@ async function pushCatalog(file) {
 		const report = await response.json();
 		for (const key of Object.keys(totals)) totals[key] += report[key];
 		for (const result of report.results) {
-			if (result.outcome === 'failed') console.log(`  failed: ${result.title} (${result.error})`);
+			if (result.outcome === 'failed') {
+				const detail = result.detail ? `: ${result.detail}` : '';
+				console.log(`  failed: ${result.title} (${result.error}${detail})`);
+			}
 		}
 	}
 	console.log(`Created ${totals.created}, updated ${totals.updated}, failed ${totals.failed}.`);
@@ -405,5 +426,6 @@ if (command === 'fetch') {
 	console.log(`Usage:
   node tools/catalog/catalog.mjs fetch [--limit 200] [--out catalog.json] [--draft]
   node tools/catalog/catalog.mjs push <file>`);
-	process.exitCode = 1;
+	// Asking for help is not a failure; a mistyped command is.
+	if (command !== undefined && command !== 'help') process.exitCode = 1;
 }

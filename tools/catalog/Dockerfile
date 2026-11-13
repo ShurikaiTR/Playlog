@@ -8,3 +8,5 @@ RUN mkdir -p /data && chown node:node /data
 ENV CATALOG_CACHE_DIR=/data/.cache
 USER node
 ENTRYPOINT ["node", "catalog.mjs"]
+# Komutsuz başlatılırsa kullanım bilgisini yazıp temiz çıkar (deploy paneli servisi başlatırsa hata saymasın).
+CMD ["help"]

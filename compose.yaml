@@ -75,6 +75,8 @@ services:
   catalog:
     build: ./tools/catalog
     profiles: [tools]
+    # Tek seferlik bir araçtır; işi bitince (ya da komutsuz başlatılınca) yeniden başlamaz.
+    restart: 'no'
     depends_on:
       - api
     environment:

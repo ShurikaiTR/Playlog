@@ -58,9 +58,11 @@ impl FromRequestParts<AppState> for Importer {
     }
 }
 
+/// Oyunlar burada ham JSON olarak alınır ve tek tek çözülür: biçimi bozuk bir kayıt (örn. geçersiz
+/// tarih) yalnızca kendisini düşürür, gruptaki diğer oyunları değil.
 #[derive(Deserialize)]
 struct ImportBody {
-    games: Vec<GameInput>,
+    games: Vec<serde_json::Value>,
 }
 
 #[derive(Serialize)]
@@ -83,6 +85,9 @@ struct ImportResult {
     slug: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<&'static str>,
+    /// Biçim hatasında hangi alanın neden reddedildiği.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    detail: Option<String>,
 }
 
 /// Oyunları ekler ya da günceller. Her oyun kendi transaction'ında işlenir: biri hatalıysa
@@ -102,8 +107,30 @@ async fn import(
         failed: 0,
         results: Vec::with_capacity(body.games.len()),
     };
-    for (index, game) in body.games.into_iter().enumerate() {
-        let title = game.title.clone();
+    for (index, raw) in body.games.into_iter().enumerate() {
+        let title = raw
+            .get("title")
+            .and_then(|title| title.as_str())
+            .unwrap_or_default()
+            .chars()
+            .take(300)
+            .collect::<String>();
+        let game: GameInput = match serde_json::from_value(raw) {
+            Ok(game) => game,
+            Err(err) => {
+                report.failed += 1;
+                report.results.push(ImportResult {
+                    index,
+                    title,
+                    outcome: "failed",
+                    id: None,
+                    slug: None,
+                    error: Some("invalid_format"),
+                    detail: Some(err.to_string()),
+                });
+                continue;
+            }
+        };
         let mut tx = state.db.begin().await?;
         let result = match import_game(&mut tx, game).await {
             Ok(imported) => {
@@ -124,6 +151,7 @@ async fn import(
                     id: Some(imported.id),
                     slug: Some(imported.slug),
                     error: None,
+                    detail: None,
                 }
             }
             Err(err) => {
@@ -144,6 +172,7 @@ async fn import(
                     id: None,
                     slug: None,
                     error: Some(code),
+                    detail: None,
                 }
             }
         };

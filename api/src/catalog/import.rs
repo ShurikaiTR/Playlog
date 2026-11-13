@@ -160,7 +160,17 @@ struct Validated {
 
 impl Validated {
     fn new(mut input: GameInput) -> Result<Self, ImportError> {
-        input.title = input.title.trim().to_owned();
+        // PostgreSQL metin alanları NUL kabul etmez; kaynak veride nadiren de olsa çıkar.
+        let clean = |text: &mut Option<String>| {
+            if let Some(text) = text
+                && text.contains('\0')
+            {
+                *text = text.replace('\0', "");
+            }
+        };
+        clean(&mut input.summary);
+        clean(&mut input.description);
+        input.title = input.title.replace('\0', "").trim().to_owned();
         if input.title.is_empty() || input.title.chars().count() > 300 {
             return Err(ImportError::Invalid("invalid_title"));
         }
