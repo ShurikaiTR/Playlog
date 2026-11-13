@@ -18,7 +18,9 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 
 const USER_AGENT = 'playthru-catalog-importer/0.1 (https://playthru.app)';
-const CACHE_DIR = path.join(import.meta.dirname, '.cache');
+// Source responses are kept here so a rerun does not ask again. The container image points this
+// at its data volume; elsewhere it sits next to the script.
+const CACHE_DIR = process.env.CATALOG_CACHE_DIR || path.join(import.meta.dirname, '.cache');
 const STEAM_ASSETS = 'https://shared.akamai.steamstatic.com/store_item_assets/';
 // Steam's store API allows roughly 200 requests per 5 minutes.
 const STEAM_DELAY_MS = 1600;

@@ -73,18 +73,15 @@ services:
   #   docker compose run --rm catalog fetch --limit 500 --out /data/catalog.json
   #   docker compose run --rm catalog push /data/catalog.json
   catalog:
-    image: node:26-slim
+    build: ./tools/catalog
     profiles: [tools]
     depends_on:
       - api
-    working_dir: /app
-    entrypoint: ['node', 'catalog.mjs']
     environment:
       API_URL: http://api:8080
       CATALOG_IMPORT_TOKEN: ${CATALOG_IMPORT_TOKEN:-}
     volumes:
-      # Kaynak yanıtları .cache altında saklanır; yeniden çalıştırma kaynakları tekrar yormaz.
-      - ./tools/catalog:/app
+      # Çıktı dosyası ve kaynak yanıtlarının önbelleği; yeniden çalıştırma kaynakları tekrar yormaz.
       - catalogdata:/data
 
 volumes:

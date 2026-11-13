@@ -322,7 +322,8 @@ Bilinen sınırlar:
 - Steam hangi dillerde altyazı olduğunu ayırmıyor; yalnızca arayüz ve seslendirme geliyor.
 - Fragman ve bitirme süresi henüz yok; sayfalar bu alanları veri olunca gösterir.
 - Wikidata yoğun adresleri dakikada bir isteğe düşürebiliyor; betik bekleyip yeniden dener.
-- Kaynak yanıtları `tools/catalog/.cache` altında saklanır; taze veri için klasörü silin.
+- Kaynak yanıtları önbelleğe alınır: yerelde `tools/catalog/.cache`, sunucuda `catalogdata`
+  volume'u (`/data/.cache`). Taze veri için önbelleği silin.
 
 ### İçe aktarma biçimi
 
