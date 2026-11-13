@@ -44,6 +44,8 @@ services:
       # Cloudflare Turnstile: sır yalnızca burada (api); boşsa doğrulama kapalıdır.
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
       TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES:-}
+      # Katalog içe aktarma betiğinin anahtarı; boşsa içe aktarma yalnızca admin oturumuyla yapılır.
+      CATALOG_IMPORT_TOKEN: ${CATALOG_IMPORT_TOKEN:-}
       RUST_LOG: info
 
   web:
@@ -67,5 +69,24 @@ services:
       # Yalnızca aynı makinedeki vekil erişir; Docker yayımlanan portlarda güvenlik duvarını atlar.
       - '127.0.0.1:3000:3000'
 
+  # Katalog verisi: Wikidata + Steam'den çeker ve API'ye yükler. `up` ile başlamaz; elle çalıştırılır:
+  #   docker compose run --rm catalog fetch --limit 500 --out /data/catalog.json
+  #   docker compose run --rm catalog push /data/catalog.json
+  catalog:
+    image: node:26-slim
+    profiles: [tools]
+    depends_on:
+      - api
+    working_dir: /app
+    entrypoint: ['node', 'catalog.mjs']
+    environment:
+      API_URL: http://api:8080
+      CATALOG_IMPORT_TOKEN: ${CATALOG_IMPORT_TOKEN:-}
+    volumes:
+      # Kaynak yanıtları .cache altında saklanır; yeniden çalıştırma kaynakları tekrar yormaz.
+      - ./tools/catalog:/app
+      - catalogdata:/data
+
 volumes:
   pgdata:
+  catalogdata:
