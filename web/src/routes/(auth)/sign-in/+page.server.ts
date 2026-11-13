@@ -8,7 +8,7 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
 	const returnTo = safeReturnPath(event.url.searchParams.get('return_to'));
 	if (event.locals.user) redirect(303, returnTo);
-	const notice = event.url.searchParams.get('hata');
+	const notice = event.url.searchParams.get('error');
 	return {
 		returnTo,
 		notice: notice ? authErrorMessage(notice) : null,

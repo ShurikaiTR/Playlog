@@ -95,7 +95,7 @@
 			<div
 				class="hero-copy"
 				role="group"
-				aria-label="Öne çıkan oyun"
+				aria-label="Featured game"
 				onpointerenter={() => (paused = true)}
 				onpointerleave={() => (paused = false)}
 			>
@@ -106,7 +106,7 @@
 						<h1 class="text-display">{current.title}</h1>
 					{/if}
 				</div>
-				<div class="metadata" aria-label="Oyun bilgileri">
+				<div class="metadata" aria-label="Game details">
 					{#if current.rating}
 						<span class="rating">{current.rating}</span>
 					{/if}
@@ -119,14 +119,14 @@
 				{/if}
 				<div class="actions">
 					<Button href={current.href} size="lg" class="h-12 px-6 text-base">
-						İncele
+						View game
 						<ArrowRightIcon data-icon="inline-end" class="size-4" />
 					</Button>
 				</div>
 			</div>
 		{/key}
 
-		<nav class="slider-controls" aria-label="Öne çıkan oyunlar">
+		<nav class="slider-controls" aria-label="Featured games">
 			<p class="counter numeric" aria-live="off">
 				<span>{String(currentIndex + 1).padStart(2, '0')}</span>
 				<span class="counter-total">/ {String(slides.length).padStart(2, '0')}</span>
@@ -136,7 +136,7 @@
 					<button
 						type="button"
 						class={{ active: index === currentIndex }}
-						aria-label={`${index + 1}. oyun: ${slide.title}`}
+						aria-label={`Game ${index + 1}: ${slide.title}`}
 						aria-current={index === currentIndex ? 'true' : undefined}
 						onclick={() => showSlide(index)}
 					>

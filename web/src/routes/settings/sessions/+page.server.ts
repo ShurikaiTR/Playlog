@@ -16,7 +16,7 @@ export const actions: Actions = {
 		if (!result.ok && result.error !== 'session_not_found') {
 			return fail(result.status, { error: result.error });
 		}
-		redirect(303, '/hesap/oturumlar');
+		redirect(303, '/settings/sessions');
 	},
 	// Signs out everywhere, this device included.
 	revokeAll: async (event) => {

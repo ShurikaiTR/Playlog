@@ -2,17 +2,12 @@
 	import { page } from '$app/state';
 	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
 	import type { Component } from 'svelte';
+	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import CompassIcon from '@lucide/svelte/icons/compass';
 	import HeartIcon from '@lucide/svelte/icons/heart';
 	import HouseIcon from '@lucide/svelte/icons/house';
 	import LayoutGridIcon from '@lucide/svelte/icons/layout-grid';
-	import LibraryIcon from '@lucide/svelte/icons/library-big';
-	import ListIcon from '@lucide/svelte/icons/list';
-	import MessageSquareIcon from '@lucide/svelte/icons/message-square';
-	import NewspaperIcon from '@lucide/svelte/icons/newspaper';
 	import TagIcon from '@lucide/svelte/icons/tag';
-	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
-	import UsersIcon from '@lucide/svelte/icons/users';
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Kbd, KbdGroup } from '#lib/components/ui/kbd/index.js';
@@ -27,36 +22,22 @@
 		icon: Component;
 	}
 
-	// Placeholder destinations until the real pages exist.
 	const groups: { label: string; items: Item[] }[] = [
 		{
 			label: 'Browse',
 			items: [
 				{ label: 'Home', href: '/', icon: HouseIcon },
-				{ label: 'Discover', href: '/kesfet', icon: CompassIcon },
-				{ label: 'All games', href: '/oyunlar', icon: LayoutGridIcon },
-				{ label: 'Popular', href: '/kesfet/populer', icon: TrendingUpIcon },
-				{ label: 'Genres', href: '/kesfet/turler', icon: TagIcon }
-			]
-		},
-		{
-			label: 'Community',
-			items: [
-				{ label: 'Reviews', href: '/incelemeler', icon: MessageSquareIcon },
-				{ label: 'Lists', href: '/listeler', icon: ListIcon },
-				{ label: 'Users', href: '/kullanicilar', icon: UsersIcon }
+				{ label: 'Discover', href: '/discover', icon: CompassIcon },
+				{ label: 'Games', href: '/games', icon: LayoutGridIcon },
+				{ label: 'Genres', href: '/genres', icon: TagIcon }
 			]
 		},
 		{
 			label: 'Library',
 			items: [
-				{ label: 'My library', href: '/kutuphane', icon: LibraryIcon },
-				{ label: 'Favorites', href: '/favoriler', icon: HeartIcon }
+				{ label: 'Favorites', href: '/favorites', icon: HeartIcon },
+				{ label: 'Backlog', href: '/backlog', icon: ClockIcon }
 			]
-		},
-		{
-			label: 'Playlog',
-			items: [{ label: 'Blog', href: '/blog', icon: NewspaperIcon }]
 		}
 	];
 

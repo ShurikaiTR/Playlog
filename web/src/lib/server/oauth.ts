@@ -54,16 +54,16 @@ export async function enabledProviders(
 }
 
 /**
- * Where a connect-from-the-account-page flow ends: back on /hesap (or the page it started from)
- * with the outcome in the query, `baglandi=<provider>` or `hata=<code>`.
+ * Where a connect-from-the-account-page flow ends: back on /settings (or the page it started from)
+ * with the outcome in the query, `linked=<provider>` or `error=<code>`.
  */
 export function linkResultPath(
 	back: string,
 	outcome: { linked: Provider } | { error: string }
 ): string {
 	const url = new URL(back, 'http://x');
-	if ('linked' in outcome) url.searchParams.set('baglandi', outcome.linked);
-	else url.searchParams.set('hata', outcome.error);
+	if ('linked' in outcome) url.searchParams.set('linked', outcome.linked);
+	else url.searchParams.set('error', outcome.error);
 	return url.pathname + url.search;
 }
 

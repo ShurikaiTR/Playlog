@@ -1,4 +1,4 @@
-// Shapes and Turkish copy for the account page (/hesap).
+// Shapes and Turkish copy for the account page (/settings).
 
 import { providerLabels, type Provider } from '#lib/features/auth/providers.js';
 
@@ -73,14 +73,14 @@ export function accountErrorMessage(code: string | undefined) {
 /** A field-specific message for the new-password check, which shares a code with a wrong current password. */
 export const NEW_PASSWORD_HINT = 'Şifre 8-128 karakter olmalı.';
 
-/** Calls the account endpoints under /api/hesap; failures come back as an error code. */
+/** Calls the account endpoints under /api/account; failures come back as an error code. */
 export async function accountRequest(
 	method: 'POST' | 'PUT' | 'DELETE',
 	path: string,
 	body?: unknown
 ): Promise<{ ok: true } | { ok: false; error: string }> {
 	try {
-		const response = await fetch(`/api/hesap${path}`, {
+		const response = await fetch(`/api/account${path}`, {
 			method,
 			headers: body === undefined ? undefined : { 'content-type': 'application/json' },
 			body: body === undefined ? undefined : JSON.stringify(body)

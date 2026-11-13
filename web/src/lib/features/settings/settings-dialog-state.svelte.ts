@@ -1,5 +1,5 @@
 // The settings window is rendered once in the sidebar; the account menu opens it at a section.
-// Managing the account itself ("Yönet") happens on the /hesap page.
+// Managing the account itself ("Yönet") happens on the /settings page.
 export type SettingsSection = 'account' | 'appearance';
 
 export const settingsDialog = $state<{

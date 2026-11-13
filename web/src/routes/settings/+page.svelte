@@ -104,7 +104,7 @@
 		}
 		busyProvider = provider;
 		// The provider sends the browser back to this page.
-		window.location.assign(`/auth/${provider}/start?baglan&geri=%2Fhesap`);
+		window.location.assign(`/auth/${provider}/start?link&return_to=%2Fsettings`);
 	}
 
 	function askDisconnect(provider: Provider) {
@@ -132,8 +132,8 @@
 	// Back from connecting a provider: say how it went, then drop the query so a reload doesn't repeat it.
 	$effect(() => {
 		const params = page.url.searchParams;
-		const done = params.get('baglandi');
-		const failed = params.get('hata');
+		const done = params.get('linked');
+		const failed = params.get('error');
 		if (!done && !failed) return;
 		if (done) toast.success(`${providerLabel(done as Provider)} hesabın bağlandı`);
 		else methodError = accountErrorMessage(failed ?? undefined);

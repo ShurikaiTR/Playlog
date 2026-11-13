@@ -20,7 +20,6 @@
 	import LockIcon from '@lucide/svelte/icons/lock';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import SearchIcon from '@lucide/svelte/icons/search';
-	import StarIcon from '@lucide/svelte/icons/star';
 	import XIcon from '@lucide/svelte/icons/x';
 
 	let { list }: { list: UserList } = $props();
@@ -49,8 +48,7 @@
 	const text = $derived(copy[list.kind]);
 	const sortOptions = [
 		{ value: 'recent', label: 'Son eklenen' },
-		{ value: 'title', label: 'Ada göre (A–Z)' },
-		{ value: 'rating', label: 'En yüksek puan' }
+		{ value: 'title', label: 'Ada göre (A–Z)' }
 	];
 
 	let query = $state('');
@@ -76,8 +74,6 @@
 			.filter((game) => game.title.toLocaleLowerCase('tr-TR').includes(search))
 			.toSorted((a, b) => {
 				if (selectedSort === 'title') return a.title.localeCompare(b.title, 'tr');
-				if (selectedSort === 'rating')
-					return b.score - a.score || a.title.localeCompare(b.title, 'tr');
 				return b.added - a.added;
 			});
 	});
@@ -170,13 +166,15 @@
 			aria-hidden="true"
 			style="mask-image: linear-gradient(to bottom, black 55%, transparent 100%)"
 		>
-			<img
-				src={list.backdrop}
-				alt=""
-				width="1600"
-				height="560"
-				class="size-full object-cover object-right"
-			/>
+			{#if list.backdrop}
+				<img
+					src={list.backdrop}
+					alt=""
+					width="1600"
+					height="560"
+					class="size-full object-cover object-right"
+				/>
+			{/if}
 			<div class="list-scrim absolute inset-0"></div>
 		</div>
 
@@ -309,14 +307,16 @@
 										aria-label="{game.title} seçenekleri"
 										onclick={() => (flippedSlug = game.slug)}
 									>
-										<img
-											src={game.cover}
-											alt="{game.title} kapağı"
-											width="1024"
-											height="1536"
-											loading="lazy"
-											class="size-full object-cover"
-										/>
+										{#if game.cover}
+											<img
+												src={game.cover}
+												alt="{game.title} kapağı"
+												width="600"
+												height="900"
+												loading="lazy"
+												class="size-full object-cover"
+											/>
+										{/if}
 									</button>
 									<div
 										class="flip-face flip-back absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-card p-4 text-center text-card-foreground ring-1 ring-foreground/10"
@@ -327,7 +327,7 @@
 										<Button
 											variant="default"
 											size="sm"
-											href="/oyun/{game.slug}"
+											href="/games/{game.slug}"
 											class="w-full cursor-pointer rounded-full text-xs">Oyuna git</Button
 										>
 										<Button
@@ -343,11 +343,7 @@
 								{game.title}
 							</h3>
 							<p class="mt-0.5 flex items-center gap-1.5 px-0.5 text-xs text-muted-foreground">
-								<StarIcon class="size-3.5 fill-current text-foreground" aria-hidden="true" />
-								<span class="font-medium text-foreground tabular-nums"
-									>{game.score.toFixed(1).replace('.', ',')}</span
-								>
-								<span>· {game.year}</span>
+								<span>{game.year}</span>
 							</p>
 						</article>
 					{/each}
@@ -374,7 +370,7 @@
 								onclick={() => (query = '')}>Aramayı temizle</Button
 							>
 						{:else}
-							<Button href="/oyunlar" class="cursor-pointer rounded-full">
+							<Button href="/games" class="cursor-pointer rounded-full">
 								Oyun keşfet
 								<ArrowUpRightIcon data-icon="inline-end" class="size-4" />
 							</Button>

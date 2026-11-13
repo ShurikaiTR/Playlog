@@ -26,7 +26,7 @@
 	}
 </script>
 
-<form bind:this={logoutForm} method="POST" action="/cikis" hidden></form>
+<form bind:this={logoutForm} method="POST" action="/sign-out" hidden></form>
 
 {#snippet avatar(size: string)}
 	<Avatar.Root class="{size} shrink-0">
@@ -78,7 +78,7 @@
 					{#snippet child({ props })}
 						<a
 							{...props}
-							href={`/profil/${user.username}`}
+							href={`/u/${user.username}`}
 							onclick={() => sidebar.isMobile && sidebar.setOpenMobile(false)}
 						>
 							<UserIcon />My profile

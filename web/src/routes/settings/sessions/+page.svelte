@@ -76,7 +76,7 @@
 			<SettingsRow
 				label={device.name}
 				description="{session.ip || '—'} · {formatMediumDate(session.created_at)} tarihinde giriş"
-				href={resolve('/hesap/oturumlar/[id]', { id: session.id })}
+				href={resolve('/settings/sessions/[id]', { id: session.id })}
 			>
 				{#snippet media()}
 					<span class="flex size-9 items-center justify-center rounded-xl bg-background">

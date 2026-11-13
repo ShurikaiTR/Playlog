@@ -15,7 +15,7 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = ({ cookies, locals }) => {
 	if (locals.user) redirect(303, safeReturnPath(cookies.get(OAUTH_RETURN_COOKIE)));
 	const pending = readPendingSignup(cookies);
-	if (!pending) redirect(303, '/sign-in?hata=invalid_pending');
+	if (!pending) redirect(303, '/sign-in?error=invalid_pending');
 	return {
 		email: pending.email,
 		suggestedUsername: pending.suggested_username ?? '',
@@ -26,7 +26,7 @@ export const load: PageServerLoad = ({ cookies, locals }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		const pending = readPendingSignup(event.cookies);
-		if (!pending) redirect(303, '/sign-in?hata=invalid_pending');
+		if (!pending) redirect(303, '/sign-in?error=invalid_pending');
 
 		const data = await event.request.formData();
 		const result = await api<{ token: string; user: ApiUser }>(event, '/v1/auth/oauth/complete', {
@@ -39,7 +39,7 @@ export const actions: Actions = {
 		if (!result.ok) {
 			if (result.error === 'invalid_pending') {
 				clearCookie(event.cookies, OAUTH_PENDING_COOKIE);
-				redirect(303, '/sign-in?hata=invalid_pending');
+				redirect(303, '/sign-in?error=invalid_pending');
 			}
 			return fail(result.status, { error: authErrorMessage(result.error) });
 		}

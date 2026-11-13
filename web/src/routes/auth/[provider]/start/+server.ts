@@ -17,10 +17,10 @@ import {
 import type { RequestHandler } from './$types';
 
 // "Google/Discord/Apple ile devam et" lands here and is sent on to the provider.
-// With `?baglan`, a signed-in user connects the provider to their account from settings instead.
+// With `?link`, a signed-in user connects the provider to their account from settings instead.
 export const GET: RequestHandler = async (event) => {
 	const provider = providerParam(event.params.provider);
-	if (event.url.searchParams.has('baglan')) return startLink(event, provider);
+	if (event.url.searchParams.has('link')) return startLink(event, provider);
 	const returnTo = safeReturnPath(event.url.searchParams.get('return_to'));
 	if (event.locals.user) redirect(303, returnTo);
 	clearCookie(event.cookies, OAUTH_LINK_COOKIE);
@@ -30,7 +30,7 @@ export const GET: RequestHandler = async (event) => {
 		`/v1/auth/oauth/${provider}/start`,
 		{ body: {} }
 	);
-	if (!result.ok) redirect(303, `/sign-in?hata=${encodeURIComponent(result.error)}`);
+	if (!result.ok) redirect(303, `/sign-in?error=${encodeURIComponent(result.error)}`);
 
 	setShortCookie(event.cookies, OAUTH_STATE_COOKIE, result.data.state_token, 600, {
 		crossSitePost: provider === 'apple'
@@ -42,7 +42,7 @@ export const GET: RequestHandler = async (event) => {
 };
 
 async function startLink(event: Parameters<RequestHandler>[0], provider: Provider): Promise<never> {
-	const back = safeReturnPath(event.url.searchParams.get('geri'));
+	const back = safeReturnPath(event.url.searchParams.get('return_to'));
 	if (!event.locals.token) redirect(303, '/sign-in');
 
 	const result = await api<{ authorization_url: string; state_token: string }>(

@@ -23,7 +23,7 @@
 			description="Profilin, giriş yöntemlerin ve açık oturumların tek bir dosya olarak iner."
 		>
 			<Button
-				href="/hesap/veri/indir"
+				href="/settings/data/export"
 				download
 				data-sveltekit-reload
 				variant="outline"

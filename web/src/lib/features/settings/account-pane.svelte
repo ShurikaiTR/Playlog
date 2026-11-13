@@ -7,7 +7,7 @@
 	import AccountAvatar from '#lib/features/account/account-avatar.svelte';
 	import ScreenHeader from './screen-header.svelte';
 
-	// The account section of the settings window: who is signed in, "Yönet" for the /hesap page.
+	// The account section of the settings window: who is signed in, "Yönet" for the /settings page.
 	const user = $derived(page.data.user);
 	const name = $derived(user ? user.displayName || user.username : '');
 
@@ -16,7 +16,7 @@
 		if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
 		event.preventDefault();
 		settingsDialog.open = false;
-		goto(resolve('/hesap'));
+		goto(resolve('/settings'));
 	}
 </script>
 
@@ -35,7 +35,7 @@
 				</div>
 			</div>
 			<Button
-				href={resolve('/hesap')}
+				href={resolve('/settings')}
 				variant="outline"
 				size="action"
 				class="shrink-0"

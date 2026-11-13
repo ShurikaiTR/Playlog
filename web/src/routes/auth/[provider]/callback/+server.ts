@@ -34,7 +34,7 @@ type ProviderReturn = {
 	openid?: Record<string, string> | null;
 };
 
-const backToLogin = (code: string) => `/sign-in?hata=${encodeURIComponent(code)}`;
+const backToLogin = (code: string) => `/sign-in?error=${encodeURIComponent(code)}`;
 
 const field = (value: FormDataEntryValue | string | null) =>
 	typeof value === 'string' ? value : null;
@@ -65,7 +65,7 @@ async function finish(
 		// Apple's cross-site POST carries no session cookie: park the code for one same-site GET.
 		if (!event.locals.token && provider === 'apple' && !back.error) {
 			setShortCookie(event.cookies, OAUTH_LINK_RETURN_COOKIE, JSON.stringify(link), 120);
-			redirect(303, `/auth/${provider}/baglan`);
+			redirect(303, `/auth/${provider}/link`);
 		}
 		return finishLink(event, provider, link);
 	}
@@ -101,7 +101,7 @@ async function finish(
 		JSON.stringify({ pending_token, email, suggested_username, display_name }),
 		900
 	);
-	redirect(303, '/auth/tamamla');
+	redirect(303, '/auth/complete');
 }
 
 // Google, Discord and Steam send the visitor back with the code in the query string.

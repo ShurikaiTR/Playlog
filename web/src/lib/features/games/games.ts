@@ -1,410 +1,192 @@
-export const platforms = [
-	'PC',
-	'macOS',
-	'Linux',
-	'PlayStation',
-	'Xbox',
-	'Switch',
-	'iOS',
-	'Android'
-] as const;
-export const gameModes = [
-	'Tek oyunculu',
-	'Çok oyunculu',
-	'Co-op',
-	'Rekabetçi',
-	'Çevrimiçi'
-] as const;
-export type GameMode = (typeof gameModes)[number];
-export type Platform = (typeof platforms)[number];
+// Shapes and display helpers for catalog data. The data itself comes from the Rust API through
+// `$lib/server/catalog`; nothing here talks to the network, so components can import it freely.
 
+export type DatePrecision = 'day' | 'month' | 'quarter' | 'year' | 'tba';
+
+/** The least a card needs. `meta` is the small line under the title. */
 export type Game = {
 	slug: string;
 	title: string;
-	cover: string;
+	cover: string | null;
 	meta?: string;
 };
 
-const unsplash = (id: string) =>
-	`https://images.unsplash.com/${id}?w=600&q=80&auto=format&fit=crop`;
+/** A game in lists, rows, the home showcase and search results. */
+export type GameSummary = Game & {
+	summary: string | null;
+	backdrop: string | null;
+	logo: string | null;
+	genres: string[];
+	developers: string[];
+	releaseDate: string | null;
+	releasePrecision: DatePrecision;
+};
 
-// Only photo ids already used by the hero are known to resolve; reused as cover placeholders.
-const covers = [
-	unsplash('photo-1542751371-adc38448a05e'),
-	unsplash('photo-1550745165-9bc0b252726f'),
-	unsplash('photo-1538481199705-c710c4e965fc')
-];
+export type Named = { slug: string; name: string };
 
-const titles: [string, string, string][] = [
-	['neon-surgun', 'Neon Sürgün', 'Aksiyon'],
-	['piksel-gecesi', 'Piksel Gecesi', 'Platform'],
-	['derin-yorunge', 'Derin Yörünge', 'Strateji'],
-	['golgeler-vadisi', 'Gölgeler Vadisi', 'RPG'],
-	['kirik-kilic', 'Kırık Kılıç Efsanesi', 'Macera'],
-	['son-istasyon', 'Son İstasyon', 'Korku'],
-	['call-of-duty-black-ops-6', 'Call of Duty: Black Ops 6', 'Nişancı']
-];
+export type GameLanguage = {
+	code: string;
+	name: string;
+	interface: boolean;
+	audio: boolean;
+	subtitles: boolean;
+};
 
-// Placeholder data until games come from real data.
-export const trendingGames: Game[] = titles.map(([slug, title, meta], i) => ({
-	slug,
-	title,
-	meta,
-	cover: covers[i % covers.length]
-}));
+export type SystemRequirement = Partial<Record<'os' | 'cpu' | 'gpu' | 'ram' | 'storage', string>>;
+export type SystemRequirements = {
+	minimum: SystemRequirement | null;
+	recommended: SystemRequirement | null;
+};
 
-const upcomingDates = [
-	'12 Kasım 2026',
-	'3 Aralık 2026',
-	'21 Ocak 2027',
-	'Şubat 2027',
-	'Mart 2027',
-	'2027'
-];
+export type GameDetail = {
+	slug: string;
+	title: string;
+	kind: string;
+	cover: string | null;
+	backdrop: string | null;
+	logo: string | null;
+	summary: string | null;
+	description: string | null;
+	genres: Named[];
+	themes: Named[];
+	modes: Named[];
+	developers: Named[];
+	publishers: Named[];
+	releaseDate: string | null;
+	releasePrecision: DatePrecision;
+	/** Every platform the game came out on, in release order. */
+	platforms: { slug: string; name: string; family: string }[];
+	languages: GameLanguage[];
+	/** The rating to show, e.g. "PEGI 18", with the board's own wording for it. */
+	ageRating: { label: string; title: string; text: string } | null;
+	/** Hours to finish the main story. */
+	playtime: number | null;
+	requirements: SystemRequirements | null;
+	screenshots: string[];
+	/** YouTube video id. */
+	trailer: string | null;
+	series: Named | null;
+	/** The base game, when this is an expansion or a remake. */
+	parent: Game | null;
+	/** Expansions and other editions of this game. */
+	related: Game[];
+	seriesGames: Game[];
+	similar: Game[];
+};
 
-export const upcomingGames: Game[] = [...trendingGames].reverse().map((game, i) => ({
-	...game,
-	meta: upcomingDates[i],
-	cover: covers[(i + 1) % covers.length]
-}));
-
-export type GameLanguage = { name: string; interface: boolean; audio: boolean; subtitles: boolean };
-
-// i = interface only, is = interface + subtitles, ias = interface + audio + subtitles.
-const lang = (name: string, parts: 'i' | 'is' | 'ias' = 'ias'): GameLanguage => ({
-	name,
-	interface: true,
-	audio: parts === 'ias',
-	subtitles: parts !== 'i'
+const DAY = new Intl.DateTimeFormat('en-US', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	timeZone: 'UTC'
+});
+const MONTH = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const SHORT_DAY = new Intl.DateTimeFormat('en-US', {
+	day: 'numeric',
+	month: 'short',
+	timeZone: 'UTC'
 });
 
-export type SystemRequirement = {
-	os: string;
-	cpu: string;
-	gpu: string;
-	ram: string;
-	storage: string;
-};
-export type SystemRequirements = { minimum: SystemRequirement; recommended: SystemRequirement };
+/**
+ * A release date as precisely as it is known: "May 19, 2015", "March 2027", "Q1 2027", "2027"
+ * or "TBA". Dates are calendar days, so they are read as UTC and never shift with the time zone.
+ */
+export function formatRelease(date: string | null, precision: DatePrecision): string {
+	if (!date || precision === 'tba') return 'TBA';
+	const day = new Date(`${date}T00:00:00Z`);
+	if (precision === 'year') return String(day.getUTCFullYear());
+	if (precision === 'quarter')
+		return `Q${Math.floor(day.getUTCMonth() / 3) + 1} ${day.getUTCFullYear()}`;
+	return precision === 'month' ? MONTH.format(day) : DAY.format(day);
+}
 
-export type GameDetail = Game & {
-	backdrop: string;
-	genres: string[];
-	description: string;
-	developer: string;
-	publisher: string;
-	releaseDate: string;
-	ageRating: string;
-	score: number;
-	votes: number;
-	// Hours it takes to finish the main story.
-	playtime: number;
-	platforms: Platform[];
-	modes: GameMode[];
-	languages: GameLanguage[];
-	// Free-form tags describing the setting, mood and feel of the game.
-	themes: string[];
-	// YouTube video id of the trailer.
-	trailer?: string;
-	// Screenshot urls; the detail page falls back to placeholders when empty.
-	screenshots?: string[];
-	// Transparent title logo, shown instead of the title text over the trailer.
-	logo?: string;
-	// Slugs of other games from the same series (sequels, spin-offs, DLC).
-	series?: string[];
-	// PC system requirements; left out for games that are not on PC.
-	requirements?: SystemRequirements;
-};
+/** The day and month alone ("May 19"), for where the year is shown separately. */
+export const formatDayMonth = (date: string) => SHORT_DAY.format(new Date(`${date}T00:00:00Z`));
 
-const extras: Record<string, Omit<GameDetail, keyof Game>> = {
-	'neon-surgun': {
-		platforms: ['PC', 'macOS', 'PlayStation', 'Xbox'],
-		modes: ['Tek oyunculu', 'Co-op'],
-		languages: [lang('İngilizce'), lang('Türkçe', 'is'), lang('Almanca', 'is'), lang('Japonca')],
-		themes: ['Distopya', 'Cyberpunk', 'Atmosferik', 'Hikâye odaklı'],
-		series: ['golgeler-vadisi', 'kirik-kilic'],
-		logo: '/logos/silent-hill-townfall.png',
-		backdrop:
-			'https://gmedia.playstation.com/is/image/SIEPDC/Silent-Hill-Townfall-hero-desktop-02-en-05jun26?$3200px$',
-		genres: ['Aksiyon', 'Bilim kurgu', 'Açık dünya'],
-		description:
-			'Işıkları hiç sönmeyen bir şehirde, kimsenin hatırlamadığı bir geçmişin izini sür. Seçimlerin şehrin kaderini değiştirir; her bölge kendi yasalarıyla yaşayan çetelere ev sahipliği yapar.',
-		developer: 'Gece Yarısı Stüdyo',
-		publisher: 'Kuzey Yayıncılık',
-		releaseDate: '2025-03-14',
-		ageRating: '16+',
-		score: 8.7,
-		votes: 12840,
-		playtime: 25
-	},
-	'piksel-gecesi': {
-		platforms: ['Switch', 'PC', 'iOS', 'Android'],
-		modes: ['Tek oyunculu', 'Çok oyunculu'],
-		languages: [lang('İngilizce'), lang('Türkçe', 'i'), lang('Fransızca', 'is')],
-		themes: ['Retro', 'Zorlayıcı', 'Rahatlatıcı', 'Bağımsız'],
-		backdrop: covers[1],
-		genres: ['Retro', 'Platform'],
-		description:
-			'Atari salonlarının ruhunu taşıyan, kısa ama tekrar tekrar dönülen bir platform oyunu. Rekorlarını arkadaşlarınla karşılaştır.',
-		developer: 'Bit Atölyesi',
-		publisher: 'Bit Atölyesi',
-		releaseDate: '2024-10-02',
-		ageRating: '7+',
-		score: 7.9,
-		votes: 4210,
-		playtime: 4
-	},
-	'derin-yorunge': {
-		platforms: ['PC', 'macOS', 'Linux'],
-		modes: ['Tek oyunculu', 'Çevrimiçi'],
-		languages: [lang('İngilizce'), lang('Almanca', 'is'), lang('İspanyolca', 'is')],
-		themes: ['Uzay', 'Taktiksel', 'Derin sistemler', 'Bağımsız'],
-		backdrop: covers[2],
-		genres: ['Strateji', 'Uzay', 'Simülasyon'],
-		description:
-			'Filonu kur, rotanı çiz ve galaksinin kenarına kadar ilerle. Topluluğun en çok listeye eklediği strateji oyunlarından biri.',
-		developer: 'Yörünge Oyun',
-		publisher: 'Kuzey Yayıncılık',
-		releaseDate: '2025-08-21',
-		ageRating: '12+',
-		score: 8.4,
-		votes: 7355,
-		playtime: 60
-	},
-	'golgeler-vadisi': {
-		platforms: ['PC', 'PlayStation', 'Xbox'],
-		modes: ['Tek oyunculu', 'Co-op'],
-		languages: [
-			lang('İngilizce'),
-			lang('Türkçe'),
-			lang('Fransızca', 'is'),
-			lang('İtalyanca', 'is')
-		],
-		themes: ['Karanlık fantezi', 'Atmosferik', 'Hikâye odaklı', 'Zorlayıcı'],
-		series: ['neon-surgun'],
-		backdrop: covers[0],
-		genres: ['RPG', 'Fantastik'],
-		description:
-			'Sisle kaplı bir vadide kaybolan köyleri ara. Her karar, yanındaki yoldaşların sana olan güvenini değiştirir.',
-		developer: 'Kül Atölyesi',
-		publisher: 'Kül Atölyesi',
-		releaseDate: '2026-01-30',
-		ageRating: '16+',
-		score: 9.1,
-		votes: 18920,
-		playtime: 45
-	},
-	'kirik-kilic': {
-		platforms: ['Xbox', 'PC', 'Switch', 'Android'],
-		modes: ['Tek oyunculu', 'Çok oyunculu', 'Rekabetçi'],
-		languages: [lang('İngilizce'), lang('Türkçe', 'is'), lang('Portekizce', 'i')],
-		themes: ['Efsane', 'Macera', 'Açık uçlu'],
-		backdrop: covers[1],
-		genres: ['Macera', 'Aksiyon'],
-		description:
-			'Efsanelerde anlatılan kılıcın kırık parçalarını topla ve krallığı karanlıktan kurtar.',
-		developer: 'Demir Kapı',
-		publisher: 'Anka Yayınları',
-		releaseDate: '2025-11-07',
-		ageRating: '12+',
-		score: 8.2,
-		votes: 6034,
-		playtime: 18
-	},
-	'son-istasyon': {
-		platforms: ['PC', 'PlayStation', 'Linux'],
-		modes: ['Tek oyunculu'],
-		languages: [lang('İngilizce'), lang('Japonca', 'is')],
-		themes: ['Uzay', 'Gerilim', 'Atmosferik', 'Hayatta kalma'],
-		backdrop: covers[2],
-		genres: ['Korku', 'Hayatta kalma'],
-		description:
-			'Terk edilmiş bir uzay istasyonunda tek başınasın. Sessizlik, duyduğun en tehlikeli ses.',
-		developer: 'Sessiz Frekans',
-		publisher: 'Sessiz Frekans',
-		releaseDate: '2026-04-18',
-		ageRating: '18+',
-		score: 7.6,
-		votes: 2988,
-		playtime: 8
-	},
-	'call-of-duty-black-ops-6': {
-		platforms: ['PC', 'PlayStation', 'Xbox'],
-		modes: ['Tek oyunculu', 'Çok oyunculu', 'Co-op'],
-		languages: [
-			lang('İngilizce'),
-			lang('Türkçe', 'is'),
-			lang('Almanca'),
-			lang('Fransızca'),
-			lang('İspanyolca'),
-			lang('Rusça', 'is')
-		],
-		themes: ['Soğuk Savaş', 'Casusluk', 'Zombiler', 'Rekabetçi'],
-		backdrop: covers[2],
-		genres: ['Nişancı', 'Aksiyon'],
-		description:
-			"1990'ların başında, Körfez Savaşı'nın hemen ardından geçen bir casusluk hikâyesi. Kendi ekibi tarafından hain ilan edilen bir ekibin peşindeki komplonun izini sürer. Tek oyunculu kampanyanın yanında çok oyunculu maçlar ve Zombiler modu aynı pakette.",
-		developer: 'Treyarch, Raven Software',
-		publisher: 'Activision',
-		releaseDate: '2024-10-25',
-		ageRating: '18+',
-		score: 7.4,
-		votes: 48210,
-		playtime: 9
-	}
-};
+export const releaseYear = (date: string | null) => (date ? date.slice(0, 4) : '');
 
-// Placeholder trailer shared by every game until real trailer ids exist.
-// Placeholder PC requirements until they come from real data.
-const req = (
-	os: string,
-	cpu: string,
-	gpu: string,
-	ram: string,
-	storage: string
-): SystemRequirement => ({ os, cpu, gpu, ram, storage });
-const requirements: Record<string, SystemRequirements> = {
-	'neon-surgun': {
-		minimum: req('Windows 10 64-bit', 'Intel Core i5-8400', 'GTX 1060 6 GB', '12 GB', '70 GB SSD'),
-		recommended: req(
-			'Windows 11 64-bit',
-			'Intel Core i7-10700',
-			'RTX 3070 8 GB',
-			'16 GB',
-			'70 GB SSD'
-		)
-	},
-	'piksel-gecesi': {
-		minimum: req('Windows 10 64-bit', 'Intel Core i3-6100', 'Intel HD 530', '4 GB', '2 GB'),
-		recommended: req('Windows 10 64-bit', 'Intel Core i5-8400', 'GTX 960', '8 GB', '2 GB')
-	},
-	'derin-yorunge': {
-		minimum: req('Windows 10 64-bit', 'Intel Core i5-7500', 'GTX 970', '8 GB', '40 GB'),
-		recommended: req('Windows 11 64-bit', 'Intel Core i7-9700', 'RTX 2060', '16 GB', '40 GB SSD')
-	},
-	'golgeler-vadisi': {
-		minimum: req('Windows 10 64-bit', 'Intel Core i5-9400F', 'GTX 1660 6 GB', '16 GB', '90 GB SSD'),
-		recommended: req(
-			'Windows 11 64-bit',
-			'Intel Core i7-11700',
-			'RTX 3070 8 GB',
-			'32 GB',
-			'90 GB SSD'
-		)
-	},
-	'kirik-kilic': {
-		minimum: req('Windows 10 64-bit', 'Intel Core i5-8400', 'GTX 1050 Ti', '8 GB', '45 GB'),
-		recommended: req('Windows 10 64-bit', 'Intel Core i7-8700', 'GTX 1070', '16 GB', '45 GB SSD')
-	},
-	'son-istasyon': {
-		minimum: req('Windows 10 64-bit', 'Intel Core i5-6600', 'GTX 960 4 GB', '8 GB', '30 GB'),
-		recommended: req('Windows 10 64-bit', 'Intel Core i7-7700', 'GTX 1070', '16 GB', '30 GB SSD')
-	}
-};
+/** How the games page can order its list. */
+export const sorts = [
+	{ key: 'newest', label: 'Newest' },
+	{ key: 'title', label: 'Title' },
+	{ key: 'added', label: 'Recently added' }
+] as const;
+export type SortKey = (typeof sorts)[number]['key'];
 
-const placeholderTrailer = 'aqz-KE-bpKQ';
-const placeholderLogo = '/logos/placeholder.png';
+/** Platform families, as the API groups them. */
+export const platformFamilies = [
+	{ key: 'pc', label: 'PC' },
+	{ key: 'playstation', label: 'PlayStation' },
+	{ key: 'xbox', label: 'Xbox' },
+	{ key: 'nintendo', label: 'Nintendo' },
+	{ key: 'mobile', label: 'Mobile' }
+] as const;
 
-// Placeholder lookup until games come from real data.
-export const getGameDetail = (slug: string): GameDetail | undefined => {
-	const game = trendingGames.find((g) => g.slug === slug);
-	const extra = extras[slug];
-	return game && extra
-		? {
-				...game,
-				...extra,
-				requirements: extra.platforms.includes('PC') ? requirements[slug] : undefined,
-				trailer: placeholderTrailer,
-				logo: extra.logo ?? placeholderLogo
-			}
-		: undefined;
-};
-
-// Moods for the discover page. Each one is a hand-picked group of genres.
+/** Moods for the discover page. Each one is a genre under a friendlier name. */
 export const moods = [
 	{
-		key: 'maceralar',
-		title: 'Büyük maceralar',
-		subtitle: 'Yolculuklar ve yeni dünyalar',
-		genres: ['Macera', 'Fantastik', 'Açık dünya']
+		key: 'adventure',
+		title: 'Grand adventures',
+		subtitle: 'Journeys and new worlds',
+		genre: 'adventure'
 	},
 	{
-		key: 'gerilim',
-		title: 'Nefes kesen gerilim',
-		subtitle: 'Hayatta kalma ve büyük riskler',
-		genres: ['Korku', 'Hayatta kalma']
+		key: 'action',
+		title: 'Pure adrenaline',
+		subtitle: 'Fast hands, faster choices',
+		genre: 'action'
 	},
 	{
-		key: 'hikaye',
-		title: 'Hikâyesi güçlü olanlar',
-		subtitle: 'Seçimlerin ağırlığını hisset',
-		genres: ['RPG', 'Bilim kurgu']
+		key: 'rpg',
+		title: 'Stories to live in',
+		subtitle: 'Feel the weight of your choices',
+		genre: 'rpg'
 	},
 	{
-		key: 'adrenalin',
-		title: 'Adrenalin',
-		subtitle: 'Çarpışmalar ve hızlı tempo',
-		genres: ['Aksiyon', 'Platform']
+		key: 'strategy',
+		title: 'Think it through',
+		subtitle: 'Plans, patience and payoff',
+		genre: 'strategy'
 	},
 	{
-		key: 'dusunenler',
-		title: 'Düşündürenler',
-		subtitle: 'Strateji, planlama ve simülasyon',
-		genres: ['Strateji', 'Simülasyon', 'Uzay']
+		key: 'indie',
+		title: 'Small and brilliant',
+		subtitle: 'Big ideas from small teams',
+		genre: 'indie'
+	},
+	{
+		key: 'simulation',
+		title: 'Another life',
+		subtitle: 'Build it, run it, live it',
+		genre: 'simulation'
 	}
 ] as const;
-
 export type Mood = (typeof moods)[number];
 
-const moodSize = 10;
-
-export const allGameDetails: GameDetail[] = trendingGames.flatMap(
-	(g) => getGameDetail(g.slug) ?? []
-);
-
-// A small catalog has few games per mood, so the rest of the catalog follows after them.
-export const moodGames = (mood: Mood): GameDetail[] => {
-	const matches = allGameDetails.filter((g) =>
-		g.genres.some((genre) => (mood.genres as readonly string[]).includes(genre))
-	);
-	const rest = allGameDetails.filter((g) => !matches.includes(g));
-	return [...matches, ...rest].slice(0, moodSize);
+// What the rating boards mean by each label.
+const PEGI: Record<string, string> = {
+	'3': 'Suitable for all ages.',
+	'7': 'May contain scenes or sounds that can frighten younger children.',
+	'12': 'May contain mild violence, mild bad language or suggestive themes.',
+	'16': 'May contain realistic violence, strong language or the use of tobacco and alcohol.',
+	'18': 'Adults only: may contain gross violence, glamorised drug use or explicit content.'
+};
+const ESRB: Record<string, [title: string, text: string]> = {
+	E: ['Everyone', 'Content is generally suitable for all ages.'],
+	E10: ['Everyone 10+', 'Content is generally suitable for ages 10 and up.'],
+	'E10+': ['Everyone 10+', 'Content is generally suitable for ages 10 and up.'],
+	T: ['Teen', 'Content is generally suitable for ages 13 and up.'],
+	M: ['Mature 17+', 'Content is generally suitable for ages 17 and up.'],
+	AO: ['Adults Only 18+', 'Content suitable only for adults ages 18 and up.']
 };
 
-// How the browse page can order the games.
-export const sorts = [
-	{ key: 'populer', label: 'Popüler' },
-	{ key: 'yeni', label: 'En yeni' },
-	{ key: 'puan', label: 'En iyi' },
-	{ key: 'ad', label: 'A–Z' }
-] as const;
-
-// How long a game takes, as the browse page buckets it.
-export const playtimes = ['Kısa', 'Orta', 'Uzun'] as const;
-export const playtimeOf = (hours: number) => (hours < 10 ? 'Kısa' : hours <= 30 ? 'Orta' : 'Uzun');
-
-const ageDescriptions: Record<string, { title: string; text: string }> = {
-	'3+': {
-		title: 'Genel oyuncu',
-		text: 'Her yaştan oyuncu için uygundur. Rahatsız edici içerik barındırmaz.'
-	},
-	'7+': {
-		title: '7 yaş ve üzeri',
-		text: '7 yaş ve üzeri oyuncu için uygundur. Hafif fantastik şiddet içerir. Oyuncu 7 yaşından küçükse ebeveyn gözetimi önerilir.'
-	},
-	'12+': {
-		title: '12 yaş ve üzeri',
-		text: '12 yaş ve üzeri oyuncu için uygundur. Şiddet ve çatışma içerir. Oyuncu 12 yaşından küçükse ebeveyn gözetimi gereklidir.'
-	},
-	'16+': {
-		title: '16 yaş ve üzeri',
-		text: '16 yaş ve üzeri oyuncu için uygundur. Yoğun şiddet ve olgun temalar içerir. Oyuncu 16 yaşından küçükse ebeveyn gözetimi gereklidir.'
-	},
-	'18+': {
-		title: '18 yaş ve üzeri',
-		text: 'Yalnızca 18 yaş ve üzeri oyuncu için uygundur. Şiddet ve yetişkin içerik barındırır.'
-	}
-};
-
-/** A short Turkish title and sentence for the age tooltip. */
-export const ageDescription = (label: string) => ageDescriptions[label] ?? null;
+/** The rating to show for a game: PEGI when there is one, otherwise ESRB. */
+export function ageRating(ratings: Record<string, string>): GameDetail['ageRating'] {
+	const pegi = ratings.pegi;
+	if (pegi && PEGI[pegi])
+		return { label: `PEGI ${pegi}`, title: `Ages ${pegi} and up`, text: PEGI[pegi] };
+	const esrb = ratings.esrb?.toUpperCase();
+	if (esrb && ESRB[esrb])
+		return { label: `ESRB ${esrb}`, title: ESRB[esrb][0], text: ESRB[esrb][1] };
+	return null;
+}

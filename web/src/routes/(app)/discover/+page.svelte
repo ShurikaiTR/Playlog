@@ -95,36 +95,38 @@
 </script>
 
 <svelte:head>
-	<title>Keşfet | Playlog</title>
+	<title>Discover | Playthru</title>
 	<meta
 		name="description"
-		content="Ruh haline göre oyun keşfet: macera, gerilim, hikâye odaklı oyunlar ve daha fazlası."
+		content="Find a game for the mood you are in: adventures, action, stories and more."
 	/>
 </svelte:head>
 
 <svelte:window onkeydown={onKeydown} />
 
-<div lang="tr" class="min-w-0 px-4 pb-20 md:px-8 md:pb-24">
+<div class="min-w-0 px-4 pb-20 md:px-8 md:pb-24">
 	<header class="flex flex-wrap items-end justify-between gap-6 pt-2 pb-6 md:pt-4">
 		<div class="max-w-2xl">
 			<h1
 				class="text-[2rem] leading-tight font-medium tracking-[-0.025em] text-primary md:text-[2.5rem]"
 			>
-				Keşfet
+				Discover
 			</h1>
 			<p class="mt-2 text-sm leading-[1.6] text-muted-foreground">
 				<span class="font-medium text-primary">{data.mood.title}</span> · {data.mood.subtitle}
 			</p>
 		</div>
-		<Button
-			href="/kesfet?ruh={data.surprise}"
-			variant="outline"
-			size="lg"
-			class="h-11 px-5 text-[0.9375rem]"
-		>
-			<ShuffleIcon data-icon="inline-start" aria-hidden="true" />
-			Rastgele bir oyun
-		</Button>
+		{#if data.surprise}
+			<Button
+				href="/discover?mood={data.surprise}"
+				variant="outline"
+				size="lg"
+				class="h-11 px-5 text-[0.9375rem]"
+			>
+				<ShuffleIcon data-icon="inline-start" aria-hidden="true" />
+				Surprise me
+			</Button>
+		{/if}
 	</header>
 
 	{#if featured}
@@ -137,7 +139,7 @@
 			<div class="relative [--fw:100cqw] md:[--fw:72cqw] lg:[--fw:62cqw]">
 				<div
 					role="group"
-					aria-label="Oyunlar"
+					aria-label="Games"
 					bind:this={scroller}
 					bind:clientHeight={stripHeight}
 					onwheel={onWheel}
@@ -156,7 +158,7 @@
 									class="relative size-full overflow-hidden rounded-2xl bg-muted ring-1 ring-foreground/10"
 								>
 									<img
-										src={item.backdrop}
+										src={item.backdrop ?? item.cover}
 										alt=""
 										draggable="false"
 										width="1672"
@@ -167,7 +169,7 @@
 										{#key item.slug}
 											<iframe
 												bind:this={player}
-												title="{item.title} fragmanı"
+												title="{item.title} trailer"
 												src="https://www.youtube-nocookie.com/embed/{item.trailer}?autoplay=1&mute=1&controls=0&loop=1&playlist={item.trailer}&playsinline=1&modestbranding=1&rel=0&enablejsapi=1"
 												allow="autoplay; encrypted-media"
 												referrerpolicy="strict-origin-when-cross-origin"
@@ -180,9 +182,9 @@
 										{/key}
 									{/if}
 									<a
-										href="/oyun/{item.slug}"
+										href="/games/{item.slug}"
 										class="absolute inset-0 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset"
-										aria-label="{item.title} sayfasına git"
+										aria-label="Go to {item.title}"
 									></a>
 									<div
 										class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/25 to-transparent p-4 pt-20 pr-16 md:p-6 md:pt-24 md:pr-20"
@@ -206,7 +208,7 @@
 											variant="ghost"
 											size="icon-lg"
 											class="absolute right-3 bottom-3 z-10 rounded-full bg-background/80 shadow-sm backdrop-blur-md hover:bg-background"
-											aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
+											aria-label={muted ? 'Unmute' : 'Mute'}
 											onclick={toggleSound}
 										>
 											{#if muted}<VolumeXIcon aria-hidden="true" />{:else}<Volume2Icon
@@ -219,11 +221,11 @@
 								<button
 									type="button"
 									onclick={() => show(position)}
-									aria-label="{item.title} oyununu göster"
+									aria-label="Show {item.title}"
 									class="relative size-full cursor-pointer overflow-hidden rounded-2xl bg-muted ring-1 ring-foreground/10 transition-shadow outline-none hover:ring-foreground/30 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
 								>
 									<img
-										src={item.cover}
+										src={item.cover ?? item.backdrop}
 										alt=""
 										draggable="false"
 										width="1024"
@@ -241,7 +243,7 @@
 						variant="outline"
 						size="icon"
 						class="absolute top-1/2 left-3 z-10 size-8 -translate-y-1/2 rounded-full bg-background hover:bg-muted"
-						aria-label="Önceki oyun"
+						aria-label="Previous game"
 						onclick={() => show(index - 1)}
 					>
 						<ChevronLeftIcon aria-hidden="true" />
@@ -252,7 +254,7 @@
 						variant="outline"
 						size="icon"
 						class="absolute top-1/2 right-3 z-10 size-8 -translate-y-1/2 rounded-full bg-background hover:bg-muted"
-						aria-label="Sonraki oyun"
+						aria-label="Next game"
 						onclick={() => show(index + 1)}
 					>
 						<ChevronRightIcon aria-hidden="true" />
@@ -280,24 +282,27 @@
 						{featured.title}
 					</h2>
 					<p class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-						<span
-							class="rounded-md border bg-background px-2 py-0.5 text-xs font-semibold text-primary"
-							>{featured.ageRating}</span
-						>
-						{#each featured.genres.slice(0, 3) as genre (genre)}
-							<span aria-hidden="true" class="text-foreground/30">•</span>
+						{#each featured.genres.slice(0, 3) as genre, position (genre)}
+							{#if position > 0}<span aria-hidden="true" class="text-foreground/30">•</span>{/if}
 							<span>{genre}</span>
 						{/each}
 					</p>
-					<p class="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-						{featured.description}
-					</p>
-					<Button href="/oyun/{featured.slug}" size="lg" class="mt-1 h-11 px-5 text-[0.9375rem]">
-						İncele
+					{#if featured.summary}
+						<p class="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+							{featured.summary}
+						</p>
+					{/if}
+					<Button href="/games/{featured.slug}" size="lg" class="mt-1 h-11 px-5 text-[0.9375rem]">
+						View game
 						<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
 					</Button>
 				</div>
 			{/key}
 		</section>
+	{:else}
+		<div class="flex min-h-72 flex-col items-center justify-center gap-2 px-6 text-center">
+			<p class="text-[0.9375rem] font-medium text-primary">Nothing to discover yet</p>
+			<p class="text-sm text-muted-foreground">Games will show up here once they are added.</p>
+		</div>
 	{/if}
 </div>

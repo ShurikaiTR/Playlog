@@ -34,7 +34,7 @@
 </svelte:head>
 
 <Button
-	href="/hesap/oturumlar"
+	href="/settings/sessions"
 	variant="ghost"
 	class="-ms-3 mb-4 h-11 gap-0.5 rounded-xl ps-1.5 pe-3 text-callout font-normal"
 >
@@ -75,13 +75,13 @@
 		</SettingsGroup>
 	</div>
 
-	<form bind:this={logoutForm} method="POST" action="/cikis" hidden></form>
+	<form bind:this={logoutForm} method="POST" action="/sign-out" hidden></form>
 
 	<AlertDialog.Root bind:open={confirmOpen}>
 		<AlertDialog.Content size="sm">
 			<form
 				method="POST"
-				action="/hesap/oturumlar?/revoke"
+				action="/settings/sessions?/revoke"
 				class="grid gap-6"
 				use:enhance={({ cancel }) => {
 					pending = true;

@@ -57,7 +57,7 @@
 </script>
 
 <svelte:head>
-	<title>{profile.name} Profili | Playlog</title>
+	<title>{profile.name} | Playthru</title>
 </svelte:head>
 
 <div lang="tr" class="flex min-w-0 flex-col gap-14 pb-16">
@@ -68,14 +68,16 @@
 			aria-hidden="true"
 			style="mask-image: linear-gradient(to bottom, black 55%, transparent 100%)"
 		>
-			<img
-				src={profile.cover}
-				alt=""
-				width="1600"
-				height="900"
-				fetchpriority="high"
-				class="size-full object-cover object-[center_45%]"
-			/>
+			{#if profile.cover}
+				<img
+					src={profile.cover}
+					alt=""
+					width="1600"
+					height="900"
+					fetchpriority="high"
+					class="size-full object-cover object-[center_45%]"
+				/>
+			{/if}
 			<div class="profile-scrim absolute inset-0"></div>
 		</div>
 
@@ -151,7 +153,7 @@
 											{#if data.linkable.includes(person.username)}
 												<Item.Root size="xs">
 													{#snippet child({ props })}
-														<a {...props} href="/profil/{person.username}">{@render row()}</a>
+														<a {...props} href="/u/{person.username}">{@render row()}</a>
 													{/snippet}
 												</Item.Root>
 											{:else}
@@ -203,14 +205,16 @@
 					{#snippet listCard()}
 						<div class="relative">
 							<AspectRatio ratio={2.6} class="bg-muted">
-								<img
-									src={list.cover}
-									alt=""
-									width="1600"
-									height="560"
-									loading="lazy"
-									class="size-full object-cover"
-								/>
+								{#if list.cover}
+									<img
+										src={list.cover}
+										alt=""
+										width="1600"
+										height="560"
+										loading="lazy"
+										class="size-full object-cover"
+									/>
+								{/if}
 							</AspectRatio>
 							<Avatar.Root
 								class="absolute -bottom-7 left-(--card-spacing) size-16 rounded-xl ring-4 ring-card"

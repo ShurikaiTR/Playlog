@@ -33,28 +33,22 @@
 		compact = false,
 		class: className
 	}: {
-		game: { slug: string; title: string; cover: string; score: number; year: string };
+		game: { slug: string; title: string; cover: string | null; year: string };
 		// A round icon-only trigger for lists of games.
 		compact?: boolean;
 		class?: string;
 	} = $props();
 
 	const statuses = [
-		{ value: 'Oynuyorum', icon: GamepadIcon, message: 'Oynuyorum olarak işaretlendi' },
-		{
-			value: 'Oynamayı planlıyorum',
-			short: 'Planlanan',
-			icon: ClockIcon,
-			message: 'Planlananlara eklendi'
-		},
-		{ value: 'Ara verdim', icon: PauseCircleIcon, message: 'Ara verdim olarak işaretlendi' },
-		{ value: 'Bitirdim', icon: CircleCheckIcon, message: 'Bitirdim olarak işaretlendi' },
-		{ value: 'Bıraktım', icon: BanIcon, message: 'Bıraktım olarak işaretlendi' }
+		{ value: 'Playing', icon: GamepadIcon, message: 'Marked as playing' },
+		{ value: 'Backlog', icon: ClockIcon, message: 'Added to your backlog' },
+		{ value: 'Paused', icon: PauseCircleIcon, message: 'Marked as paused' },
+		{ value: 'Completed', icon: CircleCheckIcon, message: 'Marked as completed' },
+		{ value: 'Dropped', icon: BanIcon, message: 'Marked as dropped' }
 	];
 	const favorites = $derived(listByKind('favorites'));
 	const custom = $derived(customLists());
 	const status = $derived(statusOf(game.slug));
-	const current = $derived(statuses.find((item) => item.value === status));
 	const saved = $derived(
 		Boolean(status) ||
 			hasGame(favorites, game.slug) ||
@@ -67,15 +61,15 @@
 		const previous = status;
 		if (next === previous) return;
 		setStatus(game, next);
-		toast(statuses.find((item) => item.value === next)?.message ?? 'Kütüphaneden çıkarıldı', {
-			action: { label: 'Geri al', onClick: () => setStatus(game, previous) }
+		toast(statuses.find((item) => item.value === next)?.message ?? 'Removed from your library', {
+			action: { label: 'Undo', onClick: () => setStatus(game, previous) }
 		});
 	}
 
 	function toggle(list: UserList, on: boolean) {
 		setGame(list, game, on);
-		toast(on ? `${list.name} listesine eklendi` : `${list.name} listesinden çıkarıldı`, {
-			action: { label: 'Geri al', onClick: () => setGame(list, game, !on) }
+		toast(on ? `Added to ${list.name}` : `Removed from ${list.name}`, {
+			action: { label: 'Undo', onClick: () => setGame(list, game, !on) }
 		});
 	}
 
@@ -93,12 +87,12 @@
 		event.preventDefault();
 		const trimmed = name.trim();
 		if (!trimmed) {
-			error = 'Liste için bir ad gir.';
+			error = 'Give the list a name.';
 			return;
 		}
 		createList(trimmed, game);
 		dialogOpen = false;
-		toast(`${trimmed} listesi oluşturuldu`);
+		toast(`Created ${trimmed}`);
 	}
 </script>
 
@@ -111,7 +105,7 @@
 						buttonVariants({ variant: 'default', size: 'lg' }),
 						'h-11 min-w-0 flex-1 gap-0 px-0 text-sm'
 					)}
-			aria-label="{game.title} için kaydetme seçenekleri"
+			aria-label="Save options for {game.title}"
 		>
 			{#if compact}
 				{#if saved}
@@ -122,7 +116,8 @@
 			{:else}
 				<span class="flex min-w-0 flex-1 items-center gap-2 px-4">
 					<span class="truncate"
-						>{(current && 'short' in current ? current.short : status) || 'Listeme ekle'}</span
+						>{#if status}{status}{:else}Add<span class="max-sm:hidden">&nbsp;to library</span
+							>{/if}</span
 					>
 				</span>
 				<span aria-hidden="true" class="h-5 w-px shrink-0 bg-current opacity-20"></span>
@@ -132,7 +127,7 @@
 
 		<DropdownMenu.Content align="start" sideOffset={8} class="w-56 p-2">
 			<DropdownMenu.Label class="px-2 pt-1 pb-2">
-				<span class="block text-xs font-semibold text-primary">Kütüphanene ekle</span>
+				<span class="block text-xs font-semibold text-primary">Add to library</span>
 				<span class="mt-0.5 block truncate text-[0.6875rem] font-normal text-muted-foreground"
 					>{game.title}</span
 				>
@@ -150,7 +145,7 @@
 			{#if custom.length}
 				<DropdownMenu.Separator class="my-2" />
 				<DropdownMenu.Label class="px-2 pb-1 text-xs font-medium text-muted-foreground"
-					>Listelerim</DropdownMenu.Label
+					>My lists</DropdownMenu.Label
 				>
 				<div class={cn(custom.length > 5 && 'max-h-52 overflow-y-auto')}>
 					{#each custom as list (list.id)}
@@ -170,14 +165,14 @@
 			<DropdownMenu.Separator class="my-2" />
 			<DropdownMenu.Item class={cn(itemClass, 'text-muted-foreground')} onclick={openDialog}>
 				<PlusIcon class="size-4" aria-hidden="true" />
-				Yeni liste oluştur
+				New list
 			</DropdownMenu.Item>
 
 			{#if status}
 				<DropdownMenu.Separator class="my-2" />
 				<DropdownMenu.Item variant="destructive" class={itemClass} onclick={() => changeStatus('')}>
 					<Trash2Icon class="size-4" aria-hidden="true" />
-					Kütüphaneden çıkar
+					Remove from library
 				</DropdownMenu.Item>
 			{/if}
 		</DropdownMenu.Content>
@@ -189,7 +184,7 @@
 			size="icon-lg"
 			class="size-11 shrink-0 cursor-pointer"
 			aria-pressed={isFavorite}
-			aria-label={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+			aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 			onclick={() => toggle(favorites, !isFavorite)}
 		>
 			<HeartIcon class={cn(isFavorite && 'fill-current')} aria-hidden="true" />
@@ -200,19 +195,17 @@
 <Dialog.Root bind:open={dialogOpen}>
 	<Dialog.Content class="sm:max-w-sm">
 		<Dialog.Header class="text-left">
-			<Dialog.Title>Yeni liste</Dialog.Title>
-			<Dialog.Description
-				>Liste oluşturulunca {game.title} otomatik olarak eklenir.</Dialog.Description
-			>
+			<Dialog.Title>New list</Dialog.Title>
+			<Dialog.Description>{game.title} is added to the list once it is created.</Dialog.Description>
 		</Dialog.Header>
 
 		<form class="mt-2 space-y-4" onsubmit={submitList}>
 			<div class="space-y-2">
-				<Label for="new-list-name">Liste adı</Label>
+				<Label for="new-list-name">List name</Label>
 				<Input
 					id="new-list-name"
 					bind:value={name}
-					placeholder="ör. Hafta sonu oyunları"
+					placeholder="e.g. Weekend games"
 					autocomplete="off"
 				/>
 			</div>
@@ -220,7 +213,7 @@
 				<p class="text-xs text-destructive" role="alert">{error}</p>
 			{/if}
 			<Dialog.Footer>
-				<Button type="submit" class="px-5">Listeyi oluştur</Button>
+				<Button type="submit" class="px-5">Create list</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

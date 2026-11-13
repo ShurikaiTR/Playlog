@@ -18,14 +18,14 @@
 	// The account page has its own window, like the settings app: a left menu of sections and
 	// the open section beside it. On phones the menu scrolls sideways above the section.
 	const navItems = [
-		{ href: '/hesap', label: 'Hesap', icon: UserRoundIcon },
-		{ href: '/hesap/guvenlik', label: 'Güvenlik', icon: LockIcon },
-		{ href: '/hesap/oturumlar', label: 'Oturumlar', icon: MonitorSmartphoneIcon },
-		{ href: '/hesap/veri', label: 'Veri', icon: DatabaseIcon }
+		{ href: '/settings', label: 'Hesap', icon: UserRoundIcon },
+		{ href: '/settings/security', label: 'Güvenlik', icon: LockIcon },
+		{ href: '/settings/sessions', label: 'Oturumlar', icon: MonitorSmartphoneIcon },
+		{ href: '/settings/data', label: 'Veri', icon: DatabaseIcon }
 	] as const;
 
 	const isActive = (href: string) =>
-		href === '/hesap' ? page.url.pathname === href : page.url.pathname.startsWith(href);
+		href === '/settings' ? page.url.pathname === href : page.url.pathname.startsWith(href);
 
 	let logoutForm = $state<HTMLFormElement | null>(null);
 
@@ -35,7 +35,7 @@
 	}
 </script>
 
-<form bind:this={logoutForm} method="POST" action="/cikis" hidden></form>
+<form bind:this={logoutForm} method="POST" action="/sign-out" hidden></form>
 
 <div class="min-h-dvh bg-background text-foreground md:flex">
 	<aside

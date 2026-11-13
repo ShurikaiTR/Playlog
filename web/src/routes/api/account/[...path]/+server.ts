@@ -3,9 +3,9 @@ import { api } from '#lib/server/api.js';
 import { clearSessionCookie } from '#lib/server/session.js';
 import type { RequestHandler } from './$types';
 
-// The /hesap dialogs call these, and they forward to the Rust API's /v1/account with the session
+// The /settings dialogs call these, and they forward to the Rust API's /v1/account with the session
 // token. Only the listed calls pass; connecting a provider is a browser redirect under /auth and
-// sessions are form actions on /hesap/oturumlar. Other sites can't call these: a JSON body or a
+// sessions are form actions on /settings/sessions. Other sites can't call these: a JSON body or a
 // PUT/DELETE needs a CORS preflight this app never allows.
 const allowed: Record<'POST' | 'PUT' | 'DELETE', RegExp> = {
 	POST: /^email-code$/,
