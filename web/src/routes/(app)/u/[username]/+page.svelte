@@ -9,7 +9,7 @@
 	import { listHref, ownLists } from '#lib/features/lists/user-lists.svelte.js';
 	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import GamepadIcon from '@lucide/svelte/icons/gamepad-2';
-	import HeartIcon from '@lucide/svelte/icons/heart';
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 
 	let { data } = $props();
 	const profile = $derived(data.profile);
@@ -53,7 +53,7 @@
 			: profile.lists.map((list) => ({ ...list, href: null as string | null }))
 	);
 
-	const listIcon = { favorites: HeartIcon, play_later: ClockIcon, custom: GamepadIcon };
+	const listIcon = { played: CircleCheckIcon, play_later: ClockIcon, custom: GamepadIcon };
 </script>
 
 <svelte:head>
@@ -193,7 +193,7 @@
 			<h2 id="profile-lists-title" class="truncate text-2xl font-medium text-primary">
 				Oyun listeleri
 			</h2>
-			<p class="mt-1 text-sm text-muted-foreground">Favoriler ve sırada bekleyenler.</p>
+			<p class="mt-1 text-sm text-muted-foreground">Oynadıkların ve sırada bekleyenler.</p>
 		</div>
 
 		{#if lists.length === 0}

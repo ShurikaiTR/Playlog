@@ -3,4 +3,4 @@
 	import { listByKind } from '#lib/features/lists/user-lists.svelte.js';
 </script>
 
-<UserListPage list={listByKind('favorites')} />
+<UserListPage list={listByKind('played')} />

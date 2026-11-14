@@ -16,7 +16,7 @@
 	import { toast } from 'svelte-sonner';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ClockIcon from '@lucide/svelte/icons/clock-3';
-	import HeartIcon from '@lucide/svelte/icons/heart';
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import ListIcon from '@lucide/svelte/icons/list';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 
@@ -28,11 +28,11 @@
 		class?: string;
 	} = $props();
 
-	const favorites = $derived(listByKind('favorites'));
+	const played = $derived(listByKind('played'));
 	const playLater = $derived(listByKind('play_later'));
 	const custom = $derived(customLists());
 	const saved = $derived(
-		hasGame(favorites, game.slug) ||
+		hasGame(played, game.slug) ||
 			hasGame(playLater, game.slug) ||
 			custom.some((list) => hasGame(list, game.slug))
 	);
@@ -90,7 +90,7 @@
 				>
 			</DropdownMenu.Label>
 
-			{#each [{ list: favorites, icon: HeartIcon }, { list: playLater, icon: ClockIcon }] as { list, icon: Icon } (list.id)}
+			{#each [{ list: played, icon: CircleCheckIcon }, { list: playLater, icon: ClockIcon }] as { list, icon: Icon } (list.id)}
 				<DropdownMenu.CheckboxItem
 					checked={hasGame(list, game.slug)}
 					onCheckedChange={(on) => toggle(list, on)}

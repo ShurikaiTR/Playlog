@@ -16,9 +16,6 @@ const MOVED: [from: string, to: string][] = [
 	['/kesfet', '/discover'],
 	['/oyunlar', '/games'],
 	['/oyun', '/games'],
-	['/favoriler', '/favorites'],
-	['/planlananlar', '/backlog'],
-	['/sonra-oyna', '/backlog'],
 	['/liste', '/lists'],
 	['/profil', '/u']
 ];

@@ -8,7 +8,7 @@ export type ListGame = {
 
 export type UserList = {
 	id: string;
-	kind: 'favorites' | 'play_later' | 'custom';
+	kind: 'played' | 'play_later' | 'custom';
 	name: string;
 	description: string;
 	visibility: 'private' | 'public';
@@ -37,17 +37,17 @@ export const toListGame = (game: {
 // Not stored yet: lists live in the browser's memory and reset on a full reload.
 export const userLists = $state<UserList[]>([
 	{
-		id: 'favorites',
-		kind: 'favorites',
-		name: 'Favorites',
-		description: 'Some games stay with you. Keep them close.',
+		id: 'played',
+		kind: 'played',
+		name: 'Played',
+		description: 'The games you have played.',
 		visibility: 'public',
 		image: '',
 		backdrop: '',
 		items: []
 	},
 	{
-		id: 'backlog',
+		id: 'play-later',
 		kind: 'play_later',
 		name: 'Play later',
 		description: 'The games waiting for their turn.',
@@ -59,14 +59,14 @@ export const userLists = $state<UserList[]>([
 ]);
 
 export const listHref = (list: Pick<UserList, 'id' | 'kind'>) =>
-	list.kind === 'favorites'
-		? '/favorites'
+	list.kind === 'played'
+		? '/played'
 		: list.kind === 'play_later'
-			? '/backlog'
+			? '/play-later'
 			: `/lists/${list.id}`;
 
 export const findList = (id: string) => userLists.find((list) => list.id === id);
-export const listByKind = (kind: 'favorites' | 'play_later') =>
+export const listByKind = (kind: 'played' | 'play_later') =>
 	userLists.find((list) => list.kind === kind)!;
 export const customLists = () => userLists.filter((list) => list.kind === 'custom' && !list.owner);
 export const ownLists = () => userLists.filter((list) => !list.owner);

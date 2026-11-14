@@ -4,7 +4,7 @@
 	import type { Component } from 'svelte';
 	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import CompassIcon from '@lucide/svelte/icons/compass';
-	import HeartIcon from '@lucide/svelte/icons/heart';
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import HouseIcon from '@lucide/svelte/icons/house';
 	import LayoutGridIcon from '@lucide/svelte/icons/layout-grid';
 	import TagIcon from '@lucide/svelte/icons/tag';
@@ -35,8 +35,8 @@
 		{
 			label: 'Library',
 			items: [
-				{ label: 'Favorites', href: '/favorites', icon: HeartIcon },
-				{ label: 'Play later', href: '/backlog', icon: ClockIcon }
+				{ label: 'Played', href: '/played', icon: CircleCheckIcon },
+				{ label: 'Play later', href: '/play-later', icon: ClockIcon }
 			]
 		}
 	];

@@ -16,7 +16,7 @@
 	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import GamepadIcon from '@lucide/svelte/icons/gamepad-2';
 	import GlobeIcon from '@lucide/svelte/icons/globe';
-	import HeartIcon from '@lucide/svelte/icons/heart';
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import LockIcon from '@lucide/svelte/icons/lock';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import SearchIcon from '@lucide/svelte/icons/search';
@@ -25,11 +25,11 @@
 	let { list }: { list: UserList } = $props();
 
 	const copy = {
-		favorites: {
-			removeLabel: 'Favorilerden çıkar',
-			emptyTitle: 'Favorilerin burada başlar.',
-			emptyDescription: 'Sevdiğin bir oyun bul ve koleksiyonunda ona yer aç.',
-			meta: 'Koleksiyonundaki favori oyunlar.'
+		played: {
+			removeLabel: 'Listeden çıkar',
+			emptyTitle: 'Henüz oynadığın bir oyun yok.',
+			emptyDescription: 'Oynadığın oyunları kaydet menüsünden buraya ekle.',
+			meta: 'Oynadığın oyunlar.'
 		},
 		play_later: {
 			removeLabel: 'Listeden çıkar',
@@ -149,7 +149,7 @@
 </script>
 
 {#snippet listIcon(className: string)}
-	{#if list.kind === 'favorites'}<HeartIcon class={className} />
+	{#if list.kind === 'played'}<CircleCheckIcon class={className} />
 	{:else if list.kind === 'play_later'}<ClockIcon class={className} />
 	{:else}<GamepadIcon class={className} />{/if}
 {/snippet}
@@ -352,7 +352,7 @@
 				<Empty.Root class="min-h-80 rounded-xl border border-dashed">
 					<Empty.Header>
 						<Empty.Media variant="icon">
-							{#if list.items.length}<SearchIcon />{:else if list.kind === 'favorites'}<HeartIcon
+							{#if list.items.length}<SearchIcon />{:else if list.kind === 'played'}<CircleCheckIcon
 								/>{:else if list.kind === 'play_later'}<ClockIcon />{:else}<GamepadIcon />{/if}
 						</Empty.Media>
 						<Empty.Title>{list.items.length ? 'Eşleşen oyun yok' : text.emptyTitle}</Empty.Title>

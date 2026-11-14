@@ -2,7 +2,7 @@ export type Person = { name: string; username: string; image?: string };
 
 export type ProfileList = {
 	id: string;
-	kind: 'favorites' | 'play_later' | 'custom';
+	kind: 'played' | 'play_later' | 'custom';
 	name: string;
 	description?: string;
 	cover: string;
