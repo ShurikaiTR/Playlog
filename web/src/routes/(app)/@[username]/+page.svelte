@@ -151,7 +151,7 @@
 											{#if data.linkable.includes(person.username)}
 												<Item.Root size="xs">
 													{#snippet child({ props })}
-														<a {...props} href="/u/{person.username}">{@render row()}</a>
+														<a {...props} href="/@{person.username}">{@render row()}</a>
 													{/snippet}
 												</Item.Root>
 											{:else}

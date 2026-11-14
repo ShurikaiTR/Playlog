@@ -78,7 +78,7 @@
 					{#snippet child({ props })}
 						<a
 							{...props}
-							href={`/u/${user.username}`}
+							href={`/@${user.username}`}
 							onclick={() => sidebar.isMobile && sidebar.setOpenMobile(false)}
 						>
 							<UserIcon />My profile

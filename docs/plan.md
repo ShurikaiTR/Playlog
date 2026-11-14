@@ -236,7 +236,7 @@ Tarayıcı API'ye gitmez; SvelteKit sunucusu çağırır. Tüm uçlar `/v1` alt�
 | `/library` | `/kutuphane` (404) | Kütüphanem |
 | `/wishlist` | yok | İstek listem |
 | `/lists/[id]` | `/liste/[id]`, `/favoriler` | Liste |
-| `/u/[username]` | `/profil/[kullanici]` | Profil |
+| `/@[username]` | `/profil/[kullanici]` | Profil |
 | `/reviews`, `/lists`, `/members` | 404 | Topluluk sayfaları |
 | `/settings` | `/hesap` | Hesap ayarları |
 | `/terms`, `/privacy` | 404 | Hukuki metinler |
