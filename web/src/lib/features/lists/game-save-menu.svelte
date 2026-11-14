@@ -9,13 +9,11 @@
 		customLists,
 		hasGame,
 		listByKind,
-		played,
 		setGame,
 		type UserList
 	} from './user-lists.svelte.js';
 	import { cn } from '#lib/utils.js';
 	import { toast } from 'svelte-sonner';
-	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import HeartIcon from '@lucide/svelte/icons/heart';
@@ -129,17 +127,6 @@
 			</DropdownMenu.Item>
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
-
-	<Button
-		variant="outline"
-		size="icon-lg"
-		class="size-11 shrink-0 cursor-pointer"
-		aria-pressed={Boolean(played[game.slug])}
-		aria-label={played[game.slug] ? 'Mark as not played' : 'Mark as played'}
-		onclick={() => (played[game.slug] = !played[game.slug])}
-	>
-		<CheckIcon class={cn(played[game.slug] && 'stroke-[3]')} aria-hidden="true" />
-	</Button>
 </div>
 
 <Dialog.Root bind:open={dialogOpen}>

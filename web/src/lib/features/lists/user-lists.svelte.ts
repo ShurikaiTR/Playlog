@@ -102,9 +102,6 @@ export function createList(name: string, game?: GameSummary): UserList {
 	return created;
 }
 
-// Games the viewer has played (a simple on/off, separate from the lists). Feeds the profile stats.
-export const played = $state<Record<string, boolean | undefined>>({});
-
 // The viewer's own score (1-10) and review per game. Demo only, like the lists.
 export const gameRating = $state<Record<string, number | undefined>>({});
 export type MyReview = { text: string; spoiler: boolean };
