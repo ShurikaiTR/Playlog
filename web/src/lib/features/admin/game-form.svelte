@@ -8,6 +8,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import GamePreview from './game-preview.svelte';
 	import {
 		DATE_PRECISIONS,
 		GAME_KINDS,
@@ -95,7 +96,7 @@
 <form
 	method="POST"
 	{action}
-	class="mx-auto grid w-full max-w-4xl gap-6"
+	class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_25rem] xl:items-start"
 	use:enhance={() => {
 		saving = true;
 		return async ({ result, update }) => {
@@ -109,164 +110,182 @@
 		};
 	}}
 >
-	{#if error}
-		<p class="rounded-2xl bg-destructive/10 px-4 py-3 text-callout text-destructive" role="alert">
-			{error}
-		</p>
-	{/if}
+	<div class="grid min-w-0 gap-6">
+		{#if error}
+			<p class="rounded-2xl bg-destructive/10 px-4 py-3 text-callout text-destructive" role="alert">
+				{error}
+			</p>
+		{/if}
 
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Basics</Card.Title>
-		</Card.Header>
-		<Card.Content>
-			<Field.Group>
-				{@render text('title', 'Title', { required: true })}
-				{@render text('slug', 'Slug', {
-					hint: 'The address of the game page. Leave it empty to build it from the title. Changing it keeps the old address working.',
-					placeholder: 'the-witcher-3'
-				})}
-				<div class="grid gap-6 sm:grid-cols-2">
-					{@render choice('kind', 'Type', GAME_KINDS)}
-					{@render choice('status', 'Status', GAME_STATUSES)}
-				</div>
-				<Field.Description>
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Basics</Card.Title>
+				<Card.Description>
 					Only published games show on the site. Drafts and hidden games stay in the admin.
-				</Field.Description>
-			</Field.Group>
-		</Card.Content>
-	</Card.Root>
-
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Description</Card.Title>
-		</Card.Header>
-		<Card.Content>
-			<Field.Group>
-				<Field.Field>
-					<Field.Label for="summary">Summary</Field.Label>
-					<Textarea
-						id="summary"
-						name="summary"
-						bind:value={values.summary}
-						maxlength={500}
-						rows={3}
-						class="min-h-24"
-					/>
-					<Field.Description
-						>One or two sentences for cards and search results. Up to 500 characters.</Field.Description
-					>
-				</Field.Field>
-				<Field.Field>
-					<Field.Label for="description">Description</Field.Label>
-					<Textarea
-						id="description"
-						name="description"
-						bind:value={values.description}
-						rows={8}
-						class="min-h-48"
-					/>
-				</Field.Field>
-			</Field.Group>
-		</Card.Content>
-	</Card.Root>
-
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Release</Card.Title>
-		</Card.Header>
-		<Card.Content>
-			<Field.Group>
-				<div class="grid gap-6 sm:grid-cols-3">
-					{@render text('releaseDate', 'Release date', {
-						type: 'date',
-						hint: 'Empty means to be announced.'
-					})}
-					{@render choice('releasePrecision', 'Date precision', DATE_PRECISIONS)}
-					{@render text('timeToBeat', 'Time to beat (minutes)', { type: 'number' })}
-				</div>
-				<Field.Set>
-					<Field.Legend variant="label">Platforms</Field.Legend>
-					<div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
-						{#each platforms as platform (platform.slug)}
-							<Field.Field orientation="horizontal" class="items-center">
-								<Checkbox
-									id={`platform-${platform.slug}`}
-									checked={values.platforms.includes(platform.slug)}
-									onCheckedChange={(checked) => togglePlatform(platform.slug, checked)}
-								/>
-								<Field.Label
-									for={`platform-${platform.slug}`}
-									class="min-h-9 flex-1 font-normal pointer-coarse:min-h-11"
-									>{platform.name}</Field.Label
-								>
-							</Field.Field>
-						{/each}
+				</Card.Description>
+			</Card.Header>
+			<Card.Content>
+				<Field.Group>
+					{@render text('title', 'Title', { required: true })}
+					<div class="grid gap-6 md:grid-cols-6">
+						<div class="md:col-span-3">
+							{@render text('slug', 'Slug', {
+								hint: 'The address of the game page. Empty builds it from the title.',
+								placeholder: 'the-witcher-3'
+							})}
+						</div>
+						<div class="md:col-span-1 md:col-start-4">
+							{@render choice('kind', 'Type', GAME_KINDS)}
+						</div>
+						<div class="md:col-span-2">
+							{@render choice('status', 'Status', GAME_STATUSES)}
+						</div>
 					</div>
-					{#each values.platforms as slug (slug)}
-						<input type="hidden" name="platforms" value={slug} />
-					{/each}
-				</Field.Set>
-			</Field.Group>
-		</Card.Content>
-	</Card.Root>
+				</Field.Group>
+			</Card.Content>
+		</Card.Root>
 
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Credits and tags</Card.Title>
-			<Card.Description>Separate several names with commas.</Card.Description>
-		</Card.Header>
-		<Card.Content>
-			<Field.Group>
-				<div class="grid gap-6 sm:grid-cols-2">
-					{@render text('developers', 'Developers')}
-					{@render text('publishers', 'Publishers')}
-					{@render text('genres', 'Genres')}
-					{@render text('themes', 'Themes')}
-					{@render text('modes', 'Game modes')}
-					{@render text('perspectives', 'Perspectives')}
-					{@render text('series', 'Series', { hint: 'One series name.' })}
-					{@render text('parentSlug', 'Parent game slug', {
-						hint: 'For DLC, expansions, remakes and ports.'
-					})}
-				</div>
-			</Field.Group>
-		</Card.Content>
-	</Card.Root>
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Artwork</Card.Title>
+				<Card.Description>
+					Paste image addresses (https://). The preview updates as you type.
+				</Card.Description>
+			</Card.Header>
+			<Card.Content>
+				<Field.Group>
+					<div class="grid gap-6 md:grid-cols-2">
+						{@render text('coverUrl', 'Cover', { hint: 'Portrait poster, 2:3.' })}
+						{@render text('backdropUrl', 'Backdrop', { hint: 'Wide header image, 16:9.' })}
+					</div>
+					{@render text('logoUrl', 'Logo', { hint: 'Transparent PNG or SVG over the backdrop.' })}
+				</Field.Group>
+			</Card.Content>
+		</Card.Root>
 
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Images</Card.Title>
-			<Card.Description>Addresses must start with https://.</Card.Description>
-		</Card.Header>
-		<Card.Content>
-			<Field.Group>
-				{@render text('coverUrl', 'Cover')}
-				{@render text('backdropUrl', 'Backdrop')}
-				{@render text('logoUrl', 'Logo')}
-			</Field.Group>
-		</Card.Content>
-	</Card.Root>
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Description</Card.Title>
+			</Card.Header>
+			<Card.Content>
+				<Field.Group>
+					<Field.Field>
+						<Field.Label for="summary">Summary</Field.Label>
+						<Textarea
+							id="summary"
+							name="summary"
+							bind:value={values.summary}
+							maxlength={500}
+							rows={3}
+							class="min-h-24 rounded-xl"
+						/>
+						<Field.Description class="flex justify-between">
+							<span>One or two sentences for cards and search results.</span>
+							<span class="tabular-nums">{values.summary.length}/500</span>
+						</Field.Description>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="description">Description</Field.Label>
+						<Textarea
+							id="description"
+							name="description"
+							bind:value={values.description}
+							rows={8}
+							class="min-h-48 rounded-xl"
+						/>
+					</Field.Field>
+				</Field.Group>
+			</Card.Content>
+		</Card.Root>
 
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>More</Card.Title>
-		</Card.Header>
-		<Card.Content>
-			<Field.Group>
-				{@render text('altTitles', 'Other titles', {
-					hint: 'Other names the game goes by. They are searchable.'
-				})}
-				{@render text('languages', 'Languages', {
-					hint: 'Language codes such as en, tr, pt-BR. New ones start with interface support.',
-					placeholder: 'en, tr'
-				})}
-			</Field.Group>
-		</Card.Content>
-	</Card.Root>
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Release</Card.Title>
+			</Card.Header>
+			<Card.Content>
+				<Field.Group>
+					<div class="grid gap-6 md:grid-cols-3">
+						{@render text('releaseDate', 'Release date', {
+							type: 'date',
+							hint: 'Empty means to be announced.'
+						})}
+						{@render choice('releasePrecision', 'Date precision', DATE_PRECISIONS)}
+						{@render text('timeToBeat', 'Time to beat (minutes)', { type: 'number' })}
+					</div>
+					<Field.Set>
+						<Field.Legend variant="label">Platforms</Field.Legend>
+						<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+							{#each platforms as platform (platform.slug)}
+								<label
+									for={`platform-${platform.slug}`}
+									class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-callout ring-1 ring-border transition-colors hover:bg-accent has-[[aria-checked=true]]:bg-accent has-[[aria-checked=true]]:ring-foreground/30"
+								>
+									<Checkbox
+										id={`platform-${platform.slug}`}
+										checked={values.platforms.includes(platform.slug)}
+										onCheckedChange={(checked) => togglePlatform(platform.slug, checked)}
+									/>
+									<span class="truncate">{platform.name}</span>
+								</label>
+							{/each}
+						</div>
+						{#each values.platforms as slug (slug)}
+							<input type="hidden" name="platforms" value={slug} />
+						{/each}
+					</Field.Set>
+				</Field.Group>
+			</Card.Content>
+		</Card.Root>
 
-	<div class="sticky bottom-4 z-10 flex justify-end gap-2">
-		<Button href="/admin/games" variant="secondary" size="lg" disabled={saving}>Cancel</Button>
-		<Button type="submit" size="lg" disabled={saving}>{saving ? 'Saving…' : submitLabel}</Button>
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Credits and tags</Card.Title>
+				<Card.Description>Separate several names with commas.</Card.Description>
+			</Card.Header>
+			<Card.Content>
+				<Field.Group>
+					<div class="grid gap-6 md:grid-cols-2">
+						{@render text('developers', 'Developers')}
+						{@render text('publishers', 'Publishers')}
+						{@render text('genres', 'Genres')}
+						{@render text('themes', 'Themes')}
+						{@render text('modes', 'Game modes')}
+						{@render text('perspectives', 'Perspectives')}
+						{@render text('series', 'Series', { hint: 'One series name.' })}
+						{@render text('parentSlug', 'Parent game slug', {
+							hint: 'For DLC, expansions, remakes and ports.'
+						})}
+					</div>
+				</Field.Group>
+			</Card.Content>
+		</Card.Root>
+
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>More</Card.Title>
+			</Card.Header>
+			<Card.Content>
+				<Field.Group>
+					<div class="grid gap-6 md:grid-cols-2">
+						{@render text('altTitles', 'Other titles', {
+							hint: 'Other names the game goes by. They are searchable.'
+						})}
+						{@render text('languages', 'Languages', {
+							hint: 'Codes such as en, tr, pt-BR. New ones start with interface support.',
+							placeholder: 'en, tr'
+						})}
+					</div>
+				</Field.Group>
+			</Card.Content>
+		</Card.Root>
+
+		<div class="sticky bottom-4 z-10 flex justify-end gap-2">
+			<Button href="/admin/games" variant="secondary" size="lg" disabled={saving}>Cancel</Button>
+			<Button type="submit" size="lg" disabled={saving}>{saving ? 'Saving…' : submitLabel}</Button>
+		</div>
 	</div>
+
+	<aside class="min-w-0 xl:sticky xl:top-6" aria-label="Preview">
+		<GamePreview {values} {platforms} />
+	</aside>
 </form>
