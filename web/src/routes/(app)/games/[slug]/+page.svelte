@@ -453,14 +453,22 @@
 				{/if}
 				{#if game.releaseDate}
 					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-					<div class="stat">
-						<dt>Release</dt>
-						<dd class="stat-value tabular-nums">{game.releaseDate.slice(0, 4)}</dd>
-						<dd class="stat-caption">
-							{game.releasePrecision === 'day'
-								? formatDayMonth(game.releaseDate)
-								: formatRelease(game.releaseDate, game.releasePrecision)}
-						</dd>
+					<div class="stat stat-wrap">
+						<Button
+							href="#info-release-date"
+							onclick={(event) => scrollToSection(event, 'info-release-date')}
+							variant="ghost"
+							class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
+							aria-label="Released {game.releaseDate.slice(0, 4)}. Go to the info section"
+						>
+							<span class="stat-label text-muted-foreground">Release</span>
+							<span class="stat-value tabular-nums">{game.releaseDate.slice(0, 4)}</span>
+							<span class="stat-caption text-muted-foreground">
+								{game.releasePrecision === 'day'
+									? formatDayMonth(game.releaseDate)
+									: formatRelease(game.releaseDate, game.releasePrecision)}
+							</span>
+						</Button>
 					</div>
 				{/if}
 				{#if game.ageRating}
@@ -499,21 +507,29 @@
 				{/if}
 				{#if game.developers.length}
 					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-					<div class="stat">
-						<dt>Developer</dt>
-						<dd class="stat-value"><CodeIcon aria-hidden="true" /></dd>
-						<dd class="stat-caption">{names(game.developers)}</dd>
+					<div class="stat stat-wrap">
+						<Button
+							href="#info-developer"
+							onclick={(event) => scrollToSection(event, 'info-developer')}
+							variant="ghost"
+							class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
+							aria-label="Developer: {names(game.developers)}. Go to the info section"
+						>
+							<span class="stat-label text-muted-foreground">Developer</span>
+							<span class="stat-value"><CodeIcon aria-hidden="true" /></span>
+							<span class="stat-caption text-muted-foreground">{names(game.developers)}</span>
+						</Button>
 					</div>
 				{/if}
 				{#if game.languages.length}
 					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
 					<div class="stat stat-wrap">
 						<Button
-							type="button"
+							href="#info-languages"
+							onclick={(event) => scrollToSection(event, 'info-languages')}
 							variant="ghost"
 							class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
-							onclick={() => (languagesOpen = true)}
-							aria-haspopup="dialog"
+							aria-label="{game.languages.length} supported languages. Go to the info section"
 						>
 							<span class="stat-label text-muted-foreground">Languages</span>
 							<span class="stat-value tabular-nums">{game.languages.length}</span>
@@ -793,7 +809,11 @@
 					class="grid items-start gap-x-8 gap-y-6 text-sm sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
 				>
 					{#each info as row (row.label)}
-						<div class="min-w-0">
+						<div
+							id="info-{row.label.toLowerCase().replace(/\s+/g, '-')}"
+							tabindex="-1"
+							class="min-w-0 scroll-m-24 outline-none"
+						>
 							<dt class="flex items-center gap-1.5 text-footnote text-muted-foreground">
 								<row.icon class="size-4 shrink-0" aria-hidden="true" />{row.label}
 							</dt>
@@ -824,7 +844,7 @@
 						</div>
 					{/each}
 					{#if game.languages.length}
-						<div class="min-w-0">
+						<div id="info-languages" tabindex="-1" class="min-w-0 scroll-m-24 outline-none">
 							<dt class="flex items-center gap-1.5 text-footnote text-muted-foreground">
 								<LanguagesIcon class="size-4 shrink-0" aria-hidden="true" />Languages
 							</dt>
