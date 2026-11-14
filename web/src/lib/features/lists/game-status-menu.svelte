@@ -36,7 +36,7 @@
 		aria-label="Status of {game.title}"
 	>
 		<span class="flex min-w-0 flex-1 items-center gap-2 px-4">
-			<span class="truncate">{status || 'Set status'}</span>
+			<span class="truncate">{status || 'Add to library'}</span>
 		</span>
 		<span aria-hidden="true" class="h-5 w-px shrink-0 bg-current opacity-20"></span>
 		<ChevronDownIcon class="mx-3 size-4" aria-hidden="true" />
