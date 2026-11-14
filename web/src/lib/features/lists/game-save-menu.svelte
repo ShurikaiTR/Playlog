@@ -67,19 +67,17 @@
 	}
 </script>
 
-<div class="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+<div class="contents">
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger
 			class={cn(
 				buttonVariants({ variant: 'default', size: 'lg' }),
-				'h-11 min-w-0 flex-1 gap-0 px-0 text-sm',
+				'h-11 shrink-0 gap-0 px-0 text-sm whitespace-nowrap',
 				className
 			)}
 			aria-label="Save {game.title} to a list"
 		>
-			<span class="flex min-w-0 flex-1 items-center gap-2 px-4">
-				<span class="truncate">{saved ? 'Saved' : 'Add to library'}</span>
-			</span>
+			<span class="px-4">{saved ? 'Saved' : 'Add to library'}</span>
 			<span aria-hidden="true" class="h-5 w-px shrink-0 bg-current opacity-20"></span>
 			<ChevronDownIcon class="mx-3 size-4" aria-hidden="true" />
 		</DropdownMenu.Trigger>

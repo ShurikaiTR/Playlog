@@ -395,7 +395,7 @@
 						{/if}
 					</div>
 					<div class="flex items-center gap-2">
-						<GameSaveMenu game={toListGame(game)} class="sm:w-48 sm:flex-none" />
+						<GameSaveMenu game={toListGame(game)} />
 						<DropdownMenu.Root>
 							<DropdownMenu.Trigger>
 								{#snippet child({ props })}
