@@ -267,7 +267,7 @@
 		</div>
 	</div>
 
-	<aside class="min-w-0 xl:sticky xl:top-6" aria-label="Preview">
-		<GamePreview bind:values {platforms} />
+	<aside class="min-w-0 xl:sticky xl:top-6" aria-label="Artwork">
+		<GamePreview bind:values />
 	</aside>
 </form>
