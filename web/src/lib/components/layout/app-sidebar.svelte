@@ -36,7 +36,7 @@
 			label: 'Library',
 			items: [
 				{ label: 'Favorites', href: '/favorites', icon: HeartIcon },
-				{ label: 'Backlog', href: '/backlog', icon: ClockIcon }
+				{ label: 'Play later', href: '/backlog', icon: ClockIcon }
 			]
 		}
 	];

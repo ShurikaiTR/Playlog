@@ -310,3 +310,20 @@
 [data-slot='choice'] {
 	border-radius: var(--radius-control);
 }
+
+/*
+ * Menu rows (Apple HIG): 32px with 14px text under a mouse, 44px on touch. Set here once so no menu overrides it.
+ * Outside any @layer so it wins over the py-*, text-* utilities of the shadcn items.
+ */
+:is(
+	[data-slot='dropdown-menu-item'],
+	[data-slot='dropdown-menu-checkbox-item'],
+	[data-slot='dropdown-menu-radio-item']
+) {
+	min-height: 2rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	@media (pointer: coarse) {
+		min-height: 2.75rem;
+	}
+}

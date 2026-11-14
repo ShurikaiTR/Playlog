@@ -33,9 +33,9 @@
 		},
 		play_later: {
 			removeLabel: 'Listeden çıkar',
-			emptyTitle: 'Planladığın bir oyun yok.',
-			emptyDescription: 'İlgini çeken bir oyunu planla, sırası geldiğinde burada seni beklesin.',
-			meta: 'Oynamayı planladığın oyunlar.'
+			emptyTitle: 'Daha sonra oynayacağın bir oyun yok.',
+			emptyDescription: 'İlgini çeken bir oyunu kaydet, sırası geldiğinde burada seni beklesin.',
+			meta: 'Daha sonra oynamak için kaydettiğin oyunlar.'
 		},
 		custom: {
 			removeLabel: 'Listeden çıkar',

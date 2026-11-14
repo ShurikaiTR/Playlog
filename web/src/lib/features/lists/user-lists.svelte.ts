@@ -49,7 +49,7 @@ export const userLists = $state<UserList[]>([
 	{
 		id: 'backlog',
 		kind: 'play_later',
-		name: 'Backlog',
+		name: 'Play later',
 		description: 'The games waiting for their turn.',
 		visibility: 'private',
 		image: '',
@@ -102,20 +102,16 @@ export function createList(name: string, game?: GameSummary): UserList {
 	return created;
 }
 
-// Library status of a game. "Backlog" is not stored here: it is membership of the backlog list, so the
-// profile shelf and the menu always agree.
-export const playStatuses = ['Playing', 'Completed', 'Dropped', 'Paused'] as const;
+// Library status of a game: one per game, separate from the lists (a game can sit in any number of lists).
+// Feeds the profile stats.
+export const playStatuses = ['Playing', 'Completed', 'Dropped'] as const;
 export type PlayStatus = (typeof playStatuses)[number];
 export const gameStatus = $state<Record<string, PlayStatus | undefined>>({});
 
-export const statusOf = (slug: string): PlayStatus | 'Backlog' | '' =>
-	hasGame(listByKind('play_later'), slug) ? 'Backlog' : (gameStatus[slug] ?? '');
+export const statusOf = (slug: string): PlayStatus | '' => gameStatus[slug] ?? '';
 
-export function setStatus(game: GameSummary, next: string) {
-	gameStatus[game.slug] = (playStatuses as readonly string[]).includes(next)
-		? (next as PlayStatus)
-		: undefined;
-	setGame(listByKind('play_later'), game, next === 'Backlog');
+export function setStatus(slug: string, next: PlayStatus | '') {
+	gameStatus[slug] = next || undefined;
 }
 
 // The viewer's own score (1-10) and review per game. Demo only, like the lists.
