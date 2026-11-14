@@ -9,7 +9,7 @@
 	import { Label } from '#lib/components/ui/label/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
-	import { saveListDetails, setGame, type UserList } from './user-lists.svelte.js';
+	import { listCover, saveListDetails, setGame, type UserList } from './user-lists.svelte.js';
 	import { toast } from 'svelte-sonner';
 	import ArrowDownWideNarrowIcon from '@lucide/svelte/icons/arrow-down-wide-narrow';
 	import ArrowUpRightIcon from '@lucide/svelte/icons/arrow-up-right';
@@ -55,15 +55,12 @@
 	let selectedSort = $state('recent');
 	let flippedSlug = $state<string | null>(null);
 	let editOpen = $state(false);
-	let editMode = $state<'details' | 'image' | 'backdrop'>('details');
+	let editMode = $state<'details' | 'cover'>('details');
 	let draftName = $state('');
 	let draftDescription = $state('');
 	let draftVisibility = $state<string>('private');
-	let draftImage = $state('');
-	let draftBackdrop = $state('');
+	let draftCover = $state<string | null>(null);
 	let nameError = $state('');
-	let imageError = $state('');
-	let pendingImages = $state(0);
 
 	const selectedSortLabel = $derived(
 		sortOptions.find((option) => option.value === selectedSort)?.label
@@ -78,47 +75,18 @@
 			});
 	});
 
-	function selectImage(event: Event, target: 'image' | 'backdrop') {
-		const input = event.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
-		imageError = '';
-		if (
-			!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type) ||
-			file.size > 5 * 1024 * 1024
-		) {
-			imageError = '5 MB altında bir JPG, PNG, WebP ya da GIF seç.';
-			input.value = '';
-			return;
-		}
-		pendingImages += 1;
-		const reader = new FileReader();
-		reader.onload = () => {
-			if (typeof reader.result === 'string') {
-				if (target === 'image') draftImage = reader.result;
-				else draftBackdrop = reader.result;
-			}
-		};
-		reader.onerror = () => (imageError = 'Bu görsel açılamadı. Başka bir dosya dene.');
-		reader.onloadend = () => (pendingImages -= 1);
-		reader.readAsDataURL(file);
-	}
-
-	function openSettings(mode: 'details' | 'image' | 'backdrop' = 'details') {
+	function openSettings(mode: 'details' | 'cover' = 'details') {
 		editMode = mode;
 		draftName = list.name;
 		draftDescription = list.description;
 		draftVisibility = list.visibility;
-		draftImage = list.image;
-		draftBackdrop = list.backdrop;
-		imageError = '';
+		draftCover = list.coverSlug;
 		nameError = '';
 		editOpen = true;
 	}
 
 	async function saveSettings(event: SubmitEvent) {
 		event.preventDefault();
-		if (pendingImages) return;
 		if (editMode === 'details') {
 			if (!draftName.trim()) {
 				nameError = 'Listen için bir ad gir.';
@@ -134,13 +102,17 @@
 				toast('Liste ayarları güncellendi');
 			}
 			return;
-		} else if (editMode === 'image') {
-			list.image = draftImage;
-		} else {
-			list.backdrop = draftBackdrop;
 		}
-		editOpen = false;
-		toast('Liste ayarları güncellendi');
+		const saved = await saveListDetails(list, {
+			name: list.name,
+			description: list.description,
+			visibility: list.visibility,
+			coverSlug: draftCover
+		});
+		if (saved) {
+			editOpen = false;
+			toast('Kapak güncellendi');
+		}
 	}
 
 	async function removeItem(game: UserList['items'][number]) {
@@ -162,7 +134,7 @@
 {/snippet}
 
 <svelte:head>
-	<title>{list.name} | Playlog</title>
+	<title>{list.name} | Playthru</title>
 </svelte:head>
 
 <div lang="tr" class="flex min-w-0 flex-col pb-16">
@@ -173,9 +145,9 @@
 			aria-hidden="true"
 			style="mask-image: linear-gradient(to bottom, black 55%, transparent 100%)"
 		>
-			{#if list.backdrop}
+			{#if listCover(list)}
 				<img
-					src={list.backdrop}
+					src={listCover(list)}
 					alt=""
 					width="1600"
 					height="560"
@@ -191,9 +163,7 @@
 			<div
 				class="relative flex size-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted shadow-sm ring-4 ring-background sm:size-40"
 			>
-				{#if list.image}<img src={list.image} alt="" class="size-full object-cover" />{:else}
-					{@render listIcon('size-8 text-muted-foreground')}
-				{/if}
+				{@render listIcon('size-8 text-muted-foreground')}
 			</div>
 			<div class="min-w-0 flex-1 pb-1">
 				<Badge variant="secondary" class="mb-3 gap-1.5">
@@ -225,11 +195,8 @@
 							>
 							<DropdownMenu.Item
 								class="cursor-pointer rounded-lg"
-								onclick={() => openSettings('backdrop')}>Kapağı değiştir</DropdownMenu.Item
-							>
-							<DropdownMenu.Item
-								class="cursor-pointer rounded-lg"
-								onclick={() => openSettings('image')}>Görseli değiştir</DropdownMenu.Item
+								disabled={list.items.length === 0}
+								onclick={() => openSettings('cover')}>Kapağı değiştir</DropdownMenu.Item
 							>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
@@ -386,9 +353,6 @@
 				</Empty.Root>
 			{/if}
 		</div>
-		<p class="mt-8 text-xs leading-5 text-muted-foreground">
-			Koleksiyonunun önizlemesi. Sayfayı yenilediğinde değişiklikler sıfırlanır.
-		</p>
 	</section>
 </div>
 
@@ -396,51 +360,42 @@
 	<Dialog.Content>
 		<Dialog.Header class="text-left">
 			<Dialog.Title>
-				{editMode === 'details'
-					? 'Listeyi düzenle'
-					: editMode === 'image'
-						? 'Görseli değiştir'
-						: 'Kapağı değiştir'}
+				{editMode === 'details' ? 'Listeyi düzenle' : 'Kapağı değiştir'}
 			</Dialog.Title>
 			<Dialog.Description>
 				{editMode === 'details'
 					? 'Bu listeyi kendine göre ayarla.'
-					: editMode === 'image'
-						? 'Koleksiyonun için bir görsel seç.'
-						: 'Koleksiyonunun arka planını belirle.'}
+					: 'Kapak, listedeki oyunlardan biri olur.'}
 			</Dialog.Description>
 		</Dialog.Header>
 		<form class="space-y-5" onsubmit={saveSettings}>
-			{#if editMode !== 'details'}
-				<div class="space-y-3">
-					<div
-						class={editMode === 'image'
-							? 'mx-auto flex size-36 items-center justify-center overflow-hidden rounded-xl border bg-muted'
-							: 'h-36 overflow-hidden rounded-xl border bg-muted'}
-					>
-						{#if editMode === 'backdrop'}
-							<img src={draftBackdrop} alt="Kapak önizlemesi" class="size-full object-cover" />
-						{:else if draftImage}
-							<img src={draftImage} alt="Liste görseli önizlemesi" class="size-full object-cover" />
-						{:else}
-							{@render listIcon('size-8 text-muted-foreground')}
-						{/if}
-					</div>
-					<Label for="list-artwork"
-						>{editMode === 'image' ? 'Liste görseli' : 'Kapak görseli'}</Label
-					>
-					<Input
-						id="list-artwork"
-						type="file"
-						accept="image/jpeg,image/png,image/webp,image/gif"
-						disabled={pendingImages > 0}
-						onchange={(event) => selectImage(event, editMode === 'image' ? 'image' : 'backdrop')}
-						aria-describedby="list-image-help"
-					/>
-					<p id="list-image-help" class="text-xs text-muted-foreground">
-						JPG, PNG, WebP ya da GIF, en fazla 5 MB.
-					</p>
-					{#if imageError}<p class="text-sm text-destructive" role="alert">{imageError}</p>{/if}
+			{#if editMode === 'cover'}
+				<div class="max-h-80 overflow-y-auto">
+					<ul class="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Kapak oyunu">
+						{#each [{ slug: null, title: 'Varsayılan', cover: list.items[0]?.cover ?? null }, ...list.items] as game (game.slug ?? 'default')}
+							<li>
+								<button
+									type="button"
+									onclick={() => (draftCover = game.slug)}
+									aria-pressed={draftCover === game.slug}
+									class="group block w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+								>
+									<span
+										class="relative block aspect-[3/4] overflow-hidden rounded-xl bg-muted ring-2 {draftCover ===
+										game.slug
+											? 'ring-primary'
+											: 'ring-transparent'}"
+									>
+										{#if game.cover}
+											<img src={game.cover} alt="" loading="lazy" class="size-full object-cover" />
+										{/if}
+									</span>
+									<span class="mt-1 block truncate text-xs text-muted-foreground">{game.title}</span
+									>
+								</button>
+							</li>
+						{/each}
+					</ul>
 				</div>
 			{:else}
 				<div class="space-y-2">
@@ -448,6 +403,7 @@
 					<Input
 						id="list-name"
 						bind:value={draftName}
+						disabled={list.kind !== 'custom'}
 						maxlength={80}
 						required
 						aria-invalid={nameError ? true : undefined}
@@ -498,9 +454,7 @@
 					class="cursor-pointer"
 					onclick={() => (editOpen = false)}>Vazgeç</Button
 				>
-				<Button type="submit" class="cursor-pointer" disabled={pendingImages > 0}
-					>Değişiklikleri kaydet</Button
-				>
+				<Button type="submit" class="cursor-pointer">Değişiklikleri kaydet</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

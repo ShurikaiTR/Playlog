@@ -5,6 +5,7 @@ export type ListGame = {
 	slug: string;
 	title: string;
 	cover: string | null;
+	backdrop?: string | null;
 	year: string;
 	added: number;
 };
@@ -17,22 +18,24 @@ export type UserList = {
 	visibility: 'private' | 'public';
 	// Set on lists made by other people; the viewer's own lists have no owner.
 	owner?: string;
-	image: string;
-	backdrop: string;
+	// The game picked as the list's cover; null means the first game in the list.
+	coverSlug: string | null;
 	items: ListGame[];
 };
 
-type GameSummary = Pick<ListGame, 'slug' | 'title' | 'cover' | 'year'>;
+type GameSummary = Pick<ListGame, 'slug' | 'title' | 'cover' | 'backdrop' | 'year'>;
 
 export const toListGame = (game: {
 	slug: string;
 	title: string;
 	cover: string | null;
+	backdrop?: string | null;
 	releaseDate: string | null;
 }): GameSummary => ({
 	slug: game.slug,
 	title: game.title,
 	cover: game.cover,
+	backdrop: game.backdrop ?? null,
 	year: game.releaseDate?.slice(0, 4) ?? ''
 });
 
@@ -43,8 +46,7 @@ const defaultLists = (): UserList[] => [
 		name: 'Played',
 		description: 'The games you have played.',
 		visibility: 'public',
-		image: '',
-		backdrop: '',
+		coverSlug: null,
 		items: []
 	},
 	{
@@ -53,8 +55,7 @@ const defaultLists = (): UserList[] => [
 		name: 'Play later',
 		description: 'The games waiting for their turn.',
 		visibility: 'private',
-		image: '',
-		backdrop: '',
+		coverSlug: null,
 		items: []
 	}
 ];
@@ -68,17 +69,7 @@ const session = $state({ signedIn: false });
 
 export function hydrateLists(lists: UserList[] | null) {
 	session.signedIn = lists !== null;
-	// The cover and image are not stored yet; keep what was picked during this visit.
-	const local = (id: string) => userLists.find((list) => list.id === id);
-	userLists.splice(
-		0,
-		userLists.length,
-		...(lists ?? defaultLists()).map((list) => ({
-			...list,
-			image: local(list.id)?.image ?? '',
-			backdrop: local(list.id)?.backdrop ?? ''
-		}))
-	);
+	userLists.splice(0, userLists.length, ...(lists ?? defaultLists()));
 }
 
 export const listHref = (list: Pick<UserList, 'id' | 'kind'>) =>
@@ -87,6 +78,12 @@ export const listHref = (list: Pick<UserList, 'id' | 'kind'>) =>
 		: list.kind === 'play_later'
 			? '/play-later'
 			: `/lists/${list.id}`;
+
+/** The wide image a list shows: its chosen game, else the first game in it. */
+export function listCover(list: UserList): string {
+	const item = list.items.find((game) => game.slug === list.coverSlug) ?? list.items[0];
+	return item?.backdrop || item?.cover || '';
+}
 
 export const findList = (id: string) => userLists.find((list) => list.id === id);
 export const listByKind = (kind: 'played' | 'play_later') =>
@@ -115,6 +112,7 @@ export async function setGame(list: UserList, game: GameSummary, on: boolean): P
 		return false;
 	}
 	list.items = on ? withGame(list.items, game) : withoutGame(list.items, game.slug);
+	if (!on && list.coverSlug === game.slug) list.coverSlug = null;
 	const result = await socialRequest(
 		on ? 'PUT' : 'DELETE',
 		`me/lists/${list.id}/games/${game.slug}`
@@ -147,8 +145,7 @@ export async function createList(name: string, game?: GameSummary): Promise<User
 		name,
 		description: '',
 		visibility: 'private',
-		image: '',
-		backdrop: '',
+		coverSlug: null,
 		items: game ? [{ ...game, added: Date.now() }] : []
 	});
 	if (game) void invalidate('app:social');
@@ -158,15 +155,22 @@ export async function createList(name: string, game?: GameSummary): Promise<User
 /** Saves a list's name, description and visibility. System lists keep their name. */
 export async function saveListDetails(
 	list: UserList,
-	details: Pick<UserList, 'name' | 'description' | 'visibility'>
+	details: Pick<UserList, 'name' | 'description' | 'visibility'> & { coverSlug?: string | null }
 ): Promise<boolean> {
-	const before = { name: list.name, description: list.description, visibility: list.visibility };
+	const before = {
+		name: list.name,
+		description: list.description,
+		visibility: list.visibility,
+		coverSlug: list.coverSlug
+	};
 	const name = list.kind === 'custom' ? details.name : list.name;
-	Object.assign(list, { ...details, name });
+	const coverSlug = details.coverSlug === undefined ? list.coverSlug : details.coverSlug;
+	Object.assign(list, { ...details, name, coverSlug });
 	const result = await socialRequest('PATCH', `me/lists/${list.id}`, {
 		name: list.kind === 'custom' ? name : undefined,
 		description: details.description,
-		visibility: details.visibility
+		visibility: details.visibility,
+		cover_slug: details.coverSlug === undefined ? undefined : (details.coverSlug ?? '')
 	});
 	if (!result.ok) {
 		Object.assign(list, before);

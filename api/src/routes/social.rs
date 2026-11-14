@@ -320,6 +320,7 @@ struct ListItem {
     slug: String,
     title: String,
     cover_url: Option<String>,
+    backdrop_url: Option<String>,
     release_date: Option<NaiveDate>,
     added_at: DateTime<Utc>,
 }
@@ -331,6 +332,8 @@ struct ListOut {
     name: String,
     description: String,
     visibility: String,
+    /// Kapak olarak seçilen oyun; yoksa arayüz listedeki ilk oyunu gösterir.
+    cover_slug: Option<String>,
     items: Vec<ListItem>,
 }
 
@@ -341,6 +344,7 @@ struct ListRow {
     name: String,
     description: String,
     visibility: String,
+    cover_slug: Option<String>,
 }
 
 #[derive(FromRow)]
@@ -349,6 +353,7 @@ struct ItemRow {
     slug: String,
     title: String,
     cover_url: Option<String>,
+    backdrop_url: Option<String>,
     release_date: Option<NaiveDate>,
     added_at: DateTime<Utc>,
 }
@@ -375,16 +380,21 @@ async fn my_lists(
     ensure_system_lists(db, user.user_id).await?;
 
     let rows: Vec<ListRow> = sqlx::query_as(
-        "SELECT id, kind::text AS kind, name, description, visibility::text AS visibility
-           FROM user_lists WHERE user_id = $1
-          ORDER BY CASE kind WHEN 'played' THEN 0 WHEN 'play_later' THEN 1 ELSE 2 END, created_at, id",
+        "SELECT l.id, l.kind::text AS kind, l.name, l.description, l.visibility::text AS visibility,
+                g.slug::text AS cover_slug
+           FROM user_lists l
+           LEFT JOIN games g ON g.id = l.cover_game_id AND g.status = 'published'
+          WHERE l.user_id = $1
+          ORDER BY CASE l.kind WHEN 'played' THEN 0 WHEN 'play_later' THEN 1 ELSE 2 END,
+                   l.created_at, l.id",
     )
     .bind(user.user_id)
     .fetch_all(db)
     .await?;
 
     let items: Vec<ItemRow> = sqlx::query_as(
-        "SELECT lg.list_id, g.slug::text AS slug, g.title, g.cover_url, g.release_date, lg.added_at
+        "SELECT lg.list_id, g.slug::text AS slug, g.title, g.cover_url, g.backdrop_url, g.release_date,
+                lg.added_at
            FROM user_list_games lg
            JOIN user_lists l ON l.id = lg.list_id
            JOIN games g ON g.id = lg.game_id AND g.status = 'published'
@@ -407,6 +417,7 @@ async fn my_lists(
                     slug: item.slug.clone(),
                     title: item.title.clone(),
                     cover_url: item.cover_url.clone(),
+                    backdrop_url: item.backdrop_url.clone(),
                     release_date: item.release_date,
                     added_at: item.added_at,
                 })
@@ -416,6 +427,7 @@ async fn my_lists(
             name: row.name,
             description: row.description,
             visibility: row.visibility,
+            cover_slug: row.cover_slug,
         })
         .collect();
     Ok(Json(lists))
@@ -486,6 +498,8 @@ struct UpdateList {
     name: Option<String>,
     description: Option<String>,
     visibility: Option<String>,
+    /// Kapak olarak listedeki bir oyunun adresi; boş metin varsayılana döner.
+    cover_slug: Option<String>,
 }
 
 async fn update_list(
@@ -523,6 +537,31 @@ async fn update_list(
     .await?;
     if result.rows_affected() == 0 {
         return Err(AppError::NotFound("list_not_found"));
+    }
+
+    if let Some(slug) = body.cover_slug.as_deref() {
+        // Kapak yalnızca listenin kendi oyunlarından seçilir.
+        let cover: Option<Uuid> = if slug.is_empty() {
+            None
+        } else {
+            Some(
+                sqlx::query_scalar(
+                    "SELECT g.id FROM user_list_games lg JOIN games g ON g.id = lg.game_id
+                      WHERE lg.list_id = $1 AND g.slug = $2",
+                )
+                .bind(id)
+                .bind(slug)
+                .fetch_optional(&state.db)
+                .await?
+                .ok_or(AppError::Validation("cover_not_in_list"))?,
+            )
+        };
+        sqlx::query("UPDATE user_lists SET cover_game_id = $2 WHERE id = $1 AND user_id = $3")
+            .bind(id)
+            .bind(cover)
+            .bind(user.user_id)
+            .execute(&state.db)
+            .await?;
     }
     Ok(StatusCode::NO_CONTENT)
 }
@@ -589,6 +628,12 @@ async fn remove_from_list(
     owned_list(&state.db, id, user.user_id).await?;
     let game = game_id(&state.db, &slug).await?;
     sqlx::query("DELETE FROM user_list_games WHERE list_id = $1 AND game_id = $2")
+        .bind(id)
+        .bind(game)
+        .execute(&state.db)
+        .await?;
+    // Kapak olan oyun çıkarıldıysa kapak varsayılana döner.
+    sqlx::query("UPDATE user_lists SET cover_game_id = NULL WHERE id = $1 AND cover_game_id = $2")
         .bind(id)
         .bind(game)
         .execute(&state.db)

@@ -80,10 +80,12 @@ type ApiList = {
 	name: string;
 	description: string;
 	visibility: UserList['visibility'];
+	cover_slug: string | null;
 	items: {
 		slug: string;
 		title: string;
 		cover_url: string | null;
+		backdrop_url: string | null;
 		release_date: string | null;
 		added_at: string;
 	}[];
@@ -99,12 +101,12 @@ export async function getMyLists(event: Event, token: string): Promise<UserList[
 		name: list.name,
 		description: list.description,
 		visibility: list.visibility,
-		image: '',
-		backdrop: '',
+		coverSlug: list.cover_slug,
 		items: list.items.map((item) => ({
 			slug: item.slug,
 			title: item.title,
 			cover: item.cover_url,
+			backdrop: item.backdrop_url,
 			year: item.release_date?.slice(0, 4) ?? '',
 			added: Date.parse(item.added_at)
 		}))

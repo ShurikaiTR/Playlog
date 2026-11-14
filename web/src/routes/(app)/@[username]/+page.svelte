@@ -5,7 +5,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
-	import { listHref, ownLists } from '#lib/features/lists/user-lists.svelte.js';
+	import { listCover, listHref, ownLists } from '#lib/features/lists/user-lists.svelte.js';
 
 	let { data } = $props();
 	const profile = $derived(data.profile);
@@ -43,7 +43,7 @@
 						kind: list.kind === 'play_later' ? ('play_later' as const) : list.kind,
 						name: list.name,
 						description: list.description || undefined,
-						cover: list.backdrop,
+						cover: listCover(list),
 						gameCount: list.items.length,
 						href: listHref(list) as string | null
 					}))
@@ -196,7 +196,7 @@
 		{#if lists.length === 0}
 			<p class="text-sm text-muted-foreground">No public lists.</p>
 		{:else}
-			<div class="grid gap-4 sm:grid-cols-2 xl:max-w-3xl">
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
 				{#each lists as list (list.id)}
 					<ListCard
 						name={list.name}

@@ -5,7 +5,12 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import ListCard from '#lib/features/lists/list-card.svelte';
-	import { createList, listHref, ownLists } from '#lib/features/lists/user-lists.svelte.js';
+	import {
+		createList,
+		listCover,
+		listHref,
+		ownLists
+	} from '#lib/features/lists/user-lists.svelte.js';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 
 	const lists = $derived(ownLists());
@@ -38,16 +43,22 @@
 </script>
 
 <svelte:head>
-	<title>Library | Playlog</title>
+	<title>Library | Playthru</title>
 </svelte:head>
 
-<div class="min-w-0 px-4 pt-24 pb-16 md:px-8">
-	<h1 class="text-large-title text-primary">Library</h1>
-	<p class="mt-1 text-callout text-muted-foreground">
-		Your played games, your play later pile and the lists you make.
-	</p>
+<div class="min-w-0 px-4 pb-20 md:px-8 md:pb-24">
+	<header class="pt-2 pb-6 md:pt-4">
+		<h1
+			class="text-[2rem] leading-tight font-medium tracking-[-0.025em] text-primary md:text-[2.5rem]"
+		>
+			Library
+		</h1>
+		<p class="mt-2 text-sm leading-[1.6] text-muted-foreground">
+			Your played games, your play later pile and the lists you make.
+		</p>
+	</header>
 
-	<div class="mt-8 grid gap-4 sm:grid-cols-2 xl:max-w-3xl">
+	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
 		<button
 			type="button"
 			onclick={openDialog}
@@ -60,7 +71,7 @@
 			<ListCard
 				name={list.name}
 				kind={list.kind}
-				cover={list.backdrop || list.items[0]?.cover || ''}
+				cover={listCover(list)}
 				gameCount={list.items.length}
 				description={list.description || undefined}
 				href={listHref(list)}

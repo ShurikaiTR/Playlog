@@ -32,7 +32,7 @@ const messages: Record<string, string> = {
 	list_full: 'This list is full.',
 	rate_limited: 'Slow down a little and try again.',
 	invalid_review: 'A review needs 10 to 5,000 characters.',
-	unavailable: 'We can’t reach Playlog right now.'
+	unavailable: 'We can’t reach Playthru right now.'
 };
 
 export function failToast(error: string) {
