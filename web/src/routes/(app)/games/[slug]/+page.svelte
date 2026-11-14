@@ -737,14 +737,22 @@
 							</Item.Root>
 						{:else}
 							<div class="flex flex-col items-center gap-1 py-4 text-center">
-								<!-- The drawing mixes light and dark ink, so it sits on a light disc in dark mode. -->
+								<!-- One drawing per theme; the dark one is swapped in by the site's dark class. -->
 								<img
 									src="/mascot/confused.svg"
 									alt=""
 									width="160"
 									height="160"
 									loading="lazy"
-									class="size-40 rounded-full object-contain dark:bg-zinc-200"
+									class="size-40 object-contain dark:hidden"
+								/>
+								<img
+									src="/mascot/confused-dark.svg"
+									alt=""
+									width="160"
+									height="160"
+									loading="lazy"
+									class="hidden size-40 object-contain dark:block"
 								/>
 								<p class="mt-3 text-title-3 text-primary">No reviews yet</p>
 								<p class="text-callout text-muted-foreground">Be the first to review it!</p>
