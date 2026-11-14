@@ -35,6 +35,15 @@ struct Stats {
     users: i64,
     reviews: i64,
     lists: i64,
+    /// Son 30 günde eklenenler ve ondan önceki 30 günde eklenenler; rozetteki değişim bunlardan.
+    games_new: i64,
+    games_prev: i64,
+    users_new: i64,
+    users_prev: i64,
+    reviews_new: i64,
+    reviews_prev: i64,
+    lists_new: i64,
+    lists_prev: i64,
 }
 
 async fn stats(
@@ -47,7 +56,19 @@ async fn stats(
                 (SELECT count(*) FROM games WHERE status = 'draft') AS games_draft,
                 (SELECT count(*) FROM users) AS users,
                 (SELECT count(*) FROM game_reviews) AS reviews,
-                (SELECT count(*) FROM user_lists) AS lists",
+                (SELECT count(*) FROM user_lists) AS lists,
+                (SELECT count(*) FROM games WHERE created_at >= now() - interval '30 days') AS games_new,
+                (SELECT count(*) FROM games WHERE created_at >= now() - interval '60 days'
+                    AND created_at < now() - interval '30 days') AS games_prev,
+                (SELECT count(*) FROM users WHERE created_at >= now() - interval '30 days') AS users_new,
+                (SELECT count(*) FROM users WHERE created_at >= now() - interval '60 days'
+                    AND created_at < now() - interval '30 days') AS users_prev,
+                (SELECT count(*) FROM game_reviews WHERE created_at >= now() - interval '30 days') AS reviews_new,
+                (SELECT count(*) FROM game_reviews WHERE created_at >= now() - interval '60 days'
+                    AND created_at < now() - interval '30 days') AS reviews_prev,
+                (SELECT count(*) FROM user_lists WHERE created_at >= now() - interval '30 days') AS lists_new,
+                (SELECT count(*) FROM user_lists WHERE created_at >= now() - interval '60 days'
+                    AND created_at < now() - interval '30 days') AS lists_prev",
     )
     .fetch_one(&state.db)
     .await?;

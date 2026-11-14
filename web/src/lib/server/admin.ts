@@ -61,6 +61,15 @@ export type AdminStats = {
 	users: number;
 	reviews: number;
 	lists: number;
+	/** Added in the last 30 days, and in the 30 days before that. */
+	games_new: number;
+	games_prev: number;
+	users_new: number;
+	users_prev: number;
+	reviews_new: number;
+	reviews_prev: number;
+	lists_new: number;
+	lists_prev: number;
 	/** New users and games per day, the last 90 days, oldest first. */
 	activity: { date: string; users: number; games: number }[];
 };

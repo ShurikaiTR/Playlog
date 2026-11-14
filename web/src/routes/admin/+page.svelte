@@ -7,8 +7,11 @@
 </script>
 
 {#if data.stats}
-	<AdminSectionCards stats={data.stats} />
-	<AdminActivityChart activity={data.stats.activity} />
+	<AdminSectionCards stats={data.stats} isAdmin={data.isAdmin}>
+		{#snippet chart()}
+			<AdminActivityChart activity={data.stats!.activity} />
+		{/snippet}
+	</AdminSectionCards>
 {:else}
 	<p class="text-callout text-muted-foreground" role="alert">
 		The numbers could not be loaded. Try again.
