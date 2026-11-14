@@ -38,6 +38,14 @@ export type SystemRequirements = {
 	recommended: SystemRequirement | null;
 };
 
+export type SeriesEntry = Game & {
+	/** The admin's short note for this entry, if any. */
+	note: string | null;
+	/** True for the game whose page this is. */
+	current: boolean;
+	release: string;
+};
+
 export type GameDetail = {
 	slug: string;
 	title: string;
@@ -67,9 +75,12 @@ export type GameDetail = {
 	series: Named | null;
 	/** The base game, when this is an expansion or a remake. */
 	parent: Game | null;
-	/** Expansions and other editions of this game. */
+	/** DLC and expansions whose parent is this game. */
+	dlc: Game[];
+	/** Remakes, remasters and ports of this game. */
 	related: Game[];
-	seriesGames: Game[];
+	/** The series in the recommended play order, this game included. */
+	seriesGames: SeriesEntry[];
 	similar: Game[];
 };
 

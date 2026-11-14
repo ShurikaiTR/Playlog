@@ -640,6 +640,9 @@ async fn update_game(tx: &mut PgConnection, id: Uuid, game: &Validated) -> Resul
     sqlx::query(
         "UPDATE games
             SET title = $2, kind = $3::game_kind, parent_id = $4, series_id = $5, summary = $6,
+                -- Seri değişince eski serideki sıra ve not geçersiz olur.
+                series_position = CASE WHEN series_id IS NOT DISTINCT FROM $5 THEN series_position END,
+                series_note = CASE WHEN series_id IS NOT DISTINCT FROM $5 THEN series_note END,
                 release_date = $7, release_precision = $8::date_precision,
                 cover_url = $9, backdrop_url = $10, logo_url = $11, time_to_beat_minutes = $12,
                 pc_requirements = $13,

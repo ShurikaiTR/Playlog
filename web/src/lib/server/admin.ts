@@ -47,6 +47,34 @@ export type AdminGameRow = {
 	updated_at: string;
 };
 
+export type AdminSeriesRow = {
+	id: string;
+	slug: string;
+	name: string;
+	games: number;
+	ordered: boolean;
+};
+
+export type AdminSeriesGame = {
+	id: string;
+	slug: string;
+	title: string;
+	kind: string;
+	status: 'draft' | 'published' | 'hidden';
+	cover_url: string | null;
+	release_date: string | null;
+	release_precision: string;
+	note: string | null;
+};
+
+export type AdminSeries = {
+	id: string;
+	slug: string;
+	name: string;
+	ordered: boolean;
+	games: AdminSeriesGame[];
+};
+
 export type AdminUserRow = {
 	id: string;
 	username: string;

@@ -238,6 +238,19 @@ pub struct GameRef {
     pub cover_url: Option<String>,
 }
 
+/// Serideki bir oyun: kısa kartı, yöneticinin notu ve bu sayfanın oyunu olup olmadığı.
+#[derive(Serialize, FromRow)]
+pub struct SeriesEntry {
+    pub slug: String,
+    pub title: String,
+    pub kind: String,
+    pub cover_url: Option<String>,
+    pub release_date: Option<NaiveDate>,
+    pub release_precision: String,
+    pub note: Option<String>,
+    pub current: bool,
+}
+
 #[derive(Serialize)]
 pub struct Release {
     pub platform: Platform,
@@ -301,8 +314,9 @@ pub struct GameDetail {
     pub external_ids: BTreeMap<String, String>,
     /// Bu oyunun ek paketleri, yeniden yapımları ve portları.
     pub related: Vec<GameRef>,
-    /// Aynı serinin diğer oyunları, çıkış sırasıyla.
-    pub series_games: Vec<GameRef>,
+    /// Serinin oyunları, yöneticinin önerdiği oynama sırasıyla (sıra yoksa çıkış sırasıyla);
+    /// bu oyun da listededir. DLC ve ek paketler serinin sırasına girmez.
+    pub series_games: Vec<SeriesEntry>,
     /// En çok tür ve tema paylaşan oyunlar.
     pub similar: Vec<GameRef>,
 }
@@ -486,21 +500,26 @@ pub async fn detail(
     .fetch_all(db)
     .await?;
 
-    let series_games: Vec<GameRef> = match game.series_id {
-        Some(series_id) => {
+    // DLC ve ek paketler seri sırasında yer almaz; onların sayfasında seri bölümü de çıkmaz.
+    let in_series_order = !matches!(game.kind.as_str(), "dlc" | "expansion" | "bundle");
+    let series_games: Vec<SeriesEntry> = match game.series_id {
+        Some(series_id) if in_series_order => {
             sqlx::query_as(
-                "SELECT slug::text AS slug, title, kind::text AS kind, cover_url
+                "SELECT slug::text AS slug, title, kind::text AS kind, cover_url, release_date,
+                        release_precision::text AS release_precision, series_note AS note,
+                        id = $2 AS current
                    FROM games
-                  WHERE series_id = $1 AND id <> $2 AND status = 'published' AND kind = 'game'
-                  ORDER BY release_date NULLS LAST, title
-                  LIMIT 24",
+                  WHERE series_id = $1 AND (status = 'published' OR id = $2)
+                    AND kind NOT IN ('dlc', 'expansion', 'bundle')
+                  ORDER BY series_position NULLS LAST, release_date NULLS LAST, title
+                  LIMIT 50",
             )
             .bind(series_id)
             .bind(game.id)
             .fetch_all(db)
             .await?
         }
-        None => Vec::new(),
+        _ => Vec::new(),
     };
 
     // Ortak tür ve tema sayısına göre; eşitlikte daha yeni olan öne gelir.

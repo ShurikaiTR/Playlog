@@ -2,6 +2,7 @@
 
 mod games;
 mod import;
+mod series;
 mod staff;
 mod stats;
 mod users;
@@ -14,6 +15,7 @@ pub fn router() -> Router<AppState> {
     staff::router()
         .merge(games::router())
         .merge(import::router())
+        .merge(series::router())
         .merge(stats::router())
         .merge(users::router())
 }

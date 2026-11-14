@@ -47,7 +47,12 @@ type ApiDetail = Omit<ApiCard, 'genres' | 'developers'> & {
 	languages: { language: string; interface: boolean; audio: boolean; subtitles: boolean }[];
 	age_ratings: Record<string, string>;
 	related: ApiRef[];
-	series_games: ApiRef[];
+	series_games: (ApiRef & {
+		release_date: string | null;
+		release_precision: DatePrecision;
+		note: string | null;
+		current: boolean;
+	})[];
 	similar: ApiRef[];
 };
 
@@ -174,8 +179,16 @@ export async function getGame(
 			trailer: trailer?.video_id ?? null,
 			series: data.series,
 			parent: data.parent ? toGame(data.parent) : null,
-			related: data.related.map(toGame),
-			seriesGames: data.series_games.map(toGame),
+			dlc: data.related.filter((ref) => ref.kind === 'dlc' || ref.kind === 'expansion').map(toGame),
+			related: data.related
+				.filter((ref) => ref.kind !== 'dlc' && ref.kind !== 'expansion')
+				.map(toGame),
+			seriesGames: data.series_games.map((entry) => ({
+				...toGame(entry),
+				note: entry.note,
+				current: entry.current,
+				release: formatRelease(entry.release_date, entry.release_precision)
+			})),
 			similar: data.similar.map(toGame)
 		}
 	};

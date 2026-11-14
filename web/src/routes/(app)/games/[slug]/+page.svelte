@@ -27,6 +27,7 @@
 	import GameGalleryDialog from '#lib/features/games/game-gallery-dialog.svelte';
 	import GameReportDialog from '#lib/features/games/game-report-dialog.svelte';
 	import GameRow from '#lib/features/games/game-row.svelte';
+	import GameSeries from '#lib/features/games/game-series.svelte';
 	import { formatDayMonth, formatRelease } from '#lib/features/games/games.js';
 	import FlagIcon from '@lucide/svelte/icons/flag';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
@@ -330,7 +331,7 @@
 						</h1>
 						{#if game.parent}
 							<p class="mt-3 text-footnote text-muted-foreground">
-								{game.kind === 'dlc' || game.kind === 'expansion' ? 'Add-on for' : 'Based on'}
+								{game.kind === 'dlc' || game.kind === 'expansion' ? 'DLC for' : 'Based on'}
 								<a
 									href="/games/{game.parent.slug}"
 									class="font-medium text-primary underline-offset-4 hover:underline"
@@ -1009,11 +1010,14 @@
 		</Dialog.Content>
 	</Dialog.Root>
 
-	{#if game.related.length}
-		<GameRow title="Add-ons and editions" href="/games" games={game.related} />
+	{#if game.series && game.seriesGames.length > 1}
+		<GameSeries series={game.series} games={game.seriesGames} />
 	{/if}
-	{#if game.series && game.seriesGames.length}
-		<GameRow title="More from {game.series.name}" href="/games" games={game.seriesGames} />
+	{#if game.dlc.length}
+		<GameRow title="DLC &amp; expansions" href="/games" games={game.dlc} />
+	{/if}
+	{#if game.related.length}
+		<GameRow title="Remakes and editions" href="/games" games={game.related} />
 	{/if}
 	{#if game.similar.length}
 		<GameRow title="Similar games" href="/games" games={game.similar} />
