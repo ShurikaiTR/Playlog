@@ -147,24 +147,6 @@
 
 		<Card.Root>
 			<Card.Header>
-				<Card.Title>Artwork</Card.Title>
-				<Card.Description>
-					Paste image addresses (https://). The preview updates as you type.
-				</Card.Description>
-			</Card.Header>
-			<Card.Content>
-				<Field.Group>
-					<div class="grid gap-6 md:grid-cols-2">
-						{@render text('coverUrl', 'Cover', { hint: 'Portrait poster, 2:3.' })}
-						{@render text('backdropUrl', 'Backdrop', { hint: 'Wide header image, 16:9.' })}
-					</div>
-					{@render text('logoUrl', 'Logo', { hint: 'Transparent PNG or SVG over the backdrop.' })}
-				</Field.Group>
-			</Card.Content>
-		</Card.Root>
-
-		<Card.Root>
-			<Card.Header>
 				<Card.Title>Description</Card.Title>
 			</Card.Header>
 			<Card.Content>
@@ -286,6 +268,6 @@
 	</div>
 
 	<aside class="min-w-0 xl:sticky xl:top-6" aria-label="Preview">
-		<GamePreview {values} {platforms} />
+		<GamePreview bind:values {platforms} />
 	</aside>
 </form>

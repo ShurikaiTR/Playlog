@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
 	import { formatRelease, type DatePrecision } from '#lib/features/games/games.js';
 	import type { GameFormValues } from './game-form.js';
 	import type { PlatformOption } from '#lib/server/admin.js';
@@ -8,9 +10,10 @@
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
 	import ImageOffIcon from '@lucide/svelte/icons/image-off';
 
-	// A live look at the game as visitors will see it: the page header (backdrop, logo, poster)
-	// and the grid card. It reads the form's values directly, so it follows every keystroke.
-	let { values, platforms }: { values: GameFormValues; platforms: PlatformOption[] } = $props();
+	// The artwork slots (cover, backdrop, logo) where the image addresses are entered, and a live
+	// look at the game as visitors will see it: the page header and the grid card.
+	let { values = $bindable(), platforms }: { values: GameFormValues; platforms: PlatformOption[] } =
+		$props();
 
 	// An address that fails to load is shown as missing instead of as a broken image.
 	let failed = $state<string[]>([]);
@@ -73,8 +76,70 @@
 	</div>
 {/snippet}
 
+{#snippet slot(
+	name: 'coverUrl' | 'backdropUrl' | 'logoUrl',
+	title: string,
+	hint: string,
+	url: string | null,
+	box: string
+)}
+	<Field.Field>
+		<Field.Label for={name}>{title}</Field.Label>
+		<label
+			for={name}
+			class="relative flex cursor-text items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border transition-shadow hover:ring-foreground/30 {box}"
+		>
+			{#if url}
+				<img
+					src={url}
+					alt=""
+					class="size-full {name === 'logoUrl' ? 'object-contain p-3' : 'object-cover'}"
+					onerror={() => fail(url)}
+					decoding="async"
+				/>
+			{:else}
+				<span
+					class="flex flex-col items-center gap-1.5 px-3 text-center text-footnote text-muted-foreground"
+				>
+					<ImageOffIcon class="size-5" aria-hidden="true" />
+					{values[name] ? 'Could not load this image' : hint}
+				</span>
+			{/if}
+		</label>
+		<Input
+			id={name}
+			{name}
+			type="url"
+			bind:value={values[name]}
+			class="rounded-xl"
+			placeholder="https://…"
+			autocomplete="off"
+			aria-invalid={values[name] !== '' && !values[name].startsWith('https://') ? true : undefined}
+		/>
+	</Field.Field>
+{/snippet}
+
 <div class="grid gap-4">
-	<p class="text-footnote font-medium tracking-caps text-muted-foreground uppercase">Preview</p>
+	<p class="text-footnote font-medium tracking-caps text-muted-foreground uppercase">Artwork</p>
+	<div class="grid gap-4 rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+		<div class="grid grid-cols-[7rem_minmax(0,1fr)] items-start gap-4">
+			{@render slot('coverUrl', 'Cover', 'Poster, 2:3', cover, 'aspect-2/3 w-28')}
+			<div class="grid gap-4">
+				{@render slot('logoUrl', 'Logo', 'Transparent PNG or SVG', logo, 'h-16 w-full')}
+			</div>
+		</div>
+		{@render slot(
+			'backdropUrl',
+			'Backdrop',
+			'Wide header image, 16:9',
+			backdrop,
+			'aspect-video w-full'
+		)}
+	</div>
+
+	<p class="mt-2 text-footnote font-medium tracking-caps text-muted-foreground uppercase">
+		Preview
+	</p>
 
 	<!-- The game page header -->
 	<div class="overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10">
