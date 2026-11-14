@@ -6,7 +6,7 @@ import type { Actions } from './$types';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export const actions: Actions = {
-	// Signs one other device out. This device signs out with "Çıkış yap".
+	// Signs one other device out. This device signs out with "Sign out".
 	revoke: async (event) => {
 		const token = event.locals.token;
 		if (!token) redirect(303, '/sign-in');

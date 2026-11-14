@@ -26,29 +26,29 @@
 
 	const copy = {
 		played: {
-			removeLabel: 'Listeden çıkar',
-			emptyTitle: 'Henüz oynadığın bir oyun yok.',
-			emptyDescription: 'Oynadığın oyunları kaydet menüsünden buraya ekle.',
-			meta: 'Oynadığın oyunlar.'
+			removeLabel: 'Remove from list',
+			emptyTitle: 'You haven’t played anything yet.',
+			emptyDescription: 'Add the games you have played from the save menu on a game’s page.',
+			meta: 'Games you have played.'
 		},
 		play_later: {
-			removeLabel: 'Listeden çıkar',
-			emptyTitle: 'Daha sonra oynayacağın bir oyun yok.',
-			emptyDescription: 'İlgini çeken bir oyunu kaydet, sırası geldiğinde burada seni beklesin.',
-			meta: 'Daha sonra oynamak için kaydettiğin oyunlar.'
+			removeLabel: 'Remove from list',
+			emptyTitle: 'Nothing is waiting to be played.',
+			emptyDescription: 'Save a game that catches your eye and it will wait for you here.',
+			meta: 'Games you saved to play later.'
 		},
 		custom: {
-			removeLabel: 'Listeden çıkar',
-			emptyTitle: 'Bu liste henüz boş.',
-			emptyDescription: 'Bir oyunun sayfasından "Listeme ekle" ile buraya oyun ekleyebilirsin.',
-			meta: 'Kendi derlemen.'
+			removeLabel: 'Remove from list',
+			emptyTitle: 'This list is empty.',
+			emptyDescription: 'Add games from a game’s page with the Add to library menu.',
+			meta: 'A list of your own.'
 		}
 	} as const;
 
 	const text = $derived(copy[list.kind]);
 	const sortOptions = [
-		{ value: 'recent', label: 'Son eklenen' },
-		{ value: 'title', label: 'Ada göre (A–Z)' }
+		{ value: 'recent', label: 'Recently added' },
+		{ value: 'title', label: 'Title (A–Z)' }
 	];
 
 	let query = $state('');
@@ -66,11 +66,11 @@
 		sortOptions.find((option) => option.value === selectedSort)?.label
 	);
 	const visibleItems = $derived.by(() => {
-		const search = query.trim().toLocaleLowerCase('tr-TR');
+		const search = query.trim().toLocaleLowerCase('en');
 		return list.items
-			.filter((game) => game.title.toLocaleLowerCase('tr-TR').includes(search))
+			.filter((game) => game.title.toLocaleLowerCase('en').includes(search))
 			.toSorted((a, b) => {
-				if (selectedSort === 'title') return a.title.localeCompare(b.title, 'tr');
+				if (selectedSort === 'title') return a.title.localeCompare(b.title, 'en');
 				return b.added - a.added;
 			});
 	});
@@ -89,7 +89,7 @@
 		event.preventDefault();
 		if (editMode === 'details') {
 			if (!draftName.trim()) {
-				nameError = 'Listen için bir ad gir.';
+				nameError = 'Give the list a name.';
 				return;
 			}
 			const saved = await saveListDetails(list, {
@@ -99,7 +99,7 @@
 			});
 			if (saved) {
 				editOpen = false;
-				toast('Liste ayarları güncellendi');
+				toast('List settings updated');
 			}
 			return;
 		}
@@ -111,7 +111,7 @@
 		});
 		if (saved) {
 			editOpen = false;
-			toast('Kapak güncellendi');
+			toast('Cover updated');
 		}
 	}
 
@@ -121,8 +121,8 @@
 		const { added, ...summary } = game;
 		flippedSlug = null;
 		if (!(await setGame(list, summary, false))) return;
-		toast(`${game.title} listeden çıkarıldı`, {
-			action: { label: 'Geri al', onClick: () => void setGame(list, summary, true) }
+		toast(`${game.title} removed from the list`, {
+			action: { label: 'Undo', onClick: () => void setGame(list, summary, true) }
 		});
 	}
 </script>
@@ -137,7 +137,7 @@
 	<title>{list.name} | Playthru</title>
 </svelte:head>
 
-<div lang="tr" class="flex min-w-0 flex-col pb-16">
+<div class="flex min-w-0 flex-col pb-16">
 	<section class="list-hero relative isolate min-w-0" aria-labelledby="list-title">
 		<!-- Full-bleed cover like the profile and game pages. -->
 		<div
@@ -167,9 +167,9 @@
 			</div>
 			<div class="min-w-0 flex-1 pb-1">
 				<Badge variant="secondary" class="mb-3 gap-1.5">
-					{#if list.visibility === 'private'}<LockIcon class="size-3.5" />Gizli liste{:else}<GlobeIcon
+					{#if list.visibility === 'private'}<LockIcon class="size-3.5" />Private list{:else}<GlobeIcon
 							class="size-3.5"
-						/>Herkese açık liste{/if}
+						/>Public list{/if}
 				</Badge>
 				<div class="flex items-center gap-2">
 					<h1
@@ -186,17 +186,17 @@
 								class:
 									'shrink-0 cursor-pointer rounded-full text-muted-foreground hover:text-foreground'
 							})}
-							aria-label="Liste seçenekleri"><PencilIcon class="size-4" /></DropdownMenu.Trigger
+							aria-label="List options"><PencilIcon class="size-4" /></DropdownMenu.Trigger
 						>
 						<DropdownMenu.Content align="start" class="w-48 rounded-xl p-1.5">
 							<DropdownMenu.Item
 								class="cursor-pointer rounded-lg"
-								onclick={() => openSettings('details')}>Listeyi düzenle</DropdownMenu.Item
+								onclick={() => openSettings('details')}>Edit list</DropdownMenu.Item
 							>
 							<DropdownMenu.Item
 								class="cursor-pointer rounded-lg"
 								disabled={list.items.length === 0}
-								onclick={() => openSettings('cover')}>Kapağı değiştir</DropdownMenu.Item
+								onclick={() => openSettings('cover')}>Change cover</DropdownMenu.Item
 							>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
@@ -215,7 +215,7 @@
 		</div>
 	</section>
 
-	<section aria-label="Liste içeriği" class="mt-12 min-w-0 px-4 md:px-8">
+	<section aria-label="List contents" class="mt-12 min-w-0 px-4 md:px-8">
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<p class="text-sm font-medium tabular-nums" aria-live="polite">
 				{visibleItems.length} / {list.items.length} oyun
@@ -225,22 +225,22 @@
 					<InputGroup.Addon><SearchIcon /></InputGroup.Addon>
 					<InputGroup.Input
 						bind:value={query}
-						aria-label="Listede ara"
-						placeholder="Listede ara…"
+						aria-label="Search this list"
+						placeholder="Search this list…"
 					/>
 					{#if query}
 						<InputGroup.Addon align="inline-end">
 							<InputGroup.Button
 								size="icon-xs"
 								class="cursor-pointer rounded-full"
-								aria-label="Aramayı temizle"
+								aria-label="Clear search"
 								onclick={() => (query = '')}><XIcon /></InputGroup.Button
 							>
 						</InputGroup.Addon>
 					{/if}
 				</InputGroup.Root>
 				<Select.Root type="single" bind:value={selectedSort}>
-					<Select.Trigger class="h-10 w-48" aria-label="Sırala: {selectedSortLabel}">
+					<Select.Trigger class="h-10 w-48" aria-label="Sort: {selectedSortLabel}">
 						<span data-slot="select-value"
 							><ArrowDownWideNarrowIcon class="text-muted-foreground" />{selectedSortLabel}</span
 						>
@@ -278,13 +278,13 @@
 										type="button"
 										class="flip-face absolute inset-0 cursor-pointer overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 										inert={flippedSlug === game.slug}
-										aria-label="{game.title} seçenekleri"
+										aria-label="{game.title} options"
 										onclick={() => (flippedSlug = game.slug)}
 									>
 										{#if game.cover}
 											<img
 												src={game.cover}
-												alt="{game.title} kapağı"
+												alt="{game.title} cover"
 												width="600"
 												height="900"
 												loading="lazy"
@@ -302,7 +302,7 @@
 											variant="default"
 											size="sm"
 											href="/games/{game.slug}"
-											class="w-full cursor-pointer rounded-full text-xs">Oyuna git</Button
+											class="w-full cursor-pointer rounded-full text-xs">View game</Button
 										>
 										<Button
 											variant="outline"
@@ -329,10 +329,10 @@
 							{#if list.items.length}<SearchIcon />{:else if list.kind === 'played'}<CircleCheckIcon
 								/>{:else if list.kind === 'play_later'}<ClockIcon />{:else}<GamepadIcon />{/if}
 						</Empty.Media>
-						<Empty.Title>{list.items.length ? 'Eşleşen oyun yok' : text.emptyTitle}</Empty.Title>
+						<Empty.Title>{list.items.length ? 'No matching games' : text.emptyTitle}</Empty.Title>
 						<Empty.Description
 							>{list.items.length
-								? 'Başka bir ad dene ya da aramayı temizle.'
+								? 'Try another title or clear the search.'
 								: text.emptyDescription}</Empty.Description
 						>
 					</Empty.Header>
@@ -341,11 +341,11 @@
 							<Button
 								variant="outline"
 								class="cursor-pointer rounded-full"
-								onclick={() => (query = '')}>Aramayı temizle</Button
+								onclick={() => (query = '')}>Clear search</Button
 							>
 						{:else}
 							<Button href="/games" class="cursor-pointer rounded-full">
-								Oyun keşfet
+								Discover games
 								<ArrowUpRightIcon data-icon="inline-end" class="size-4" />
 							</Button>
 						{/if}
@@ -360,19 +360,19 @@
 	<Dialog.Content>
 		<Dialog.Header class="text-left">
 			<Dialog.Title>
-				{editMode === 'details' ? 'Listeyi düzenle' : 'Kapağı değiştir'}
+				{editMode === 'details' ? 'Edit list' : 'Change cover'}
 			</Dialog.Title>
 			<Dialog.Description>
 				{editMode === 'details'
-					? 'Bu listeyi kendine göre ayarla.'
-					: 'Kapak, listedeki oyunlardan biri olur.'}
+					? 'Make this list your own.'
+					: 'The cover is one of the games in the list.'}
 			</Dialog.Description>
 		</Dialog.Header>
 		<form class="space-y-5" onsubmit={saveSettings}>
 			{#if editMode === 'cover'}
 				<div class="max-h-80 overflow-y-auto">
-					<ul class="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Kapak oyunu">
-						{#each [{ slug: null, title: 'Varsayılan', cover: list.items[0]?.cover ?? null }, ...list.items] as game (game.slug ?? 'default')}
+					<ul class="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Cover game">
+						{#each [{ slug: null, title: 'Default', cover: list.items[0]?.cover ?? null }, ...list.items] as game (game.slug ?? 'default')}
 							<li>
 								<button
 									type="button"
@@ -399,7 +399,7 @@
 				</div>
 			{:else}
 				<div class="space-y-2">
-					<Label for="list-name">Liste adı</Label>
+					<Label for="list-name">List name</Label>
 					<Input
 						id="list-name"
 						bind:value={draftName}
@@ -412,38 +412,39 @@
 				</div>
 				<div class="space-y-2">
 					<Label for="list-description"
-						>Açıklama <span class="font-normal text-muted-foreground">(isteğe bağlı)</span></Label
+						>Description <span class="font-normal text-muted-foreground">(optional)</span></Label
 					>
 					<Textarea
 						id="list-description"
 						bind:value={draftDescription}
 						maxlength={280}
 						rows={3}
-						placeholder="Bu koleksiyonu özel yapan ne?"
+						placeholder="What makes this list special?"
 						class="max-h-40 resize-y"
 					/>
 				</div>
 				<div class="space-y-2">
-					<Label id="list-visibility-label">Görünürlük</Label>
+					<Label id="list-visibility-label">Visibility</Label>
 					<Select.Root type="single" bind:value={draftVisibility}>
 						<Select.Trigger class="h-10 w-full" aria-labelledby="list-visibility-label">
 							<span data-slot="select-value">
-								{#if draftVisibility === 'private'}<LockIcon />Gizli{:else}<GlobeIcon />Herkese açık{/if}
+								{#if draftVisibility === 'private'}<LockIcon />Private{:else}<GlobeIcon
+									/>Public{/if}
 							</span>
 						</Select.Trigger>
 						<Select.Content class="rounded-xl">
 							<Select.Item value="private" class="rounded-lg"
-								><LockIcon class="size-4" />Gizli</Select.Item
+								><LockIcon class="size-4" />Private</Select.Item
 							>
 							<Select.Item value="public" class="rounded-lg"
-								><GlobeIcon class="size-4" />Herkese açık</Select.Item
+								><GlobeIcon class="size-4" />Public</Select.Item
 							>
 						</Select.Content>
 					</Select.Root>
 					<p class="text-xs leading-5 text-muted-foreground">
 						{draftVisibility === 'private'
-							? 'Bu listeyi yalnızca sen görebilirsin.'
-							: 'Bu liste profilinde herkese görünür.'}
+							? 'Only you can see this list.'
+							: 'Anyone can see this list on your profile.'}
 					</p>
 				</div>
 			{/if}
@@ -452,9 +453,9 @@
 					type="button"
 					variant="outline"
 					class="cursor-pointer"
-					onclick={() => (editOpen = false)}>Vazgeç</Button
+					onclick={() => (editOpen = false)}>Cancel</Button
 				>
-				<Button type="submit" class="cursor-pointer">Değişiklikleri kaydet</Button>
+				<Button type="submit" class="cursor-pointer">Save changes</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

@@ -29,7 +29,7 @@
 			return;
 		}
 		open = false;
-		showAuthTransition({ title: 'Hesabın silindi', description: 'Görüşmek üzere…' });
+		showAuthTransition({ title: 'Account deleted', description: 'See you around…' });
 		// A full load: the session is gone, so every page must render signed out.
 		window.location.assign('/');
 	}
@@ -39,15 +39,15 @@
 	<Dialog.Content class="sm:max-w-sm">
 		<Dialog.Header class="items-center gap-3 pt-2 text-center">
 			<TriangleAlertIcon class="size-8 text-destructive" strokeWidth={1.6} />
-			<Dialog.Title class="text-center text-headline">Hesabın silinsin mi?</Dialog.Title>
+			<Dialog.Title class="text-center text-headline">Delete your account?</Dialog.Title>
 			<Dialog.Description class="text-center">
-				Profilin, bağlı hesapların ve oturumların kalıcı olarak silinir. Bu işlem geri alınamaz.
+				Your profile, connected accounts and sessions are deleted for good. This can’t be undone.
 			</Dialog.Description>
 		</Dialog.Header>
 		<form class="space-y-4" onsubmit={submit}>
 			{#if hasPassword}
 				<div class="space-y-2">
-					<Label for="delete-password">Onaylamak için şifreni gir</Label>
+					<Label for="delete-password">Enter your password to confirm</Label>
 					<PasswordInput id="delete-password" bind:value={password} />
 				</div>
 			{/if}
@@ -60,7 +60,7 @@
 					variant="destructive"
 					class="h-11 w-full"
 					disabled={deleting || (hasPassword && !password)}
-					>{deleting ? 'Siliniyor…' : 'Hesabımı kalıcı olarak sil'}</Button
+					>{deleting ? 'Deleting…' : 'Delete my account permanently'}</Button
 				>
 				<Button
 					type="button"
@@ -69,7 +69,7 @@
 					onclick={() => {
 						open = false;
 						reset();
-					}}>Vazgeç</Button
+					}}>Cancel</Button
 				>
 			</div>
 		</form>

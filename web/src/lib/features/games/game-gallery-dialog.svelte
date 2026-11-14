@@ -57,7 +57,7 @@
 			else if (event.key === 'ArrowRight') api?.scrollNext();
 		}}
 	>
-		<Dialog.Title class="sr-only">{title} ekran görüntüleri</Dialog.Title>
+		<Dialog.Title class="sr-only">{title} screenshots</Dialog.Title>
 		<Carousel.Root
 			setApi={(carousel) => (api = carousel)}
 			opts={{ startIndex: start }}
@@ -71,7 +71,7 @@
 								<!-- Only the slide that is showing holds the player, so leaving it stops the sound. -->
 								{#if open && index === i}
 									<iframe
-										title="{title} fragmanı"
+										title="{title} trailer"
 										src="https://www.youtube-nocookie.com/embed/{item.src}?autoplay=1&rel=0"
 										allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
 										allowfullscreen
@@ -81,7 +81,7 @@
 							{:else}
 								<img
 									src={item.src}
-									alt="{title} ekran görüntüsü {i + 1 - videoCount} / {imageCount}"
+									alt="{title} screenshot {i + 1 - videoCount} of {imageCount}"
 									class="size-full object-cover"
 								/>
 							{/if}
@@ -90,7 +90,7 @@
 				{/each}
 			</Carousel.Content>
 		</Carousel.Root>
-		{#each [{ dir: -1, label: 'Önceki görsel', can: canPrev, pos: 'start-5' }, { dir: 1, label: 'Sonraki görsel', can: canNext, pos: 'end-5' }] as arrow (arrow.dir)}
+		{#each [{ dir: -1, label: 'Previous image', can: canPrev, pos: 'start-5' }, { dir: 1, label: 'Next image', can: canNext, pos: 'end-5' }] as arrow (arrow.dir)}
 			<Button
 				variant="ghost"
 				size="icon"

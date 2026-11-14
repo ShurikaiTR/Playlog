@@ -57,36 +57,36 @@
 <Dialog.Root bind:open onOpenChange={(value) => value || reset()}>
 	<Dialog.Content>
 		<Dialog.Header>
-			<Dialog.Title class="text-headline">Şifreyi değiştir</Dialog.Title>
+			<Dialog.Title class="text-headline">Change password</Dialog.Title>
 			<Dialog.Description
-				>Mevcut şifreni ve yeni şifreni girerek giriş şifreni güncelle.</Dialog.Description
+				>Enter your current password and a new one to update how you sign in.</Dialog.Description
 			>
 		</Dialog.Header>
 		<form class="space-y-4" onsubmit={submit} novalidate>
 			<input type="text" name="username" value={email ?? ''} autocomplete="username" hidden />
 			<div class="space-y-2">
-				<Label for="change-current-password">Mevcut şifre</Label>
+				<Label for="change-current-password">Current password</Label>
 				<PasswordInput id="change-current-password" bind:value={currentPassword} />
 			</div>
 			<div class="space-y-2">
-				<Label for="change-new-password">Yeni şifre</Label>
+				<Label for="change-new-password">New password</Label>
 				<PasswordInput
 					id="change-new-password"
 					bind:value={newPassword}
 					autocomplete="new-password"
 				/>
-				<p class="px-4 text-footnote text-muted-foreground">En az 8 karakter.</p>
+				<p class="px-4 text-footnote text-muted-foreground">At least 8 characters.</p>
 			</div>
 			<Label class="flex min-h-11 items-center gap-2.5 font-normal">
-				<Checkbox bind:checked={signOutOthers} />Diğer cihazlardaki oturumları kapat
+				<Checkbox bind:checked={signOutOthers} />Sign out of other devices
 			</Label>
 			{#if error}
 				<p class="text-footnote text-destructive" role="alert">{error}</p>
 			{/if}
 			<Dialog.Footer>
-				<Button type="button" variant="outline" class="h-11 px-5" onclick={close}>Vazgeç</Button>
+				<Button type="button" variant="outline" class="h-11 px-5" onclick={close}>Cancel</Button>
 				<Button type="submit" class="h-11 px-5" disabled={pending || !currentPassword}>
-					{#if pending}<Spinner />{/if}Şifreyi kaydet
+					{#if pending}<Spinner />{/if}Save password
 				</Button>
 			</Dialog.Footer>
 		</form>

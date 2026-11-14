@@ -56,7 +56,7 @@
 	{#if showLanguage}
 		<DropdownMenu.Item class={cn('cursor-pointer', soft)} onSelect={openLanguageDialog}>
 			<LanguagesIcon />
-			Dil
+			Language
 		</DropdownMenu.Item>
 	{/if}
 	<DropdownMenu.Item class={cn('cursor-pointer', soft)} onSelect={openFeedbackDialog}>

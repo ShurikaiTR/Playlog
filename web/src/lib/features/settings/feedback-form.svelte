@@ -15,7 +15,7 @@
 
 	const soft =
 		'focus:bg-muted focus:text-foreground focus:**:text-foreground not-data-[variant=destructive]:focus:**:text-foreground';
-	const feedbackReasons = ['Hata', 'Öneri', 'Diğer'];
+	const feedbackReasons = ['Bug', 'Suggestion', 'Other'];
 	const maxAttachments = 5;
 	let feedbackReason = $state('');
 	let feedbackText = $state('');
@@ -27,7 +27,7 @@
 	function addFiles(files: FileList | null | undefined) {
 		if (!files) return;
 		const all = [...attachments, ...files];
-		if (all.length > maxAttachments) toast(`En fazla ${maxAttachments} dosya ekleyebilirsin`);
+		if (all.length > maxAttachments) toast(`You can attach up to ${maxAttachments} files`);
 		attachments = all.slice(0, maxAttachments);
 	}
 
@@ -36,17 +36,17 @@
 		if (!canSend) return;
 		// TODO: placeholder, nothing is sent yet. Post { reason, text, attachments } to the server once there is a backend.
 		onsent();
-		toast('Geri bildirimin için teşekkürler');
+		toast('Thanks for your feedback');
 	}
 </script>
 
 <form class="flex flex-col gap-4" onsubmit={sendFeedback}>
 	<div>
-		<Label for="feedback-reason" class="mb-2 font-semibold">Tür</Label>
+		<Label for="feedback-reason" class="mb-2 font-semibold">Type</Label>
 		<Select.Root type="single" bind:value={feedbackReason}>
 			<Select.Trigger id="feedback-reason" class="h-10! w-full cursor-pointer rounded-xl px-4">
 				<span data-slot="select-value" class={cn(!feedbackReason && 'text-muted-foreground')}
-					>{feedbackReason || 'Tür seç'}</span
+					>{feedbackReason || 'Choose a type'}</span
 				>
 			</Select.Trigger>
 			<Select.Content class="rounded-xl">
@@ -65,8 +65,8 @@
 	<Textarea
 		bind:value={feedbackText}
 		rows={8}
-		aria-label="Mesajın"
-		placeholder="Bize neyin yanlış gittiğini ya da ne istediğini anlat"
+		aria-label="Your message"
+		placeholder="Tell us what went wrong or what you would like to see"
 		class="min-h-40"
 	/>
 	<div>
@@ -78,7 +78,7 @@
 		<Empty.Root
 			role="button"
 			tabindex={0}
-			aria-label="Dosya ekle"
+			aria-label="Add files"
 			class={cn(
 				'cursor-pointer gap-2 rounded-2xl border border-dashed p-4 transition-colors hover:border-foreground/25 hover:bg-muted/50 md:p-4',
 				dragging && 'border-foreground/30 bg-muted/50'
@@ -99,7 +99,7 @@
 				<Empty.Media class="mb-0 rounded-full p-2 text-muted-foreground"
 					><UploadIcon class="size-5" /></Empty.Media
 				>
-				<Empty.Title class="text-sm font-medium">Sürükle bırak ya da seçmek için tıkla</Empty.Title>
+				<Empty.Title class="text-sm font-medium">Drag and drop, or click to choose</Empty.Title>
 			</Empty.Header>
 		</Empty.Root>
 		<input
@@ -116,7 +116,7 @@
 			}}
 		/>
 		{#if attachments.length}
-			<ul class="mt-2 flex flex-wrap gap-1.5" aria-label="Eklenen dosyalar">
+			<ul class="mt-2 flex flex-wrap gap-1.5" aria-label="Attached files">
 				{#each attachments as file, index (index)}
 					<li>
 						<Badge variant="secondary" class="max-w-56 pe-1">
@@ -126,7 +126,7 @@
 								variant="ghost"
 								size="icon-xs"
 								class="size-4 cursor-pointer rounded-full"
-								aria-label="{file.name} dosyasını kaldır"
+								aria-label="Remove {file.name}"
 								onclick={() => (attachments = attachments.filter((_, i) => i !== index))}
 							>
 								<XIcon class="size-3.5" />
@@ -142,7 +142,7 @@
 			type="submit"
 			size="sm"
 			class="h-8 cursor-pointer rounded-full px-2.5 font-semibold"
-			disabled={!canSend}>Gönder</Button
+			disabled={!canSend}>Send</Button
 		>
 	</div>
 </form>

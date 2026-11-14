@@ -7,7 +7,8 @@ export const GET: RequestHandler = async (event) => {
 	const token = event.locals.token;
 	if (!event.locals.user || !token) redirect(303, '/sign-in');
 	const result = await api(event, '/v1/account/export', { method: 'GET', token });
-	if (!result.ok) error(result.status === 429 ? 429 : 503, 'Verilerin şu an hazırlanamadı.');
+	if (!result.ok)
+		error(result.status === 429 ? 429 : 503, 'We couldn’t prepare your data right now.');
 
 	const day = new Date().toISOString().slice(0, 10);
 	return new Response(JSON.stringify(result.data, null, 2), {

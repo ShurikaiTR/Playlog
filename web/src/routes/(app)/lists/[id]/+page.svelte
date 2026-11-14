@@ -9,5 +9,5 @@
 {#if list}
 	<UserListPage {list} />
 {:else}
-	<p class="px-4 pt-24 text-sm text-muted-foreground md:px-8">Liste bulunamadı.</p>
+	<p class="px-4 pt-24 text-sm text-muted-foreground md:px-8">List not found.</p>
 {/if}

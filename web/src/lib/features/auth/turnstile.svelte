@@ -55,7 +55,7 @@
 				widgetId = window.turnstile.render(element, {
 					sitekey: TURNSTILE_SITE_KEY,
 					theme: mode.current === 'light' ? 'light' : 'dark',
-					language: 'tr',
+					language: 'en',
 					callback: (value: string) => (token = value),
 					'expired-callback': () => (token = ''),
 					'timeout-callback': () => (token = ''),

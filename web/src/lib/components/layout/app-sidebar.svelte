@@ -6,7 +6,6 @@
 	import LibraryIcon from '@lucide/svelte/icons/library-big';
 	import HouseIcon from '@lucide/svelte/icons/house';
 	import LayoutGridIcon from '@lucide/svelte/icons/layout-grid';
-	import TagIcon from '@lucide/svelte/icons/tag';
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Kbd, KbdGroup } from '#lib/components/ui/kbd/index.js';
@@ -27,8 +26,7 @@
 			items: [
 				{ label: 'Home', href: '/', icon: HouseIcon },
 				{ label: 'Discover', href: '/discover', icon: CompassIcon },
-				{ label: 'Games', href: '/games', icon: LayoutGridIcon },
-				{ label: 'Genres', href: '/genres', icon: TagIcon }
+				{ label: 'Games', href: '/games', icon: LayoutGridIcon }
 			]
 		},
 		{

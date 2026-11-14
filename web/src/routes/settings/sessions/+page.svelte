@@ -26,12 +26,12 @@
 		if (!current) return [];
 		const device = describeDevice(current.user_agent);
 		return [
-			['IP adresi', current.ip || 'Bilinmiyor'],
-			['İşletim sistemi', device.os],
-			['Tarayıcı', device.browser],
-			['İstemci', 'Web'],
-			['Giriş tarihi', formatMediumDate(current.created_at)],
-			['Bitiş tarihi', formatMediumDate(current.expires_at)]
+			['IP address', current.ip || 'Unknown'],
+			['Operating system', device.os],
+			['Browser', device.browser],
+			['Client', 'Web'],
+			['Signed in', formatMediumDate(current.created_at)],
+			['Expires', formatMediumDate(current.expires_at)]
 		];
 	});
 
@@ -40,13 +40,13 @@
 </script>
 
 <svelte:head>
-	<title>Playthru: Oturumlar</title>
+	<title>Playthru: Sessions</title>
 </svelte:head>
 
 <div class="mb-10 flex flex-wrap items-center justify-between gap-4">
-	<h1 class="text-large-title">Oturumlar</h1>
+	<h1 class="text-large-title">Sessions</h1>
 	<Button variant="outline" class="h-11 px-5" onclick={() => (confirmAll = true)}
-		>Tüm cihazlardan çıkış yap</Button
+		>Sign out of all devices</Button
 	>
 </div>
 
@@ -58,7 +58,7 @@
 
 <div class="space-y-10">
 	{#if current}
-		<SettingsGroup title="Mevcut oturum">
+		<SettingsGroup title="Current session">
 			{#each currentDetails as [term, value] (term)}
 				<SettingsRow label={term} {value} />
 			{/each}
@@ -67,15 +67,15 @@
 
 	<!-- Like the device list of an Apple Account: each signed-in browser opens its own screen. -->
 	<SettingsGroup
-		title="Aktif oturumlar"
-		footer="Tanımadığın bir cihaz görürsen oturumunu kapat ve şifreni değiştir."
+		title="Active sessions"
+		footer="If you see a device you don’t recognize, end its session and change your password."
 	>
 		{#each data.sessions as session (session.id)}
 			{@const device = describeDevice(session.user_agent)}
 			{@const Icon = icons[device.kind]}
 			<SettingsRow
 				label={device.name}
-				description="{session.ip || '—'} · {formatMediumDate(session.created_at)} tarihinde giriş"
+				description="{session.ip || '—'} · signed in {formatMediumDate(session.created_at)}"
 				href={resolve('/settings/sessions/[id]', { id: session.id })}
 			>
 				{#snippet media()}
@@ -83,7 +83,7 @@
 						<Icon class="size-4" strokeWidth={1.8} aria-hidden="true" />
 					</span>
 				{/snippet}
-				{#if session.current}<Badge variant="secondary">Bu cihaz</Badge>{/if}
+				{#if session.current}<Badge variant="secondary">This device</Badge>{/if}
 			</SettingsRow>
 		{/each}
 	</SettingsGroup>
@@ -105,17 +105,18 @@
 			}}
 		>
 			<AlertDialog.Header>
-				<AlertDialog.Title>Tüm cihazlardan çıkış yapılsın mı?</AlertDialog.Title>
+				<AlertDialog.Title>Sign out of all devices?</AlertDialog.Title>
 				<AlertDialog.Description>
-					Bu cihaz dahil {data.sessions.length} cihazdaki oturumun kapanır. Yeniden giriş yapman gerekecek.
+					This signs you out on all {data.sessions.length} devices, including this one. You’ll need to
+					sign in again.
 				</AlertDialog.Description>
 			</AlertDialog.Header>
 			<AlertDialog.Footer>
 				<AlertDialog.Cancel type="button" class="h-11" disabled={signingOut}
-					>Vazgeç</AlertDialog.Cancel
+					>Cancel</AlertDialog.Cancel
 				>
 				<Button type="submit" variant="destructive" class="h-11" disabled={signingOut}>
-					{#if signingOut}<Spinner />{/if}Çıkış yap
+					{#if signingOut}<Spinner />{/if}Sign out
 				</Button>
 			</AlertDialog.Footer>
 		</form>

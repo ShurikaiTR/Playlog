@@ -16,27 +16,27 @@
 </script>
 
 <svelte:head>
-	<title>Playthru: Güvenlik</title>
+	<title>Playthru: Security</title>
 </svelte:head>
 
-<h1 class="mb-10 text-large-title">Güvenlik</h1>
+<h1 class="mb-10 text-large-title">Security</h1>
 
 <SettingsGroup>
 	<SettingsRow
-		label="Şifre ile giriş"
+		label="Password sign-in"
 		description={changed
-			? 'Şifren değiştirildi.'
+			? 'Your password was changed.'
 			: account.has_password
-				? 'Hesabına e-posta ve şifreyle girmek için kullandığın şifreyi yönet.'
-				: 'Şu an sadece sosyal hesabınla giriş yapıyorsun. Şifre belirlersen e-postanla da girebilirsin.'}
+				? 'Manage the password you use to sign in with email.'
+				: 'You currently sign in with a social account only. Set a password to sign in with your email too.'}
 	>
 		{#if account.has_password}
 			<Button variant="outline" class="h-11 px-5" onclick={() => (changeOpen = true)}
-				>Şifreyi değiştir</Button
+				>Change password</Button
 			>
 		{:else}
 			<Button variant="outline" class="h-11 px-5" onclick={() => (setOpen = true)}
-				>Şifre belirle</Button
+				>Set password</Button
 			>
 		{/if}
 	</SettingsRow>

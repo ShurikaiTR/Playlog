@@ -9,6 +9,6 @@ import type { ApiUser } from './api.js';
  */
 export function requireRole(locals: App.Locals, min: Exclude<Role, 'user'>): ApiUser {
 	if (!locals.user) redirect(303, '/sign-in');
-	if (!hasRole(locals.user.role, min)) error(403, 'Bu sayfaya erişim yetkin yok');
+	if (!hasRole(locals.user.role, min)) error(403, 'You don’t have access to this page');
 	return locals.user;
 }

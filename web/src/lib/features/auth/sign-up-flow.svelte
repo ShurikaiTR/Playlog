@@ -73,7 +73,7 @@
 	// Errors that belong to the email step send the visitor back there.
 	const EMAIL_ERRORS = new Set(['invalid_email', 'email_taken']);
 
-	// Details step and "Tekrar gönder": checks the details and mails the code.
+	// Details step and "Resend": checks the details and mails the code.
 	const submitStart: SubmitFunction = ({ cancel }) => {
 		if (!captchaReady()) {
 			cancel();

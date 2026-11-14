@@ -18,10 +18,10 @@
 	// The account page has its own window, like the settings app: a left menu of sections and
 	// the open section beside it. On phones the menu scrolls sideways above the section.
 	const navItems = [
-		{ href: '/settings', label: 'Hesap', icon: UserRoundIcon },
-		{ href: '/settings/security', label: 'Güvenlik', icon: LockIcon },
-		{ href: '/settings/sessions', label: 'Oturumlar', icon: MonitorSmartphoneIcon },
-		{ href: '/settings/data', label: 'Veri', icon: DatabaseIcon }
+		{ href: '/settings', label: 'Account', icon: UserRoundIcon },
+		{ href: '/settings/security', label: 'Security', icon: LockIcon },
+		{ href: '/settings/sessions', label: 'Sessions', icon: MonitorSmartphoneIcon },
+		{ href: '/settings/data', label: 'Data', icon: DatabaseIcon }
 	] as const;
 
 	const isActive = (href: string) =>
@@ -30,7 +30,7 @@
 	let logoutForm = $state<HTMLFormElement | null>(null);
 
 	function signOut() {
-		showAuthTransition({ title: 'Çıkış yapılıyor', description: 'Görüşmek üzere…' });
+		showAuthTransition({ title: 'Signing out', description: 'See you around…' });
 		logoutForm?.requestSubmit();
 	}
 </script>
@@ -45,7 +45,7 @@
 			<a
 				href={resolve('/(app)')}
 				class="inline-block rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-				aria-label="Playthru ana sayfa"
+				aria-label="Playthru home"
 			>
 				<img
 					src="/logos/playthru.svg"
@@ -60,12 +60,12 @@
 				variant="ghost"
 				class="-mx-3 h-11 gap-2 rounded-xl px-3 text-callout font-normal text-muted-foreground"
 			>
-				<ArrowUpLeftIcon class="size-4" />Siteye dön
+				<ArrowUpLeftIcon class="size-4" />Back to the site
 			</Button>
 		</div>
 
 		<ScrollArea orientation="horizontal" class="-mx-1 md:mx-0">
-			<nav class="flex gap-1 px-1 pb-1 md:flex-col md:px-0" aria-label="Hesap bölümleri">
+			<nav class="flex gap-1 px-1 pb-1 md:flex-col md:px-0" aria-label="Account sections">
 				{#each navItems as item (item.href)}
 					{@const active = isActive(item.href)}
 					<Button
@@ -88,7 +88,7 @@
 			class="hidden h-11 cursor-pointer justify-start gap-2.5 rounded-xl px-3 text-callout font-normal text-muted-foreground md:mt-auto md:inline-flex"
 			onclick={signOut}
 		>
-			<LogOutIcon class="size-4" />Çıkış yap
+			<LogOutIcon class="size-4" />Sign out
 		</Button>
 	</aside>
 

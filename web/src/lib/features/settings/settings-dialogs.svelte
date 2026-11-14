@@ -8,7 +8,7 @@
 
 	onMount(() => {
 		try {
-			languageChoice.value = localStorage.getItem('playlog-language') ?? 'tr';
+			languageChoice.value = localStorage.getItem('playlog-language') ?? 'en';
 		} catch {
 			// Storage can be unavailable (private mode); the default stays.
 		}

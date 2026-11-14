@@ -138,7 +138,7 @@
 							class="-ms-3 mb-2 h-11 cursor-pointer gap-0.5 rounded-xl ps-1.5 pe-3 text-callout text-primary"
 							onclick={() => (settingsDialog.showList = true)}
 						>
-							<ChevronLeftIcon class="size-5" aria-hidden="true" />Ayarlar
+							<ChevronLeftIcon class="size-5" aria-hidden="true" />Settings
 						</Button>
 					{/if}
 

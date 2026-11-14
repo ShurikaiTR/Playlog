@@ -19,38 +19,38 @@
 
 	function submit(event: SubmitEvent) {
 		event.preventDefault();
-		notice = 'Bildirimler şu anda kullanılamıyor. Bildirimin gönderilmedi.';
+		notice = 'Reports aren’t available right now. Your report wasn’t sent.';
 	}
 </script>
 
 <Dialog.Root bind:open>
 	<Dialog.Content>
 		<Dialog.Header>
-			<Dialog.Title>Sorun bildir</Dialog.Title>
+			<Dialog.Title>Report a problem</Dialog.Title>
 			<Dialog.Description
-				>{title} bilgilerinde neyin düzeltilmesi gerektiğini bize anlat.</Dialog.Description
+				>Tell us what needs fixing in the information about {title}.</Dialog.Description
 			>
 		</Dialog.Header>
 		<form class="space-y-4" onsubmit={submit}>
 			<div class="space-y-2">
-				<Label for="report-reason">Neden</Label>
+				<Label for="report-reason">Reason</Label>
 				<Select.Root type="single" bind:value={reason}>
 					<Select.Trigger id="report-reason" class="h-10 w-full">
-						<span data-slot="select-value">{reason || 'Bir neden seç'}</span>
+						<span data-slot="select-value">{reason || 'Choose a reason'}</span>
 					</Select.Trigger>
 					<Select.Content class="rounded-xl">
-						{#each ['Yanlış bilgi', 'Yanlış görsel', 'Eksik bilgi', 'Diğer'] as reason (reason)}
+						{#each ['Wrong information', 'Wrong image', 'Missing information', 'Other'] as reason (reason)}
 							<Select.Item value={reason} class="rounded-lg">{reason}</Select.Item>
 						{/each}
 					</Select.Content>
 				</Select.Root>
 			</div>
 			<div class="space-y-2">
-				<Label for="report-details">Ayrıntılar</Label>
+				<Label for="report-details">Details</Label>
 				<Textarea
 					id="report-details"
 					bind:value={details}
-					placeholder="Sorunu anlat…"
+					placeholder="Describe the problem…"
 					class="min-h-24 resize-y"
 				/>
 			</div>
@@ -60,9 +60,9 @@
 					type="button"
 					variant="outline"
 					class="cursor-pointer"
-					onclick={() => (open = false)}>Vazgeç</Button
+					onclick={() => (open = false)}>Cancel</Button
 				>
-				<Button type="submit" class="cursor-pointer">Bildirimi gönder</Button>
+				<Button type="submit" class="cursor-pointer">Send report</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

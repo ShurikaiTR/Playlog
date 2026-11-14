@@ -15,7 +15,7 @@ export const load: LayoutServerLoad = async (event) => {
 	]);
 	if (!account.ok) {
 		if (account.status === 401) redirect(303, '/sign-in');
-		error(503, 'Hesap bilgilerin şu an yüklenemedi. Biraz sonra tekrar dene.');
+		error(503, 'We couldn’t load your account right now. Try again in a moment.');
 	}
 	return {
 		account: {

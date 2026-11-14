@@ -30,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>Playthru: {device?.name ?? 'Oturum'}</title>
+	<title>Playthru: {device?.name ?? 'Session'}</title>
 </svelte:head>
 
 <Button
@@ -38,7 +38,7 @@
 	variant="ghost"
 	class="-ms-3 mb-4 h-11 gap-0.5 rounded-xl ps-1.5 pe-3 text-callout font-normal"
 >
-	<ChevronLeftIcon class="size-5" aria-hidden="true" />Oturumlar
+	<ChevronLeftIcon class="size-5" aria-hidden="true" />Sessions
 </Button>
 
 {#if session && device}
@@ -50,28 +50,28 @@
 		<div>
 			<h1 class="text-title-2">{device.name}</h1>
 			{#if session.current}
-				<p class="text-footnote text-muted-foreground">Bu cihaz</p>
+				<p class="text-footnote text-muted-foreground">This device</p>
 			{/if}
 		</div>
 	</div>
 
 	<div class="space-y-10">
 		<SettingsGroup>
-			<SettingsRow label="IP adresi" value={session.ip || 'Bilinmiyor'} />
-			<SettingsRow label="İşletim sistemi" value={device.os} />
-			<SettingsRow label="Tarayıcı" value={device.browser} />
-			<SettingsRow label="İstemci" value="Web" />
-			<SettingsRow label="Son etkinlik" value={formatDateTime(session.last_seen_at)} />
-			<SettingsRow label="Giriş tarihi" value={formatMediumDate(session.created_at)} />
-			<SettingsRow label="Bitiş tarihi" value={formatMediumDate(session.expires_at)} />
+			<SettingsRow label="IP address" value={session.ip || 'Unknown'} />
+			<SettingsRow label="Operating system" value={device.os} />
+			<SettingsRow label="Browser" value={device.browser} />
+			<SettingsRow label="Client" value="Web" />
+			<SettingsRow label="Last active" value={formatDateTime(session.last_seen_at)} />
+			<SettingsRow label="Signed in" value={formatMediumDate(session.created_at)} />
+			<SettingsRow label="Expires" value={formatMediumDate(session.expires_at)} />
 		</SettingsGroup>
 
 		<SettingsGroup
 			footer={session.current
-				? 'Bu cihazda Playthru hesabından çıkış yaparsın.'
-				: 'Bu cihaz yeniden giriş yapana kadar hesabına erişemez.'}
+				? 'You’ll sign out of Playthru on this device.'
+				: 'This device can’t access your account until it signs in again.'}
 		>
-			<SettingsRow label="Oturumu kapat" destructive onclick={() => (confirmOpen = true)} />
+			<SettingsRow label="End session" destructive onclick={() => (confirmOpen = true)} />
 		</SettingsGroup>
 	</div>
 
@@ -85,7 +85,7 @@
 				class="grid gap-6"
 				use:enhance={({ cancel }) => {
 					pending = true;
-					// This device signs out like "Çıkış yap" does.
+					// This device signs out like "Sign out" does.
 					if (session.current) {
 						cancel();
 						logoutForm?.requestSubmit();
@@ -101,28 +101,26 @@
 				<input type="hidden" name="id" value={session.id} />
 				<AlertDialog.Header>
 					<AlertDialog.Title
-						>{session.current
-							? 'Bu cihazda çıkış yapılsın mı?'
-							: 'Oturum kapatılsın mı?'}</AlertDialog.Title
+						>{session.current ? 'Sign out on this device?' : 'End this session?'}</AlertDialog.Title
 					>
 					<AlertDialog.Description>
 						{session.current
-							? 'Yeniden giriş yapman gerekecek.'
-							: `${device.name} hesabına yeniden giriş yapana kadar erişemez.`}
+							? 'You’ll need to sign in again.'
+							: `${device.name} can’t access your account until it signs in again.`}
 					</AlertDialog.Description>
 				</AlertDialog.Header>
 				<AlertDialog.Footer>
 					<AlertDialog.Cancel type="button" class="h-11" disabled={pending}
-						>Vazgeç</AlertDialog.Cancel
+						>Cancel</AlertDialog.Cancel
 					>
 					<Button type="submit" variant="destructive" class="h-11" disabled={pending}>
-						{#if pending}<Spinner />{/if}{session.current ? 'Çıkış yap' : 'Oturumu kapat'}
+						{#if pending}<Spinner />{/if}{session.current ? 'Sign out' : 'End session'}
 					</Button>
 				</AlertDialog.Footer>
 			</form>
 		</AlertDialog.Content>
 	</AlertDialog.Root>
 {:else}
-	<h1 class="mb-3 text-title-2">Oturum bulunamadı</h1>
-	<p class="text-muted-foreground">Bu cihazın oturumu artık açık değil.</p>
+	<h1 class="mb-3 text-title-2">Session not found</h1>
+	<p class="text-muted-foreground">This device is no longer signed in.</p>
 {/if}

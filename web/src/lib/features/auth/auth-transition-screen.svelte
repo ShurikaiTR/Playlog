@@ -6,7 +6,6 @@
 
 {#if authTransition.current}
 	<div
-		lang="tr"
 		class="fixed inset-0 z-100 flex flex-col items-center justify-center bg-background px-6 text-center"
 		role="status"
 		aria-live="polite"

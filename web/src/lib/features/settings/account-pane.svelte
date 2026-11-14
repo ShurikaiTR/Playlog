@@ -7,7 +7,7 @@
 	import AccountAvatar from '#lib/features/account/account-avatar.svelte';
 	import ScreenHeader from './screen-header.svelte';
 
-	// The account section of the settings window: who is signed in, "Yönet" for the /settings page.
+	// The account section of the settings window: who is signed in, "Manage" for the /settings page.
 	const user = $derived(page.data.user);
 	const name = $derived(user ? user.displayName || user.username : '');
 
@@ -20,7 +20,7 @@
 	}
 </script>
 
-<ScreenHeader title="Hesap" />
+<ScreenHeader title="Account" />
 
 {#if user}
 	<div class="flex flex-col gap-6">
@@ -39,7 +39,7 @@
 				variant="outline"
 				size="action"
 				class="shrink-0"
-				onclick={manage}>Yönet</Button
+				onclick={manage}>Manage</Button
 			>
 		</div>
 		<hr class="mx-5 border-border" />

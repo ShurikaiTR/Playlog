@@ -9,7 +9,7 @@
 		<a
 			href="/"
 			class="inline-block rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-			aria-label="Playthru ana sayfa"
+			aria-label="Playthru home"
 		>
 			<img
 				src="/logos/playthru.svg"

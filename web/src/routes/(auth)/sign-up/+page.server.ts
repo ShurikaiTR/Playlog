@@ -14,7 +14,7 @@ export const load: PageServerLoad = async (event) => {
 const text = (data: FormData, key: string) => String(data.get(key) ?? '').trim();
 
 export const actions: Actions = {
-	// Checks the details and mails the 6-digit code. Also used by "Tekrar gönder".
+	// Checks the details and mails the 6-digit code. Also used by "Resend".
 	start: async (event) => {
 		const data = await event.request.formData();
 		const result = await api(event, '/v1/auth/signup/start', {

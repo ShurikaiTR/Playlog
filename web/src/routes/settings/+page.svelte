@@ -71,9 +71,9 @@
 	// ---------- Theme ----------
 
 	const themes = [
-		{ id: 'dark', label: 'Koyu tema', icon: MoonIcon },
-		{ id: 'light', label: 'Açık tema', icon: SunIcon },
-		{ id: 'system', label: 'Sistem teması', icon: LaptopIcon }
+		{ id: 'dark', label: 'Dark theme', icon: MoonIcon },
+		{ id: 'light', label: 'Light theme', icon: SunIcon },
+		{ id: 'system', label: 'System theme', icon: LaptopIcon }
 	] as const;
 
 	function changeTheme(id: (typeof themes)[number]['id']) {
@@ -99,7 +99,7 @@
 		methodError = '';
 		// Providers without keys on the server are listed but can't be connected yet.
 		if (!account.available[provider]) {
-			methodError = `${providerSignInLabel(provider)} henüz açık değil.`;
+			methodError = `${providerSignInLabel(provider)} isn’t available yet.`;
 			return;
 		}
 		busyProvider = provider;
@@ -123,7 +123,7 @@
 			else methodError = accountErrorMessage(result.error);
 		} else {
 			await invalidateAll();
-			toast.success(`${providerLabel(provider)} bağlantısı kaldırıldı`);
+			toast.success(`${providerLabel(provider)} was disconnected`);
 		}
 		busyProvider = null;
 		removing = null;
@@ -135,7 +135,7 @@
 		const done = params.get('linked');
 		const failed = params.get('error');
 		if (!done && !failed) return;
-		if (done) toast.success(`${providerLabel(done as Provider)} hesabın bağlandı`);
+		if (done) toast.success(`${providerLabel(done as Provider)} was connected`);
 		else methodError = accountErrorMessage(failed ?? undefined);
 		// Only the query changes; the path stays the current page.
 		replaceState(page.url.pathname, page.state);
@@ -143,10 +143,10 @@
 </script>
 
 <svelte:head>
-	<title>Playthru: Hesap</title>
+	<title>Playthru: Account</title>
 </svelte:head>
 
-<h1 class="mb-10 text-large-title">Hesap</h1>
+<h1 class="mb-10 text-large-title">Account</h1>
 
 <div class="space-y-10">
 	<SettingsGroup>
@@ -159,12 +159,12 @@
 					<p class="truncate text-footnote text-muted-foreground">@{account.username}</p>
 				</div>
 			</div>
-			<Button variant="outline" class="h-11 px-5" onclick={openProfile}>Değiştir</Button>
+			<Button variant="outline" class="h-11 px-5" onclick={openProfile}>Change</Button>
 		</div>
-		<SettingsRow label="E-posta" value={account.email ?? 'Eklenmedi'} />
-		<SettingsRow label="Hesap oluşturma" value={formatDate(account.created_at)} />
-		<SettingsRow label="Tema">
-			<div class="flex gap-1" role="group" aria-label="Tema seç">
+		<SettingsRow label="Email" value={account.email ?? 'Not added'} />
+		<SettingsRow label="Account created" value={formatDate(account.created_at)} />
+		<SettingsRow label="Theme">
+			<div class="flex gap-1" role="group" aria-label="Choose a theme">
 				{#each themes as theme (theme.id)}
 					{@const selected = userPrefersMode.current === theme.id}
 					<Button
@@ -187,10 +187,10 @@
 	</SettingsGroup>
 
 	<SettingsGroup
-		title="Giriş yöntemleri"
-		footer="Hesabına girmenin son yolu kaldırılamaz; önce başka bir giriş yöntemi ekle."
+		title="Sign-in methods"
+		footer="You can’t remove your last way to sign in. Add another method first."
 	>
-		<SettingsRow label="E-posta ve şifre ile giriş">
+		<SettingsRow label="Sign in with email and password">
 			{#snippet media()}
 				<span class="flex size-9 items-center justify-center rounded-full bg-background">
 					<MailIcon class="size-4" />
@@ -198,10 +198,10 @@
 			{/snippet}
 			{#if account.has_password}
 				<Button variant="outline" class="h-11 px-5" onclick={() => (changePasswordOpen = true)}
-					>Şifreyi değiştir</Button
+					>Change password</Button
 				>
 			{:else}
-				<Button class="h-11 px-5" onclick={() => (setPasswordOpen = true)}>Etkinleştir</Button>
+				<Button class="h-11 px-5" onclick={() => (setPasswordOpen = true)}>Turn on</Button>
 			{/if}
 		</SettingsRow>
 
@@ -210,7 +210,7 @@
 			{@const since = linked.get(provider.id)}
 			<SettingsRow
 				label={providerSignInLabel(provider.id)}
-				description={since ? `${formatDate(since)} tarihinde bağlandı` : undefined}
+				description={since ? `Connected on ${formatDate(since)}` : undefined}
 			>
 				{#snippet media()}
 					<span class="flex size-9 items-center justify-center rounded-full bg-background">
@@ -222,7 +222,7 @@
 						variant="outline"
 						class="h-11 px-5"
 						disabled={busyProvider !== null}
-						onclick={() => askDisconnect(provider.id)}>Kaldır</Button
+						onclick={() => askDisconnect(provider.id)}>Disconnect</Button
 					>
 				{:else}
 					<Button
@@ -230,7 +230,7 @@
 						disabled={busyProvider !== null}
 						onclick={() => connect(provider.id)}
 					>
-						{#if busyProvider === provider.id}<Spinner />{/if}Bağla
+						{#if busyProvider === provider.id}<Spinner />{/if}Connect
 					</Button>
 				{/if}
 			</SettingsRow>
@@ -244,13 +244,14 @@
 <Dialog.Root bind:open={profileOpen}>
 	<Dialog.Content>
 		<Dialog.Header>
-			<Dialog.Title class="text-headline">Profili düzenle</Dialog.Title>
-			<Dialog.Description>Görünen adın ve kullanıcı adın sitede herkese görünür.</Dialog.Description
+			<Dialog.Title class="text-headline">Edit profile</Dialog.Title>
+			<Dialog.Description
+				>Your display name and username are visible to everyone.</Dialog.Description
 			>
 		</Dialog.Header>
 		<form class="space-y-4" onsubmit={saveProfile}>
 			<div class="space-y-2">
-				<Label for="profile-name">Görünen ad</Label>
+				<Label for="profile-name">Display name</Label>
 				<Input
 					id="profile-name"
 					bind:value={nameInput}
@@ -260,7 +261,7 @@
 				/>
 			</div>
 			<div class="space-y-2">
-				<Label for="profile-username">Kullanıcı adı</Label>
+				<Label for="profile-username">Username</Label>
 				<Input
 					id="profile-username"
 					bind:value={usernameInput}
@@ -273,7 +274,7 @@
 					aria-describedby="profile-username-hint"
 				/>
 				<p id="profile-username-hint" class="px-4 text-footnote text-muted-foreground">
-					Küçük harf, rakam ve alt çizgi. Profil adresin de değişir.
+					Lowercase letters, numbers and underscores. Your profile address changes too.
 				</p>
 			</div>
 			{#if saveError}
@@ -284,10 +285,10 @@
 					type="button"
 					variant="outline"
 					class="h-11 px-5"
-					onclick={() => (profileOpen = false)}>Vazgeç</Button
+					onclick={() => (profileOpen = false)}>Cancel</Button
 				>
 				<Button type="submit" class="h-11 px-5" disabled={saving}>
-					{#if saving}<Spinner />{/if}Kaydet
+					{#if saving}<Spinner />{/if}Save
 				</Button>
 			</Dialog.Footer>
 		</form>
@@ -298,13 +299,14 @@
 	<Dialog.Content class="text-center sm:max-w-sm">
 		<Dialog.Header class="items-center gap-3 pt-2">
 			<TriangleAlertIcon class="size-8" strokeWidth={1.6} />
-			<Dialog.Title class="text-center text-headline">Giriş yöntemi kaldırılamıyor</Dialog.Title>
+			<Dialog.Title class="text-center text-headline">Can’t remove this sign-in method</Dialog.Title
+			>
 			<Dialog.Description class="text-center">
-				Bu hesapta başka bir giriş yöntemin yok. Devam etmek için önce başka bir giriş yöntemi ekle.
+				This is your only sign-in method. Add another one before you continue.
 			</Dialog.Description>
 		</Dialog.Header>
 		<Button variant="outline" class="h-11 w-full" onclick={() => (lastMethodOpen = false)}
-			>Kapat</Button
+			>Close</Button
 		>
 	</Dialog.Content>
 </Dialog.Root>
@@ -313,13 +315,14 @@
 	<AlertDialog.Content size="sm">
 		{#if removing}
 			<AlertDialog.Header>
-				<AlertDialog.Title>{providerLabel(removing)} bağlantısı kaldırılsın mı?</AlertDialog.Title>
+				<AlertDialog.Title>Disconnect {providerLabel(removing)}?</AlertDialog.Title>
 				<AlertDialog.Description>
-					Artık {providerLabel(removing)} ile giriş yapamazsın. İstediğin zaman yeniden bağlayabilirsin.
+					You won’t be able to sign in with {providerLabel(removing)}. You can connect it again any
+					time.
 				</AlertDialog.Description>
 			</AlertDialog.Header>
 			<AlertDialog.Footer>
-				<AlertDialog.Cancel class="h-11" disabled={busyProvider !== null}>Vazgeç</AlertDialog.Cancel
+				<AlertDialog.Cancel class="h-11" disabled={busyProvider !== null}>Cancel</AlertDialog.Cancel
 				>
 				<AlertDialog.Action
 					variant="destructive"
@@ -327,7 +330,7 @@
 					disabled={busyProvider !== null}
 					onclick={disconnect}
 				>
-					{#if busyProvider}<Spinner />{/if}Bağlantıyı kaldır
+					{#if busyProvider}<Spinner />{/if}Disconnect
 				</AlertDialog.Action>
 			</AlertDialog.Footer>
 		{/if}
@@ -338,5 +341,5 @@
 <ChangePasswordDialog
 	bind:open={changePasswordOpen}
 	email={account.email}
-	onChanged={() => toast.success('Şifren değiştirildi')}
+	onChanged={() => toast.success('Your password was changed')}
 />

@@ -8,7 +8,7 @@
 		class: className
 	}: { name: string; src?: string | null; class?: string } = $props();
 
-	const initial = $derived(name.charAt(0).toLocaleUpperCase('tr'));
+	const initial = $derived(name.charAt(0).toLocaleUpperCase('en'));
 </script>
 
 <Avatar.Root class={cn('shrink-0', className)}>

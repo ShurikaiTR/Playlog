@@ -6,7 +6,7 @@ export type { EnabledProviders, Provider };
 
 export function providerParam(value: string): Provider {
 	if (isProvider(value)) return value;
-	error(404, 'Sayfa bulunamadı');
+	error(404, 'Page not found');
 }
 
 // The only places the start route may send a visitor.

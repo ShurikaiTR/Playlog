@@ -14,7 +14,7 @@
 	let { user }: { user: { username: string; displayName: string | null } } = $props();
 
 	const name = $derived(user.displayName || user.username);
-	const initial = $derived(name.charAt(0).toLocaleUpperCase('tr'));
+	const initial = $derived(name.charAt(0).toLocaleUpperCase('en'));
 	const sidebar = Sidebar.useSidebar();
 	const collapsed = $derived(!sidebar.isMobile && sidebar.state === 'collapsed');
 

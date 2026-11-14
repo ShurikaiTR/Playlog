@@ -49,7 +49,7 @@ export async function api<T = unknown>(
 			signal: AbortSignal.timeout(10_000)
 		});
 	} catch (cause) {
-		console.error(`API isteği başarısız (${path}):`, cause);
+		console.error(`API request failed (${path}):`, cause);
 		return { ok: false, status: 503, error: 'unavailable' };
 	}
 

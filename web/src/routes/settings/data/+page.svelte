@@ -11,34 +11,34 @@
 </script>
 
 <svelte:head>
-	<title>Playthru: Veri</title>
+	<title>Playthru: Data</title>
 </svelte:head>
 
-<h1 class="mb-10 text-large-title">Veri</h1>
+<h1 class="mb-10 text-large-title">Data</h1>
 
 <div class="space-y-10">
 	<SettingsGroup>
 		<SettingsRow
-			label="Verilerimi indir"
-			description="Profilin, giriş yöntemlerin ve açık oturumların tek bir dosya olarak iner."
+			label="Download my data"
+			description="Your profile, sign-in methods and active sessions, as a single file."
 		>
 			<Button
 				href="/settings/data/export"
 				download
 				data-sveltekit-reload
 				variant="outline"
-				class="h-11 px-5">İndir</Button
+				class="h-11 px-5">Download</Button
 			>
 		</SettingsRow>
 	</SettingsGroup>
 
 	<SettingsGroup>
 		<SettingsRow
-			label="Hesabı sil"
-			description="Hesabın ve ona bağlı tüm veriler kalıcı olarak silinir. Bu işlem geri alınamaz."
+			label="Delete account"
+			description="Your account and everything connected to it are deleted for good. This can’t be undone."
 		>
 			<Button variant="destructive" class="h-11 px-5" onclick={() => (deleteOpen = true)}
-				>Sil</Button
+				>Delete</Button
 			>
 		</SettingsRow>
 	</SettingsGroup>

@@ -35,43 +35,41 @@ export const providers: { id: Provider; label: string }[] = (
 
 export const providerLabel = (id: Provider) => providerLabels[id] ?? id;
 
-export const providerSignInLabel = (id: Provider) => `${providerLabel(id)} ile giriş`;
+export const providerSignInLabel = (id: Provider) => `Sign in with ${providerLabel(id)}`;
 
 const messages: Record<string, string> = {
-	invalid_username:
-		'Kullanıcı adı 3-20 karakter olmalı; küçük harf, rakam ve alt çizgi kullanabilirsin.',
-	reserved_username: 'Bu kullanıcı adı kullanılamaz, başka bir tane dene.',
-	username_taken: 'Bu kullanıcı adı alınmış, başka bir tane dene.',
-	invalid_display_name: 'Görünen ad en fazla 40 karakter olabilir.',
-	invalid_password: 'Mevcut şifre hatalı.',
+	invalid_username: 'Usernames are 3 to 20 characters: lowercase letters, numbers and underscores.',
+	reserved_username: 'That username isn’t available. Try another one.',
+	username_taken: 'That username is taken. Try another one.',
+	invalid_display_name: 'Your display name can be up to 40 characters.',
+	invalid_password: 'Your current password is incorrect.',
 	session_not_fresh:
-		'Güvenliğin için çıkış yapıp yeniden giriş yap, sonra hesabını silmeyi tekrar dene.',
-	last_sign_in_method:
-		'Bu hesapta başka bir giriş yöntemin yok. Devam etmek için önce başka bir giriş yöntemi ekle.',
-	last_admin: 'Son yönetici hesabı silinemez. Önce yönetici yetkisini başka birine ver.',
-	email_taken: 'Bu e-posta başka bir hesapta kullanılıyor. Farklı bir adres dene.',
-	invalid_email: 'Geçerli bir e-posta adresi gir.',
-	invalid_code: 'Kod hatalı ya da süresi dolmuş. Yeni bir kod isteyebilirsin.',
-	code_cooldown: 'Yeni kod istemeden önce bir dakika bekle.',
-	provider_already_linked: 'Bu hesap zaten bağlı.',
-	provider_linked_elsewhere: 'Bu hesap başka bir Playthru hesabına bağlı.',
-	not_linked: 'Bu hesap bağlı değil.',
-	session_not_found: 'Bu cihazın oturumu zaten kapanmış.',
-	access_denied: 'Bağlama iptal edildi.',
-	invalid_state: 'Bağlama süresi doldu. Lütfen tekrar dene.',
-	oauth_failed: 'Hesap bağlanamadı. Lütfen tekrar dene.',
-	unknown_provider: 'Bu giriş yöntemi şu an kullanılamıyor.',
-	rate_limited: 'Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.',
-	unauthenticated: 'Oturumun kapanmış. Lütfen yeniden giriş yap.',
-	unavailable: 'Sunucuya şu an ulaşılamıyor. Biraz sonra tekrar dene.'
+		'For your security, sign out and back in, then try deleting your account again.',
+	last_sign_in_method: 'This is your only sign-in method. Add another one before you continue.',
+	last_admin: 'The last admin account can’t be deleted. Give someone else admin access first.',
+	email_taken: 'That email is used by another account. Try a different address.',
+	invalid_email: 'Enter a valid email address.',
+	invalid_code: 'That code is wrong or has expired. You can ask for a new one.',
+	code_cooldown: 'Wait a minute before asking for a new code.',
+	provider_already_linked: 'This account is already connected.',
+	provider_linked_elsewhere: 'This account is connected to another Playthru account.',
+	not_linked: 'This account isn’t connected.',
+	session_not_found: 'This device is already signed out.',
+	access_denied: 'Connecting was cancelled.',
+	invalid_state: 'The connection timed out. Please try again.',
+	oauth_failed: 'The account couldn’t be connected. Please try again.',
+	unknown_provider: 'This sign-in method isn’t available right now.',
+	rate_limited: 'Too many attempts. Wait a bit and try again.',
+	unauthenticated: 'You’ve been signed out. Please sign in again.',
+	unavailable: 'We can’t reach the server right now. Try again in a moment.'
 };
 
 export function accountErrorMessage(code: string | undefined) {
-	return (code && messages[code]) || 'Bir şeyler ters gitti. Lütfen tekrar dene.';
+	return (code && messages[code]) || 'Something went wrong. Please try again.';
 }
 
 /** A field-specific message for the new-password check, which shares a code with a wrong current password. */
-export const NEW_PASSWORD_HINT = 'Şifre 8-128 karakter olmalı.';
+export const NEW_PASSWORD_HINT = 'Passwords are 8 to 128 characters.';
 
 /** Calls the account endpoints under /api/account; failures come back as an error code. */
 export async function accountRequest(
@@ -125,17 +123,17 @@ export function describeDevice(userAgent: string | null) {
 				: 'computer';
 	return {
 		/** "Safari · macOS" style name for lists. */
-		name: [browser, os].filter(Boolean).join(' · ') || 'Bilinmeyen cihaz',
-		browser: browser ?? 'Bilinmeyen tarayıcı',
+		name: [browser, os].filter(Boolean).join(' · ') || 'Unknown device',
+		browser: browser ?? 'Unknown browser',
 		os: os ?? 'Bilinmeyen sistem',
 		kind
 	};
 }
 
-const dateFormat = new Intl.DateTimeFormat('tr', { dateStyle: 'long' });
-const dateTimeFormat = new Intl.DateTimeFormat('tr', { dateStyle: 'medium', timeStyle: 'short' });
+const dateFormat = new Intl.DateTimeFormat('en', { dateStyle: 'long' });
+const dateTimeFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' });
 
 export const formatDate = (iso: string) => dateFormat.format(new Date(iso));
 export const formatDateTime = (iso: string) => dateTimeFormat.format(new Date(iso));
-const mediumDateFormat = new Intl.DateTimeFormat('tr', { dateStyle: 'medium' });
+const mediumDateFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
 export const formatMediumDate = (iso: string) => mediumDateFormat.format(new Date(iso));

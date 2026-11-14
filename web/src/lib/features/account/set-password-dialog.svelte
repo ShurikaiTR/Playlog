@@ -93,16 +93,16 @@
 <Dialog.Root bind:open onOpenChange={(value) => value || reset()}>
 	<Dialog.Content>
 		<Dialog.Header>
-			<Dialog.Title class="text-headline">E-posta ve şifre ile giriş</Dialog.Title>
+			<Dialog.Title class="text-headline">Sign in with email and password</Dialog.Title>
 			<Dialog.Description>
 				{#if step === 'form'}
 					{#if hasEmail}
-						<strong>{accountEmail}</strong> ve bu şifreyle de giriş yapabilirsin.
+						<strong>{accountEmail}</strong> and this password too.
 					{:else}
-						Giriş için kullanacağın e-postayı ve bir şifre belirle.
+						Choose the email and password you’ll use to sign in.
 					{/if}
 				{:else}
-					<strong>{normalized}</strong> adresine 6 haneli bir kod gönderdik.
+					<strong>{normalized}</strong> We sent a 6-digit code to this address.
 				{/if}
 			</Dialog.Description>
 		</Dialog.Header>
@@ -113,7 +113,7 @@
 					<input type="text" name="username" value={accountEmail} autocomplete="username" hidden />
 				{:else}
 					<div class="space-y-2">
-						<Label for="set-email">E-posta</Label>
+						<Label for="set-email">Email</Label>
 						<Input
 							id="set-email"
 							type="email"
@@ -123,22 +123,22 @@
 							class="h-11"
 						/>
 						<p class="px-4 text-footnote text-muted-foreground">
-							Bu adrese bir doğrulama kodu göndereceğiz.
+							We’ll send a verification code to this address.
 						</p>
 					</div>
 				{/if}
 				<div class="space-y-2">
-					<Label for="set-new-password">Yeni şifre</Label>
+					<Label for="set-new-password">New password</Label>
 					<PasswordInput id="set-new-password" bind:value={password} autocomplete="new-password" />
-					<p class="px-4 text-footnote text-muted-foreground">En az 8 karakter.</p>
+					<p class="px-4 text-footnote text-muted-foreground">At least 8 characters.</p>
 				</div>
 				{#if error}
 					<p class="text-footnote text-destructive" role="alert">{error}</p>
 				{/if}
 				<Dialog.Footer>
-					<Button type="button" variant="outline" class="h-11 px-5" onclick={close}>Vazgeç</Button>
+					<Button type="button" variant="outline" class="h-11 px-5" onclick={close}>Cancel</Button>
 					<Button type="submit" class="h-11 px-5" disabled={pending}>
-						{#if pending}<Spinner />{/if}{changed ? 'Kod gönder' : 'Kaydet'}
+						{#if pending}<Spinner />{/if}{changed ? 'Send code' : 'Save'}
 					</Button>
 				</Dialog.Footer>
 			</form>
@@ -177,10 +177,10 @@
 						onclick={() => {
 							step = 'form';
 							code = error = '';
-						}}>Geri</Button
+						}}>Back</Button
 					>
 					<Button type="submit" class="h-11 px-5" disabled={pending || code.length !== 6}>
-						{#if pending}<Spinner />{/if}Doğrula ve kaydet
+						{#if pending}<Spinner />{/if}Verify and save
 					</Button>
 				</Dialog.Footer>
 			</form>
