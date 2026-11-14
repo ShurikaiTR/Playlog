@@ -14,26 +14,24 @@
 	let { data } = $props();
 	const profile = $derived(data.profile);
 
-	const initial = (name: string) => name.charAt(0).toLocaleUpperCase('tr');
+	const initial = (name: string) => name.charAt(0).toLocaleUpperCase('en');
 	let following = $state(false);
 
 	const connections = $derived([
 		{
 			key: 'following',
-			label: 'Takip edilen',
-			description: data.isOwner
-				? 'Takip ettiğin kişiler.'
-				: `@${profile.username} kullanıcısının takip ettiği kişiler.`,
-			empty: data.isOwner ? 'Henüz kimseyi takip etmiyorsun.' : 'Henüz kimseyi takip etmiyor.',
+			label: 'Following',
+			description: data.isOwner ? 'People you follow.' : `People @${profile.username} follows.`,
+			empty: data.isOwner ? "You aren't following anyone yet." : "Isn't following anyone yet.",
 			people: profile.following
 		},
 		{
 			key: 'followers',
-			label: 'Takipçi',
+			label: 'Followers',
 			description: data.isOwner
-				? 'Seni takip eden kişiler.'
-				: `@${profile.username} kullanıcısını takip eden kişiler.`,
-			empty: data.isOwner ? 'Henüz takipçin yok.' : 'Henüz takipçisi yok.',
+				? 'People who follow you.'
+				: `People who follow @${profile.username}.`,
+			empty: data.isOwner ? "You don't have any followers yet." : 'No followers yet.',
 			people: profile.followers
 		}
 	] as const);
@@ -60,7 +58,7 @@
 	<title>{profile.name} | Playthru</title>
 </svelte:head>
 
-<div lang="tr" class="flex min-w-0 flex-col gap-14 pb-16">
+<div lang="en" class="flex min-w-0 flex-col gap-14 pb-16">
 	<section aria-labelledby="profile-name" class="profile-hero relative isolate min-w-0">
 		<!-- Full-bleed: slides under the header and the floating sidebar. -->
 		<div
@@ -100,7 +98,7 @@
 					</h1>
 					<p class="mt-0.5 text-sm text-muted-foreground">@{profile.username}</p>
 					<p class="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-						{profile.bio ?? 'Henüz bir biyografi yok.'}
+						{profile.bio ?? 'No bio yet.'}
 					</p>
 				</div>
 			</div>
@@ -173,7 +171,7 @@
 					<Button
 						variant="outline"
 						class="h-10 cursor-pointer rounded-full bg-background/70 px-5 backdrop-blur-sm"
-						>Profili düzenle</Button
+						>Edit profile</Button
 					>
 				{:else}
 					<Button
@@ -181,7 +179,7 @@
 						class="h-10 cursor-pointer rounded-full px-5"
 						onclick={() => (following = !following)}
 					>
-						{following ? 'Takibi bırak' : 'Takip et'}
+						{following ? 'Unfollow' : 'Follow'}
 					</Button>
 				{/if}
 			</div>
@@ -191,13 +189,15 @@
 	<section class="min-w-0 space-y-6 px-4 md:px-8" aria-labelledby="profile-lists-title">
 		<div>
 			<h2 id="profile-lists-title" class="truncate text-2xl font-medium text-primary">
-				Oyun listeleri
+				Game lists
 			</h2>
-			<p class="mt-1 text-sm text-muted-foreground">Oynadıkların ve sırada bekleyenler.</p>
+			<p class="mt-1 text-sm text-muted-foreground">
+				Games you've played and games waiting for their turn.
+			</p>
 		</div>
 
 		{#if lists.length === 0}
-			<p class="text-sm text-muted-foreground">Herkese açık bir liste yok.</p>
+			<p class="text-sm text-muted-foreground">No public lists.</p>
 		{:else}
 			<div class="grid gap-4 sm:grid-cols-2 xl:max-w-3xl">
 				{#each lists as list (list.id)}
@@ -217,17 +217,16 @@
 								{/if}
 							</AspectRatio>
 							<Avatar.Root
-								class="absolute -bottom-7 left-(--card-spacing) size-16 rounded-xl ring-4 ring-card"
+								class="absolute -bottom-7 left-(--card-spacing) size-14 ring-4 ring-card"
 							>
-								<Avatar.Fallback class="rounded-xl"
-									><Icon class="size-5 text-muted-foreground" /></Avatar.Fallback
-								>
+								<Avatar.Fallback><Icon class="size-5 text-muted-foreground" /></Avatar.Fallback>
 							</Avatar.Root>
 						</div>
 						<Card.Header class="pt-10">
 							<Card.Title class="truncate">{list.name}</Card.Title>
 							<Card.Description class="truncate"
-								>{list.gameCount} oyun{list.description
+								>{list.gameCount}
+								{list.gameCount === 1 ? 'game' : 'games'}{list.description
 									? ` · ${list.description}`
 									: ''}</Card.Description
 							>
@@ -242,7 +241,7 @@
 							<a
 								href={list.href}
 								class="flex flex-col rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-								aria-label="{list.name} listesini gör">{@render listCard()}</a
+								aria-label="View {list.name}">{@render listCard()}</a
 							>
 						{:else}
 							<div class="flex flex-col">{@render listCard()}</div>
