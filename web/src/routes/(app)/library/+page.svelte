@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -59,14 +60,24 @@
 	</header>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-		<button
+		<Button
 			type="button"
+			variant="ghost"
 			onclick={openDialog}
-			class="flex min-h-48 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-muted-foreground transition-colors outline-none hover:border-foreground/30 hover:bg-muted/50 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+			class="group/new h-auto min-h-48 w-full cursor-pointer flex-col gap-3 rounded-2xl border-2 border-dashed border-border px-4 py-6 font-normal whitespace-normal text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-muted/50 hover:text-foreground"
 		>
-			<PlusIcon class="size-6" aria-hidden="true" />
-			<span class="text-callout font-medium">New list</span>
-		</button>
+			<Avatar.Root
+				class="size-14 bg-muted transition-transform duration-300 group-hover/new:scale-110"
+			>
+				<Avatar.Fallback class="bg-muted text-foreground">
+					<PlusIcon class="size-7" aria-hidden="true" />
+				</Avatar.Fallback>
+			</Avatar.Root>
+			<span class="flex flex-col gap-0.5 text-center">
+				<span class="text-callout font-medium text-foreground">New list</span>
+				<span class="text-footnote text-muted-foreground">Group games your way</span>
+			</span>
+		</Button>
 		{#each lists as list (list.id)}
 			<ListCard
 				name={list.name}
