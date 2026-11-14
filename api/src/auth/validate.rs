@@ -109,3 +109,61 @@ pub fn display_name(raw: Option<&str>) -> Result<Option<String>, AppError> {
     }
     Ok(Some(raw.to_owned()))
 }
+
+/// Bir addan (görünen ad, e-posta yerel kısmı) kullanıcı adı gövdesi üretir: Türkçe ve genel Latin
+/// harfleri ASCII karşılığına çevrilir ("Gökhan Güler" → "gokhanguler"), boşluk ve noktalama
+/// atılır, en çok 16 karakter kalır. Çevrilemeyen harfler (örn. Kiril) da atılır.
+pub fn username_base(source: &str) -> String {
+    let mut out = String::new();
+    for c in source.chars() {
+        match c {
+            'a'..='z' | '0'..='9' => out.push(c),
+            'A'..='Z' => out.push(c.to_ascii_lowercase()),
+            'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' | 'ā' | 'ă' | 'ą' | 'À' | 'Á' | 'Â' | 'Ã' | 'Ä'
+            | 'Å' | 'Ā' | 'Ă' | 'Ą' => out.push('a'),
+            'ç' | 'ć' | 'č' | 'Ç' | 'Ć' | 'Č' => out.push('c'),
+            'ď' | 'đ' | 'ð' | 'Ď' | 'Đ' | 'Ð' => out.push('d'),
+            'è' | 'é' | 'ê' | 'ë' | 'ē' | 'ė' | 'ę' | 'ě' | 'È' | 'É' | 'Ê' | 'Ë' | 'Ē' | 'Ė'
+            | 'Ę' | 'Ě' => out.push('e'),
+            'ğ' | 'ģ' | 'Ğ' | 'Ģ' => out.push('g'),
+            'ì' | 'í' | 'î' | 'ï' | 'ī' | 'į' | 'ı' | 'Ì' | 'Í' | 'Î' | 'Ï' | 'Ī' | 'Į' | 'İ' => {
+                out.push('i')
+            }
+            'ķ' | 'Ķ' => out.push('k'),
+            'ł' | 'ļ' | 'ľ' | 'Ł' | 'Ļ' | 'Ľ' => out.push('l'),
+            'ñ' | 'ń' | 'ň' | 'ņ' | 'Ñ' | 'Ń' | 'Ň' | 'Ņ' => out.push('n'),
+            'ò' | 'ó' | 'ô' | 'õ' | 'ö' | 'ø' | 'ō' | 'ő' | 'Ò' | 'Ó' | 'Ô' | 'Õ' | 'Ö' | 'Ø'
+            | 'Ō' | 'Ő' => out.push('o'),
+            'ř' | 'Ř' => out.push('r'),
+            'ś' | 'š' | 'ş' | 'ș' | 'Ś' | 'Š' | 'Ş' | 'Ș' => out.push('s'),
+            'ť' | 'ţ' | 'ț' | 'Ť' | 'Ţ' | 'Ț' => out.push('t'),
+            'ù' | 'ú' | 'û' | 'ü' | 'ū' | 'ů' | 'ű' | 'ų' | 'Ù' | 'Ú' | 'Û' | 'Ü' | 'Ū' | 'Ů'
+            | 'Ű' | 'Ų' => out.push('u'),
+            'ý' | 'ÿ' | 'Ý' | 'Ÿ' => out.push('y'),
+            'ź' | 'ż' | 'ž' | 'Ź' | 'Ż' | 'Ž' => out.push('z'),
+            'ß' => out.push_str("ss"),
+            'æ' | 'Æ' => out.push_str("ae"),
+            'œ' | 'Œ' => out.push_str("oe"),
+            'þ' | 'Þ' => out.push_str("th"),
+            _ => {}
+        }
+    }
+    out.chars().take(16).collect()
+}
+
+#[cfg(test)]
+mod username_base_tests {
+    use super::username_base;
+
+    #[test]
+    fn transliterates_turkish_and_latin() {
+        assert_eq!(username_base("Gökhan Güler"), "gokhanguler");
+        assert_eq!(username_base("İŞÇİ ığ"), "isciig");
+        assert_eq!(
+            username_base("Zoë Müller-Straße"),
+            "zoemullerstrasse"[..16].to_string()
+        );
+        assert_eq!(username_base("john.doe_99"), "johndoe99");
+        assert_eq!(username_base("日本"), "");
+    }
+}

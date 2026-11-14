@@ -332,15 +332,7 @@ async fn suggest_username(
     let source = display_name
         .or_else(|| email.and_then(|email| email.split('@').next()))
         .unwrap_or("oyuncu");
-    let mut base: String = source
-        .to_lowercase()
-        .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
-        .collect::<String>()
-        .trim_matches('_')
-        .chars()
-        .take(16)
-        .collect();
+    let mut base = validate::username_base(source);
     if base.len() < 3 {
         base = format!("oyuncu{base}");
     }
