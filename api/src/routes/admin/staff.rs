@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::{
     auth::role::{RequireAdmin, RequireModerator, Role},
     error::AppError,
+    routes::guard::{TEN_MINUTES, rate_limit},
     state::AppState,
 };
 
@@ -62,6 +63,12 @@ async fn change_role(
     Path(target_id): Path<Uuid>,
     Json(body): Json<RoleChange>,
 ) -> Result<Json<StaffMember>, AppError> {
+    rate_limit(
+        &state,
+        &format!("admin:write:{}", actor.user_id),
+        120,
+        TEN_MINUTES,
+    )?;
     let new_role = parse_role(&body.role)?;
     // Kendi rolünü değiştiren admin kendini kilitleyebilir ya da yetkisini geri alamaz.
     if target_id == actor.user_id {

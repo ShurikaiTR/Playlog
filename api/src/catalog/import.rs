@@ -148,6 +148,108 @@ pub async fn import_game(tx: &mut PgConnection, input: GameInput) -> Result<Impo
     Ok(Imported { id, slug, created })
 }
 
+/// Yönetim panelinden yeni oyun: içe aktarmanın aksine var olan bir oyunu asla güncellemez.
+/// Slug verilmişse boş olmalıdır (eski adresler de dolu sayılır); verilmezse başlıktan üretilir.
+pub async fn create_game(tx: &mut PgConnection, input: GameInput) -> Result<Imported, ImportError> {
+    let game = Validated::new(input)?;
+    let explicit = game
+        .input
+        .slug
+        .as_deref()
+        .is_some_and(|s| !s.trim().is_empty());
+    let slug = if explicit {
+        if slug_taken(tx, &game.slug, None).await? {
+            return Err(ImportError::Invalid("slug_taken"));
+        }
+        game.slug.clone()
+    } else {
+        free_slug(tx, &game).await?
+    };
+    let id = insert_game(tx, &slug, &game).await?;
+    replace_relations(tx, id, &game).await?;
+    Ok(Imported {
+        id,
+        slug,
+        created: true,
+    })
+}
+
+/// Yönetim panelinden düzenleme: oyun kimliğiyle bulunur ve alanlarıyla ilişkileri gönderilenle
+/// değiştirilir. Slug verilip değişmişse eskisi yönlendirme için geçmişe yazılır.
+pub async fn update_game_by_id(
+    tx: &mut PgConnection,
+    id: Uuid,
+    input: GameInput,
+) -> Result<Option<Imported>, ImportError> {
+    let game = Validated::new(input)?;
+    let current: Option<String> =
+        sqlx::query_scalar("SELECT slug::text FROM games WHERE id = $1 FOR UPDATE")
+            .bind(id)
+            .fetch_optional(&mut *tx)
+            .await?;
+    let Some(current) = current else {
+        return Ok(None);
+    };
+
+    let explicit = game
+        .input
+        .slug
+        .as_deref()
+        .is_some_and(|s| !s.trim().is_empty());
+    let slug = if explicit {
+        game.slug.clone()
+    } else {
+        current.clone()
+    };
+    if slug != current {
+        if slug_taken(tx, &slug, Some(id)).await? {
+            return Err(ImportError::Invalid("slug_taken"));
+        }
+        sqlx::query("DELETE FROM game_slug_history WHERE slug = $1 AND game_id = $2")
+            .bind(&slug)
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("UPDATE games SET slug = $2 WHERE id = $1")
+            .bind(id)
+            .bind(&slug)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query(
+            "INSERT INTO game_slug_history (slug, game_id) VALUES ($1, $2)
+             ON CONFLICT (slug) DO NOTHING",
+        )
+        .bind(&current)
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    update_game(tx, id, &game).await?;
+    replace_relations(tx, id, &game).await?;
+    Ok(Some(Imported {
+        id,
+        slug,
+        created: false,
+    }))
+}
+
+/// Slug başka bir oyunda (ya da başka bir oyunun eski adresinde) kullanılıyor mu?
+async fn slug_taken(
+    tx: &mut PgConnection,
+    slug: &str,
+    except: Option<Uuid>,
+) -> Result<bool, ImportError> {
+    Ok(sqlx::query_scalar(
+        "SELECT EXISTS (SELECT 1 FROM games WHERE slug = $1 AND id IS DISTINCT FROM $2)
+             OR EXISTS (SELECT 1 FROM game_slug_history WHERE slug = $1 AND game_id IS DISTINCT FROM $2)",
+    )
+    .bind(slug)
+    .bind(except)
+    .fetch_one(&mut *tx)
+    .await?)
+}
+
 /// Biçimi denetlenmiş ve normalleştirilmiş girdi.
 struct Validated {
     input: GameInput,
