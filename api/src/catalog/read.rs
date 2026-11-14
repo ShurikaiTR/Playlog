@@ -358,9 +358,10 @@ pub async fn detail(
         Some(parent_id) => {
             sqlx::query_as(
                 "SELECT slug::text AS slug, title, kind::text AS kind, cover_url
-                   FROM games WHERE id = $1 AND status = 'published'",
+                   FROM games WHERE id = $1 AND ($2 OR status = 'published')",
             )
             .bind(parent_id)
+            .bind(include_unpublished)
             .fetch_optional(db)
             .await?
         }
