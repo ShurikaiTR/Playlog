@@ -109,12 +109,15 @@
 			oninput={(event) => onSearch(event.currentTarget.value)}
 			placeholder="Search by name, username or email"
 			aria-label="Search users"
-			class="ps-10"
+			class="h-11 rounded-xl ps-10"
 			maxlength={100}
 		/>
 	</div>
 	<Select.Root type="single" value={data.role} onValueChange={(role) => go({ role })}>
-		<Select.Trigger class="h-11 w-full rounded-full sm:w-48" aria-label="Filter by role">
+		<Select.Trigger
+			class="w-full rounded-xl data-[size=default]:h-11 sm:w-48"
+			aria-label="Filter by role"
+		>
 			{data.role === 'all' ? 'All roles' : label(data.role)}
 		</Select.Trigger>
 		<Select.Content>
@@ -177,7 +180,7 @@
 		>
 			<input type="hidden" name="id" value={editing?.id ?? ''} />
 			<Select.Root type="single" name="role" bind:value={newRole as string}>
-				<Select.Trigger class="h-11 w-full rounded-full" aria-label="Role">
+				<Select.Trigger class="w-full rounded-xl data-[size=default]:h-11" aria-label="Role">
 					{label(newRole)}
 				</Select.Trigger>
 				<Select.Content>

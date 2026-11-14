@@ -62,6 +62,7 @@
 			{name}
 			type={options.type ?? 'text'}
 			bind:value={values[name]}
+			class="rounded-xl"
 			placeholder={options.placeholder}
 			required={options.required}
 			autocomplete="off"
@@ -79,7 +80,7 @@
 	<Field.Field>
 		<Field.Label for={name}>{title}</Field.Label>
 		<Select.Root type="single" {name} bind:value={values[name]}>
-			<Select.Trigger id={name} class="h-11 w-full rounded-full">
+			<Select.Trigger id={name} class="w-full rounded-xl data-[size=default]:h-11">
 				{label(values[name])}
 			</Select.Trigger>
 			<Select.Content>

@@ -119,12 +119,15 @@
 			oninput={(event) => onSearch(event.currentTarget.value)}
 			placeholder="Search by title or slug"
 			aria-label="Search games"
-			class="ps-10"
+			class="h-11 rounded-xl ps-10"
 			maxlength={100}
 		/>
 	</div>
 	<Select.Root type="single" value={data.status} onValueChange={(status) => go({ status })}>
-		<Select.Trigger class="h-11 w-full rounded-full sm:w-48" aria-label="Filter by status">
+		<Select.Trigger
+			class="w-full rounded-xl data-[size=default]:h-11 sm:w-48"
+			aria-label="Filter by status"
+		>
 			{statusLabels[data.status]}
 		</Select.Trigger>
 		<Select.Content>
