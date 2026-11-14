@@ -86,7 +86,6 @@ export type AdminGameDetail = {
 	kind: string;
 	status: string;
 	summary: string | null;
-	description: string | null;
 	release_date: string | null;
 	release_precision: string;
 	cover_url: string | null;
@@ -125,7 +124,6 @@ export function valuesFromDetail(game: AdminGameDetail): GameFormValues {
 		kind: game.kind,
 		status: game.status,
 		summary: game.summary ?? '',
-		description: game.description ?? '',
 		releaseDate: game.release_date ?? '',
 		releasePrecision: game.release_precision === 'tba' ? 'day' : game.release_precision,
 		coverUrl: game.cover_url ?? '',
@@ -158,7 +156,6 @@ export function valuesFromForm(form: FormData): GameFormValues {
 		kind: text(form, 'kind'),
 		status: text(form, 'status'),
 		summary: text(form, 'summary'),
-		description: text(form, 'description'),
 		releaseDate: text(form, 'releaseDate'),
 		releasePrecision: text(form, 'releasePrecision'),
 		coverUrl: text(form, 'coverUrl'),
@@ -237,7 +234,6 @@ export function buildGameInput(values: GameFormValues, stored: AdminGameDetail |
 		parent_slug: orNull(values.parentSlug),
 		series: orNull(values.series),
 		summary: orNull(values.summary),
-		description: orNull(values.description),
 		release_date: date,
 		release_precision: precision,
 		cover_url: orNull(values.coverUrl),

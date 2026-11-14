@@ -147,36 +147,26 @@
 
 		<Card.Root>
 			<Card.Header>
-				<Card.Title>Description</Card.Title>
+				<Card.Title>Overview</Card.Title>
+				<Card.Description
+					>What the game is about. Shown on the game page and in search.</Card.Description
+				>
 			</Card.Header>
 			<Card.Content>
-				<Field.Group>
-					<Field.Field>
-						<Field.Label for="summary">Summary</Field.Label>
-						<Textarea
-							id="summary"
-							name="summary"
-							bind:value={values.summary}
-							maxlength={500}
-							rows={3}
-							class="min-h-24 rounded-xl"
-						/>
-						<Field.Description class="flex justify-between">
-							<span>One or two sentences for cards and search results.</span>
-							<span class="tabular-nums">{values.summary.length}/500</span>
-						</Field.Description>
-					</Field.Field>
-					<Field.Field>
-						<Field.Label for="description">Description</Field.Label>
-						<Textarea
-							id="description"
-							name="description"
-							bind:value={values.description}
-							rows={8}
-							class="min-h-48 rounded-xl"
-						/>
-					</Field.Field>
-				</Field.Group>
+				<Field.Field>
+					<Field.Label for="summary" class="sr-only">Overview</Field.Label>
+					<Textarea
+						id="summary"
+						name="summary"
+						bind:value={values.summary}
+						maxlength={4000}
+						rows={8}
+						class="min-h-48 rounded-xl"
+					/>
+					<Field.Description class="text-end tabular-nums">
+						{values.summary.length}/4000
+					</Field.Description>
+				</Field.Field>
 			</Card.Content>
 		</Card.Root>
 

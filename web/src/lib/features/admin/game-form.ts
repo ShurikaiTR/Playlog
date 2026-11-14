@@ -22,8 +22,8 @@ export type GameFormValues = {
 	slug: string;
 	kind: string;
 	status: string;
+	/** The overview: the game's one text field. */
 	summary: string;
-	description: string;
 	releaseDate: string;
 	releasePrecision: string;
 	coverUrl: string;
@@ -52,7 +52,6 @@ export const emptyGameForm = (): GameFormValues => ({
 	kind: 'game',
 	status: 'draft',
 	summary: '',
-	description: '',
 	releaseDate: '',
 	releasePrecision: 'day',
 	coverUrl: '',
@@ -79,7 +78,7 @@ export const adminErrors: Record<string, string> = {
 	slug_taken: 'That slug is already used by another game.',
 	invalid_kind: 'Pick a valid type.',
 	invalid_status: 'Pick a valid status.',
-	invalid_summary: 'The summary can be at most 500 characters.',
+	invalid_summary: 'The overview can be at most 4000 characters.',
 	invalid_time_to_beat: 'Time to beat must be a positive number of minutes.',
 	invalid_url: 'Image addresses must start with https:// and have no spaces.',
 	invalid_precision: 'Pick a valid date precision.',

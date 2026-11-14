@@ -22,6 +22,8 @@ const KINDS: &[&str] = &[
 const STATUSES: &[&str] = &["draft", "published", "hidden"];
 const PRECISIONS: &[&str] = &["day", "month", "quarter", "year"];
 const MAX_URL_LEN: usize = 2000;
+/// Uzunluk üst sınırı (karakter); veritabanındaki `games_summary_len` ile aynı.
+const MAX_OVERVIEW: usize = 4000;
 /// İlişki başına üst sınır; hatalı bir kaynak binlerce satır yazamasın.
 const MAX_ITEMS: usize = 200;
 
@@ -36,7 +38,6 @@ pub struct GameInput {
     /// Serinin adı; yoksa oluşturulur.
     pub series: Option<String>,
     pub summary: Option<String>,
-    pub description: Option<String>,
     /// Verilmezse çıkışların en erkeni kullanılır.
     pub release_date: Option<NaiveDate>,
     pub release_precision: Option<String>,
@@ -271,7 +272,6 @@ impl Validated {
             }
         };
         clean(&mut input.summary);
-        clean(&mut input.description);
         input.title = input.title.replace('\0', "").trim().to_owned();
         if input.title.is_empty() || input.title.chars().count() > 300 {
             return Err(ImportError::Invalid("invalid_title"));
@@ -298,7 +298,7 @@ impl Validated {
         if input
             .summary
             .as_deref()
-            .is_some_and(|s| s.chars().count() > 500)
+            .is_some_and(|s| s.chars().count() > MAX_OVERVIEW)
         {
             return Err(ImportError::Invalid("invalid_summary"));
         }
@@ -578,11 +578,11 @@ async fn insert_game(
     let input = &game.input;
     Ok(sqlx::query_scalar(
         "INSERT INTO games
-             (slug, title, kind, parent_id, series_id, summary, description, release_date,
+             (slug, title, kind, parent_id, series_id, summary, release_date,
               release_precision, cover_url, backdrop_url, logo_url, time_to_beat_minutes,
               pc_requirements, status)
-         VALUES ($1, $2, $3::game_kind, $4, $5, $6, $7, $8, $9::date_precision, $10, $11, $12,
-                 $13, $14, $15::publish_status)
+         VALUES ($1, $2, $3::game_kind, $4, $5, $6, $7, $8::date_precision, $9, $10, $11,
+                 $12, $13, $14::publish_status)
          RETURNING id",
     )
     .bind(slug)
@@ -591,7 +591,6 @@ async fn insert_game(
     .bind(parent)
     .bind(series)
     .bind(&input.summary)
-    .bind(&input.description)
     .bind(game.release.0)
     .bind(game.release.1)
     .bind(&input.cover_url)
@@ -613,10 +612,10 @@ async fn update_game(tx: &mut PgConnection, id: Uuid, game: &Validated) -> Resul
     sqlx::query(
         "UPDATE games
             SET title = $2, kind = $3::game_kind, parent_id = $4, series_id = $5, summary = $6,
-                description = $7, release_date = $8, release_precision = $9::date_precision,
-                cover_url = $10, backdrop_url = $11, logo_url = $12, time_to_beat_minutes = $13,
-                pc_requirements = $14,
-                status = COALESCE($15::publish_status, status),
+                release_date = $7, release_precision = $8::date_precision,
+                cover_url = $9, backdrop_url = $10, logo_url = $11, time_to_beat_minutes = $12,
+                pc_requirements = $13,
+                status = COALESCE($14::publish_status, status),
                 updated_at = now()
           WHERE id = $1",
     )
@@ -626,7 +625,6 @@ async fn update_game(tx: &mut PgConnection, id: Uuid, game: &Validated) -> Resul
     .bind(parent)
     .bind(series)
     .bind(&input.summary)
-    .bind(&input.description)
     .bind(game.release.0)
     .bind(game.release.1)
     .bind(&input.cover_url)

@@ -708,10 +708,10 @@
 				</section>
 			{/if}
 
-			{#if game.description ?? game.summary}
+			{#if game.summary}
 				<section aria-label="About" class="min-w-0 xl:col-span-2">
 					<p class="text-callout whitespace-pre-line measure">
-						{game.description ?? game.summary}
+						{game.summary}
 					</p>
 				</section>
 			{/if}

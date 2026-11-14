@@ -84,7 +84,7 @@ Mevcut: `users`, `credentials`, `oauth_accounts`, `sessions`, `email_codes`.
 | `game_alt_titles` | Diğer adlar ve yerel adlar (aramada kullanılır) |
 | `game_slug_history` | Eski adreslerin yönlendirilmesi |
 
-`games` üzerindeki önemli alanlar: `slug`, `title`, `summary`, `description`, `release_date` +
+`games` üzerindeki önemli alanlar: `slug`, `title`, `summary` (tek metin alanı, UI'da "Overview"), `release_date` +
 `release_precision` (en erken çıkış), `cover_url`, `backdrop_url`, `logo_url`,
 `time_to_beat_minutes`, `pc_requirements` (jsonb), `status` (draft, published, hidden).
 

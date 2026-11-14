@@ -323,7 +323,6 @@ function toGame(wiki, details, steam, assets, status) {
 		status,
 		series: details?.series?.split('|')[0] || undefined,
 		summary: summaryOf(steam.short_description) || undefined,
-		description: plainText(steam.about_the_game || steam.detailed_description) || undefined,
 		release_date: released ?? undefined,
 		cover_url: assetUrl(assets, 'library_capsule') ?? steam.header_image,
 		backdrop_url: assetUrl(assets, 'library_hero') ?? screenshots[0] ?? steam.header_image,

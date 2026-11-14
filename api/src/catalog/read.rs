@@ -275,7 +275,6 @@ pub struct GameDetail {
     pub kind: String,
     pub status: String,
     pub summary: Option<String>,
-    pub description: Option<String>,
     pub release_date: Option<NaiveDate>,
     pub release_precision: String,
     pub cover_url: Option<String>,
@@ -319,7 +318,6 @@ struct GameRow {
     kind: String,
     status: String,
     summary: Option<String>,
-    description: Option<String>,
     release_date: Option<NaiveDate>,
     release_precision: String,
     cover_url: Option<String>,
@@ -340,7 +338,7 @@ pub async fn detail(
 ) -> sqlx::Result<Option<GameDetail>> {
     let row: Option<GameRow> = sqlx::query_as(
         "SELECT g.id, g.slug::text AS slug, g.title, g.kind::text AS kind, g.status::text AS status,
-                g.summary, g.description, g.release_date,
+                g.summary, g.release_date,
                 g.release_precision::text AS release_precision, g.cover_url, g.backdrop_url,
                 g.logo_url, g.time_to_beat_minutes, g.pc_requirements, g.parent_id, g.series_id
            FROM games g
@@ -550,7 +548,6 @@ pub async fn detail(
         kind: game.kind,
         status: game.status,
         summary: game.summary,
-        description: game.description,
         release_date: game.release_date,
         release_precision: game.release_precision,
         cover_url: game.cover_url,

@@ -32,7 +32,6 @@ type ApiCard = {
 type ApiRef = { slug: string; title: string; kind: string; cover_url: string | null };
 
 type ApiDetail = Omit<ApiCard, 'genres' | 'developers'> & {
-	description: string | null;
 	time_to_beat_minutes: number | null;
 	pc_requirements: SystemRequirements | null;
 	parent: ApiRef | null;
@@ -151,7 +150,6 @@ export async function getGame(
 			backdrop: data.backdrop_url,
 			logo: data.logo_url,
 			summary: data.summary,
-			description: data.description,
 			genres: data.genres,
 			themes: data.themes,
 			modes: data.modes,

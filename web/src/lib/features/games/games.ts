@@ -46,7 +46,6 @@ export type GameDetail = {
 	backdrop: string | null;
 	logo: string | null;
 	summary: string | null;
-	description: string | null;
 	genres: Named[];
 	themes: Named[];
 	modes: Named[];
