@@ -73,9 +73,9 @@ pub(super) async fn start(
             .mailer
             .send(
                 &email,
-                "Playthru: bu e-posta zaten kayıtlı",
-                "Bu e-posta adresiyle zaten bir Playthru hesabı var. Giriş yapabilir ya da \
-                 şifreni sıfırlayabilirsin. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.",
+                "Playthru: this email is already registered",
+                "There is already a Playthru account with this email address. You can sign in or \
+                 reset your password. If you didn't make this request, you can ignore this email.",
                 None,
             )
             .await?;
