@@ -39,15 +39,18 @@
 	// The owner sees their live lists (same data as the list pages); visitors see the profile's sample lists.
 	const lists = $derived(
 		data.isOwner
-			? ownLists().map((list) => ({
-					id: list.id,
-					kind: list.kind === 'play_later' ? ('play_later' as const) : list.kind,
-					name: list.name,
-					description: list.description || undefined,
-					cover: list.backdrop,
-					gameCount: list.items.length,
-					href: listHref(list) as string | null
-				}))
+			? ownLists()
+					// Only the two default lists show on the profile; the rest live in the library.
+					.filter((list) => list.kind !== 'custom')
+					.map((list) => ({
+						id: list.id,
+						kind: list.kind === 'play_later' ? ('play_later' as const) : list.kind,
+						name: list.name,
+						description: list.description || undefined,
+						cover: list.backdrop,
+						gameCount: list.items.length,
+						href: listHref(list) as string | null
+					}))
 			: profile.lists.map((list) => ({ ...list, href: null as string | null }))
 	);
 

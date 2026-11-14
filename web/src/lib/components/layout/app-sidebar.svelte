@@ -2,9 +2,8 @@
 	import { page } from '$app/state';
 	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
 	import type { Component } from 'svelte';
-	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import CompassIcon from '@lucide/svelte/icons/compass';
-	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
+	import LibraryIcon from '@lucide/svelte/icons/library-big';
 	import HouseIcon from '@lucide/svelte/icons/house';
 	import LayoutGridIcon from '@lucide/svelte/icons/layout-grid';
 	import TagIcon from '@lucide/svelte/icons/tag';
@@ -34,10 +33,7 @@
 		},
 		{
 			label: 'Library',
-			items: [
-				{ label: 'Played', href: '/played', icon: CircleCheckIcon },
-				{ label: 'Play later', href: '/play-later', icon: ClockIcon }
-			]
+			items: [{ label: 'Library', href: '/library', icon: LibraryIcon }]
 		}
 	];
 
@@ -50,8 +46,14 @@
 		openSearch();
 	}
 
+	// The library covers its own page and every list page under it.
+	const libraryPaths = ['/library', '/played', '/play-later', '/lists'];
 	const isActive = (href: string) =>
-		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+		href === '/'
+			? page.url.pathname === '/'
+			: href === '/library'
+				? libraryPaths.some((path) => page.url.pathname.startsWith(path))
+				: page.url.pathname.startsWith(href);
 </script>
 
 <Sidebar.Root
