@@ -59,8 +59,8 @@
 	});
 </script>
 
-{#snippet small(metric: Metric)}
-	<Card.Root class="col-span-12 sm:col-span-6 xl:col-span-3">
+{#snippet small(metric: Metric, wide = false)}
+	<Card.Root class="col-span-12 sm:col-span-6 {wide ? 'xl:col-span-6' : 'xl:col-span-3'}">
 		<Card.Content class="flex items-start justify-between gap-4">
 			<div class="flex flex-col justify-between gap-5">
 				<div class="flex flex-col gap-1">
@@ -85,12 +85,11 @@
 
 <div class="grid grid-cols-12 gap-4 md:gap-6">
 	<Card.Root class="relative col-span-12 xl:col-span-6">
-		<Card.Content class="flex h-full flex-col justify-between gap-9">
+		<Card.Content class="flex h-full flex-col justify-between gap-9 sm:pe-56">
 			<div>
 				<p class="text-headline font-medium">Playthru Dashboard</p>
 				<p class="text-footnote text-muted-foreground">
-					The size of the catalog and the community. Changes compare the last 30 days with the 30
-					before.
+					Catalog and community size. Badges compare the last 30 days with the 30 before.
 				</p>
 			</div>
 			<div class="flex items-center gap-6">
@@ -125,9 +124,9 @@
 
 	{@render small(games)}
 	{@render small(users)}
-	{@render small(reviews)}
-	{@render small(lists)}
+	{@render small(reviews, true)}
+	{@render small(lists, true)}
 	{#if chart}
-		<div class="col-span-12 xl:col-span-6">{@render chart()}</div>
+		<div class="col-span-12">{@render chart()}</div>
 	{/if}
 </div>
