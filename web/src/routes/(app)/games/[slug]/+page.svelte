@@ -16,6 +16,7 @@
 	import { toast } from 'svelte-sonner';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { compactCount, gameSocial } from '#lib/features/games/game-social.js';
 	import { cn } from '#lib/utils.js';
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
@@ -125,6 +126,7 @@
 		'Great',
 		'Masterpiece'
 	];
+	const social = $derived(gameSocial(game.slug));
 	const myReview = $derived(myReviews[game.slug]);
 	const reviews = $derived<Review[]>(
 		myReview
@@ -167,18 +169,6 @@
 			block: 'start'
 		});
 	}
-
-	// The strip needs something to show; a bare catalog entry goes without it.
-	const stats = $derived(
-		Boolean(
-			game.playtime ||
-			game.releaseDate ||
-			game.ageRating ||
-			game.modes.length ||
-			game.developers.length ||
-			game.languages.length
-		)
-	);
 
 	let languagesOpen = $state(false);
 	let requirementsOpen = $state(false);
@@ -388,11 +378,22 @@
 								{/each}
 							</ul>
 						{/if}
-						{#if game.platforms.length}
-							<p class="mt-3 text-footnote text-muted-foreground">
-								{game.platforms.map((platform) => platform.name).join(' · ')}
+						<div class="mt-3 flex items-center gap-3">
+							<Avatar.Group aria-hidden="true">
+								{#each social.people as initials (initials)}
+									<Avatar.Root class="size-7">
+										<Avatar.Fallback
+											class="bg-foreground text-[0.625rem] font-semibold text-background"
+											>{initials}</Avatar.Fallback
+										>
+									</Avatar.Root>
+								{/each}
+							</Avatar.Group>
+							<p class="text-footnote text-muted-foreground">
+								<span class="tabular-nums">{compactCount(social.played)}</span> played ·
+								<span class="tabular-nums">{compactCount(social.wantToPlay)}</span> want to play
 							</p>
-						{/if}
+						</div>
 					</div>
 					<div class="flex items-center gap-2">
 						<GameSaveMenu game={toListGame(game)} />
@@ -421,88 +422,99 @@
 			</div>
 
 			<!-- Stat strip: one fact per tile, label above, value large, caption below. -->
-			{#if stats}
-				<dl class="stat-strip -mx-4 mt-6 flex snap-x overflow-x-auto px-4 py-4 md:mx-0 md:px-0">
-					{#if game.playtime}
-						<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-						<div class="stat">
-							<dt>Time to beat</dt>
-							<dd class="stat-value tabular-nums">{game.playtime}</dd>
-							<dd class="stat-caption">{game.playtime === 1 ? 'hour' : 'hours'}, main story</dd>
-						</div>
-					{/if}
-					{#if game.releaseDate}
-						<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-						<div class="stat">
-							<dt>Release</dt>
-							<dd class="stat-value tabular-nums">{game.releaseDate.slice(0, 4)}</dd>
-							<dd class="stat-caption">
-								{game.releasePrecision === 'day'
-									? formatDayMonth(game.releaseDate)
-									: formatRelease(game.releaseDate, game.releasePrecision)}
-							</dd>
-						</div>
-					{/if}
-					{#if game.ageRating}
-						<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-						<div class="stat stat-wrap">
-							<Button
-								href="#info-title"
-								onclick={(event) => scrollToSection(event, 'info-title')}
-								variant="ghost"
-								class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
-								aria-label="Age rating {game.ageRating.label}. Go to the info section"
+			<dl class="stat-strip -mx-4 mt-6 flex snap-x overflow-x-auto px-4 py-4 md:mx-0 md:px-0">
+				<div class="stat stat-wrap">
+					<Button
+						href="#reviews-title"
+						onclick={(event) => scrollToSection(event, 'reviews-title')}
+						variant="ghost"
+						class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
+						aria-label="Reviews. Go to the ratings and reviews section"
+					>
+						<span class="stat-label text-muted-foreground">Reviews</span>
+						<span class="stat-value tabular-nums">{reviews.length}</span>
+						<span class="stat-caption text-muted-foreground">Read or write</span>
+					</Button>
+				</div>
+				{#if game.playtime}
+					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
+					<div class="stat">
+						<dt>Time to beat</dt>
+						<dd class="stat-value tabular-nums">{game.playtime}</dd>
+						<dd class="stat-caption">{game.playtime === 1 ? 'hour' : 'hours'}, main story</dd>
+					</div>
+				{/if}
+				{#if game.releaseDate}
+					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
+					<div class="stat">
+						<dt>Release</dt>
+						<dd class="stat-value tabular-nums">{game.releaseDate.slice(0, 4)}</dd>
+						<dd class="stat-caption">
+							{game.releasePrecision === 'day'
+								? formatDayMonth(game.releaseDate)
+								: formatRelease(game.releaseDate, game.releasePrecision)}
+						</dd>
+					</div>
+				{/if}
+				{#if game.ageRating}
+					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
+					<div class="stat stat-wrap">
+						<Button
+							href="#info-title"
+							onclick={(event) => scrollToSection(event, 'info-title')}
+							variant="ghost"
+							class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
+							aria-label="Age rating {game.ageRating.label}. Go to the info section"
+						>
+							<span class="stat-label text-muted-foreground">Age</span>
+							<span class="stat-value">{game.ageRating.label.split(' ')[1]}</span>
+							<span class="stat-caption text-muted-foreground">{game.ageRating.title}</span>
+						</Button>
+					</div>
+				{/if}
+				{#if game.modes.length}
+					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
+					<div class="stat stat-wrap">
+						<Button
+							href="#info-title"
+							onclick={(event) => scrollToSection(event, 'info-title')}
+							variant="ghost"
+							class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
+							aria-label="Game modes: {names(game.modes)}. Go to the info section"
+						>
+							<span class="stat-label text-muted-foreground">Mode</span>
+							<span class="stat-value"><GamepadIcon aria-hidden="true" /></span>
+							<span class="stat-caption text-muted-foreground"
+								>{game.modes.map((mode) => mode.name).join(' · ')}</span
 							>
-								<span class="stat-label text-muted-foreground">Age</span>
-								<span class="stat-value">{game.ageRating.label.split(' ')[1]}</span>
-								<span class="stat-caption text-muted-foreground">{game.ageRating.title}</span>
-							</Button>
-						</div>
-					{/if}
-					{#if game.modes.length}
-						<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-						<div class="stat stat-wrap">
-							<Button
-								href="#info-title"
-								onclick={(event) => scrollToSection(event, 'info-title')}
-								variant="ghost"
-								class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
-								aria-label="Game modes: {names(game.modes)}. Go to the info section"
-							>
-								<span class="stat-label text-muted-foreground">Mode</span>
-								<span class="stat-value"><GamepadIcon aria-hidden="true" /></span>
-								<span class="stat-caption text-muted-foreground"
-									>{game.modes.map((mode) => mode.name).join(' · ')}</span
-								>
-							</Button>
-						</div>
-					{/if}
-					{#if game.developers.length}
-						<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-						<div class="stat">
-							<dt>Developer</dt>
-							<dd class="stat-value"><CodeIcon aria-hidden="true" /></dd>
-							<dd class="stat-caption">{names(game.developers)}</dd>
-						</div>
-					{/if}
-					{#if game.languages.length}
-						<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
-						<div class="stat stat-wrap">
-							<Button
-								type="button"
-								variant="ghost"
-								class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
-								onclick={() => (languagesOpen = true)}
-								aria-haspopup="dialog"
-							>
-								<span class="stat-label text-muted-foreground">Languages</span>
-								<span class="stat-value tabular-nums">{game.languages.length}</span>
-								<span class="stat-caption text-muted-foreground">Supported</span>
-							</Button>
-						</div>
-					{/if}
-				</dl>
-			{/if}
+						</Button>
+					</div>
+				{/if}
+				{#if game.developers.length}
+					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
+					<div class="stat">
+						<dt>Developer</dt>
+						<dd class="stat-value"><CodeIcon aria-hidden="true" /></dd>
+						<dd class="stat-caption">{names(game.developers)}</dd>
+					</div>
+				{/if}
+				{#if game.languages.length}
+					<Separator orientation="vertical" class="my-1 h-auto self-stretch first:hidden" />
+					<div class="stat stat-wrap">
+						<Button
+							type="button"
+							variant="ghost"
+							class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
+							onclick={() => (languagesOpen = true)}
+							aria-haspopup="dialog"
+						>
+							<span class="stat-label text-muted-foreground">Languages</span>
+							<span class="stat-value tabular-nums">{game.languages.length}</span>
+							<span class="stat-caption text-muted-foreground">Supported</span>
+						</Button>
+					</div>
+				{/if}
+			</dl>
 			{#if game.requirements}
 				{@const requirements = game.requirements}
 				<Dialog.Root bind:open={requirementsOpen}>
