@@ -102,17 +102,8 @@ export function createList(name: string, game?: GameSummary): UserList {
 	return created;
 }
 
-// Library status of a game: one per game, separate from the lists (a game can sit in any number of lists).
-// Feeds the profile stats.
-export const playStatuses = ['Playing', 'Completed', 'Dropped'] as const;
-export type PlayStatus = (typeof playStatuses)[number];
-export const gameStatus = $state<Record<string, PlayStatus | undefined>>({});
-
-export const statusOf = (slug: string): PlayStatus | '' => gameStatus[slug] ?? '';
-
-export function setStatus(slug: string, next: PlayStatus | '') {
-	gameStatus[slug] = next || undefined;
-}
+// Games the viewer has played (a simple on/off, separate from the lists). Feeds the profile stats.
+export const played = $state<Record<string, boolean | undefined>>({});
 
 // The viewer's own score (1-10) and review per game. Demo only, like the lists.
 export const gameRating = $state<Record<string, number | undefined>>({});

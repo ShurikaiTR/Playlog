@@ -9,12 +9,14 @@
 		customLists,
 		hasGame,
 		listByKind,
+		played,
 		setGame,
 		type UserList
 	} from './user-lists.svelte.js';
 	import { cn } from '#lib/utils.js';
 	import { toast } from 'svelte-sonner';
-	import BookmarkIcon from '@lucide/svelte/icons/bookmark';
+	import CheckIcon from '@lucide/svelte/icons/check';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ClockIcon from '@lucide/svelte/icons/clock-3';
 	import HeartIcon from '@lucide/svelte/icons/heart';
 	import ListIcon from '@lucide/svelte/icons/list';
@@ -67,61 +69,78 @@
 	}
 </script>
 
-<DropdownMenu.Root>
-	<DropdownMenu.Trigger
-		class={cn(
-			buttonVariants({ variant: 'outline', size: 'icon-lg' }),
-			'size-11 shrink-0 cursor-pointer',
-			className
-		)}
-		aria-label={saved ? 'Edit saved lists' : 'Save to a list'}
-	>
-		<BookmarkIcon class={cn(saved && 'fill-current')} aria-hidden="true" />
-	</DropdownMenu.Trigger>
+<div class="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+	<DropdownMenu.Root>
+		<DropdownMenu.Trigger
+			class={cn(
+				buttonVariants({ variant: 'default', size: 'lg' }),
+				'h-11 min-w-0 flex-1 gap-0 px-0 text-sm',
+				className
+			)}
+			aria-label="Save {game.title} to a list"
+		>
+			<span class="flex min-w-0 flex-1 items-center gap-2 px-4">
+				<span class="truncate">{saved ? 'Saved' : 'Add to library'}</span>
+			</span>
+			<span aria-hidden="true" class="h-5 w-px shrink-0 bg-current opacity-20"></span>
+			<ChevronDownIcon class="mx-3 size-4" aria-hidden="true" />
+		</DropdownMenu.Trigger>
 
-	<DropdownMenu.Content align="start" sideOffset={8} class="w-60 p-2">
-		<DropdownMenu.Label class="px-2 pt-1 pb-2">
-			<span class="block text-xs font-semibold text-primary">Save to</span>
-			<span class="mt-0.5 block truncate text-[0.6875rem] font-normal text-muted-foreground"
-				>{game.title}</span
-			>
-		</DropdownMenu.Label>
+		<DropdownMenu.Content align="start" sideOffset={8} class="w-60 p-2">
+			<DropdownMenu.Label class="px-2 pt-1 pb-2">
+				<span class="block text-xs font-semibold text-primary">Add to library</span>
+				<span class="mt-0.5 block truncate text-[0.6875rem] font-normal text-muted-foreground"
+					>{game.title}</span
+				>
+			</DropdownMenu.Label>
 
-		{#each [{ list: favorites, icon: HeartIcon }, { list: playLater, icon: ClockIcon }] as { list, icon: Icon } (list.id)}
-			<DropdownMenu.CheckboxItem
-				checked={hasGame(list, game.slug)}
-				onCheckedChange={(on) => toggle(list, on)}
-			>
-				<Icon class="size-4" aria-hidden="true" />
-				<span class="truncate">{list.name}</span>
-			</DropdownMenu.CheckboxItem>
-		{/each}
+			{#each [{ list: favorites, icon: HeartIcon }, { list: playLater, icon: ClockIcon }] as { list, icon: Icon } (list.id)}
+				<DropdownMenu.CheckboxItem
+					checked={hasGame(list, game.slug)}
+					onCheckedChange={(on) => toggle(list, on)}
+				>
+					<Icon class="size-4" aria-hidden="true" />
+					<span class="truncate">{list.name}</span>
+				</DropdownMenu.CheckboxItem>
+			{/each}
 
-		{#if custom.length}
+			{#if custom.length}
+				<DropdownMenu.Separator class="my-2" />
+				<DropdownMenu.Label class="px-2 pb-1 text-xs font-medium text-muted-foreground"
+					>My lists</DropdownMenu.Label
+				>
+				<div class={cn(custom.length > 5 && 'max-h-52 overflow-y-auto')}>
+					{#each custom as list (list.id)}
+						<DropdownMenu.CheckboxItem
+							checked={hasGame(list, game.slug)}
+							onCheckedChange={(on) => toggle(list, on)}
+						>
+							<ListIcon class="size-4" aria-hidden="true" />
+							<span class="truncate">{list.name}</span>
+						</DropdownMenu.CheckboxItem>
+					{/each}
+				</div>
+			{/if}
+
 			<DropdownMenu.Separator class="my-2" />
-			<DropdownMenu.Label class="px-2 pb-1 text-xs font-medium text-muted-foreground"
-				>My lists</DropdownMenu.Label
-			>
-			<div class={cn(custom.length > 5 && 'max-h-52 overflow-y-auto')}>
-				{#each custom as list (list.id)}
-					<DropdownMenu.CheckboxItem
-						checked={hasGame(list, game.slug)}
-						onCheckedChange={(on) => toggle(list, on)}
-					>
-						<ListIcon class="size-4" aria-hidden="true" />
-						<span class="truncate">{list.name}</span>
-					</DropdownMenu.CheckboxItem>
-				{/each}
-			</div>
-		{/if}
+			<DropdownMenu.Item class="text-muted-foreground" onclick={openDialog}>
+				<PlusIcon class="size-4" aria-hidden="true" />
+				New list
+			</DropdownMenu.Item>
+		</DropdownMenu.Content>
+	</DropdownMenu.Root>
 
-		<DropdownMenu.Separator class="my-2" />
-		<DropdownMenu.Item class="text-muted-foreground" onclick={openDialog}>
-			<PlusIcon class="size-4" aria-hidden="true" />
-			New list
-		</DropdownMenu.Item>
-	</DropdownMenu.Content>
-</DropdownMenu.Root>
+	<Button
+		variant="outline"
+		size="icon-lg"
+		class="size-11 shrink-0 cursor-pointer"
+		aria-pressed={Boolean(played[game.slug])}
+		aria-label={played[game.slug] ? 'Mark as not played' : 'Mark as played'}
+		onclick={() => (played[game.slug] = !played[game.slug])}
+	>
+		<CheckIcon class={cn(played[game.slug] && 'stroke-[3]')} aria-hidden="true" />
+	</Button>
+</div>
 
 <Dialog.Root bind:open={dialogOpen}>
 	<Dialog.Content class="sm:max-w-sm">

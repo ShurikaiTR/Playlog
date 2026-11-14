@@ -21,7 +21,6 @@
 	import * as Table from '#lib/components/ui/table/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
 	import GameSaveMenu from '#lib/features/lists/game-save-menu.svelte';
-	import GameStatusMenu from '#lib/features/lists/game-status-menu.svelte';
 	import { gameRating, myReviews, toListGame } from '#lib/features/lists/user-lists.svelte.js';
 	import GameGalleryDialog from '#lib/features/games/game-gallery-dialog.svelte';
 	import GameReportDialog from '#lib/features/games/game-report-dialog.svelte';
@@ -396,8 +395,7 @@
 						{/if}
 					</div>
 					<div class="flex items-center gap-2">
-						<GameStatusMenu game={toListGame(game)} class="sm:w-48 sm:flex-none" />
-						<GameSaveMenu game={toListGame(game)} />
+						<GameSaveMenu game={toListGame(game)} class="sm:w-48 sm:flex-none" />
 						<DropdownMenu.Root>
 							<DropdownMenu.Trigger>
 								{#snippet child({ props })}
