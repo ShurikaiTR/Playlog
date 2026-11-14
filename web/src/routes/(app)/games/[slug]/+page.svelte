@@ -736,28 +736,45 @@
 								</Item.Header>
 							</Item.Root>
 						{:else}
-							<p class="text-sm text-muted-foreground">
-								No reviews yet. Be the first to write one.
-							</p>
+							<div class="flex flex-col items-center gap-1 py-4 text-center">
+								<!-- The drawing mixes light and dark ink, so it sits on a light disc in dark mode. -->
+								<img
+									src="/mascot/confused.svg"
+									alt=""
+									width="160"
+									height="160"
+									loading="lazy"
+									class="size-40 rounded-full object-contain dark:bg-zinc-200"
+								/>
+								<p class="mt-3 text-title-3 text-primary">No reviews yet</p>
+								<p class="text-callout text-muted-foreground">Be the first to review it!</p>
+								<Button
+									type="button"
+									class="mt-4 cursor-pointer rounded-full px-5"
+									onclick={openReview}>Write a review</Button
+								>
+							</div>
 						{/if}
 					</Card.Content>
 
-					<Card.Footer class="flex-wrap gap-2 border-t bg-muted/30 py-4">
-						<Button type="button" class="cursor-pointer rounded-full px-5" onclick={openReview}
-							>{myReview ? 'Edit your review' : 'Write a review'}</Button
-						>
-						{#if reviews.length}
-							<Button
-								type="button"
-								variant="outline"
-								class="cursor-pointer rounded-full px-5"
-								onclick={() => (reviewsSheetOpen = true)}
-								>All reviews <span class="text-muted-foreground tabular-nums"
-									>({reviews.length})</span
-								></Button
+					{#if reviews.length}
+						<Card.Footer class="flex-wrap gap-2 border-t bg-muted/30 py-4">
+							<Button type="button" class="cursor-pointer rounded-full px-5" onclick={openReview}
+								>{myReview ? 'Edit your review' : 'Write a review'}</Button
 							>
-						{/if}
-					</Card.Footer>
+							{#if reviews.length}
+								<Button
+									type="button"
+									variant="outline"
+									class="cursor-pointer rounded-full px-5"
+									onclick={() => (reviewsSheetOpen = true)}
+									>All reviews <span class="text-muted-foreground tabular-nums"
+										>({reviews.length})</span
+									></Button
+								>
+							{/if}
+						</Card.Footer>
+					{/if}
 				</Card.Root>
 			</section>
 
