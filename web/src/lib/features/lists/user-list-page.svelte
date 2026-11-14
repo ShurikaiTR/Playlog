@@ -9,7 +9,7 @@
 	import { Label } from '#lib/components/ui/label/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
-	import { setGame, type UserList } from './user-lists.svelte.js';
+	import { saveListDetails, setGame, type UserList } from './user-lists.svelte.js';
 	import { toast } from 'svelte-sonner';
 	import ArrowDownWideNarrowIcon from '@lucide/svelte/icons/arrow-down-wide-narrow';
 	import ArrowUpRightIcon from '@lucide/svelte/icons/arrow-up-right';
@@ -116,7 +116,7 @@
 		editOpen = true;
 	}
 
-	function saveSettings(event: SubmitEvent) {
+	async function saveSettings(event: SubmitEvent) {
 		event.preventDefault();
 		if (pendingImages) return;
 		if (editMode === 'details') {
@@ -124,9 +124,16 @@
 				nameError = 'Listen için bir ad gir.';
 				return;
 			}
-			list.name = draftName.trim();
-			list.description = draftDescription.trim();
-			list.visibility = draftVisibility === 'public' ? 'public' : 'private';
+			const saved = await saveListDetails(list, {
+				name: draftName.trim(),
+				description: draftDescription.trim(),
+				visibility: draftVisibility === 'public' ? 'public' : 'private'
+			});
+			if (saved) {
+				editOpen = false;
+				toast('Liste ayarları güncellendi');
+			}
+			return;
 		} else if (editMode === 'image') {
 			list.image = draftImage;
 		} else {
@@ -136,14 +143,14 @@
 		toast('Liste ayarları güncellendi');
 	}
 
-	function removeItem(game: UserList['items'][number]) {
+	async function removeItem(game: UserList['items'][number]) {
 		// `added` is dropped on purpose: the summary is the game without its list timestamp.
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { added, ...summary } = game;
-		setGame(list, summary, false);
 		flippedSlug = null;
+		if (!(await setGame(list, summary, false))) return;
 		toast(`${game.title} listeden çıkarıldı`, {
-			action: { label: 'Geri al', onClick: () => setGame(list, summary, true) }
+			action: { label: 'Geri al', onClick: () => void setGame(list, summary, true) }
 		});
 	}
 </script>

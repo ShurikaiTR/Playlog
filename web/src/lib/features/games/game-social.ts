@@ -1,29 +1,44 @@
-// Placeholder social proof for the game page (rating box, "1.2K played · 340 want to play").
-// Nothing stores who played a game yet, so the numbers are derived from the slug. Replace the body of
-// `gameSocial` with an API call when lists live on the server; the page only reads this shape.
-export type GameSocial = {
-	// Average score out of 10 and how many people rated.
-	score: number;
-	votes: number;
-	played: number;
-	wantToPlay: number;
-	// Initials of a few people who played it, for the avatar stack.
-	people: string[];
+// What people did with a game, as the game page and the library menu read it. The Rust API
+// computes the totals (`GET /v1/games/{slug}/social`); `lib/server/social.ts` translates them.
+export type SocialPerson = { username: string; name: string; image: string | null };
+
+export type SocialReview = {
+	key: string;
+	username: string;
+	name: string;
+	image: string | null;
+	text: string;
+	spoiler: boolean;
+	score: number | null;
+	date: string;
+	mine: boolean;
 };
 
-const PEOPLE = ['DA', 'EK', 'MY', 'AS', 'CB', 'ZT'];
-
-export function gameSocial(slug: string): GameSocial {
-	let hash = 0;
-	for (const char of slug) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-	return {
-		score: 6.5 + ((hash >>> 4) % 30) / 10,
-		votes: 120 + ((hash >>> 12) % 9000),
-		played: 200 + (hash % 4800),
-		wantToPlay: 40 + ((hash >>> 8) % 1200),
-		people: PEOPLE.slice(hash % 3, (hash % 3) + 4)
-	};
-}
+export type GameSocial = {
+	played: number;
+	playLater: number;
+	// Average out of 10, null while nobody has rated.
+	score: number | null;
+	ratings: number;
+	reviewCount: number;
+	// A few people who played it, newest first, for the avatar stack.
+	people: SocialPerson[];
+	reviews: SocialReview[];
+	// The signed-in viewer's own score, review and lists; null when signed out.
+	mine: {
+		rating: number | null;
+		review: { text: string; spoiler: boolean } | null;
+		lists: string[];
+	} | null;
+};
 
 export const compactCount = (value: number) =>
 	new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+
+export const initials = (name: string) =>
+	name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((part) => part[0]?.toUpperCase())
+		.join('') || '?';

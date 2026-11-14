@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getGame } from '#lib/server/catalog.js';
+import { getGameSocial } from '#lib/server/social.js';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -12,5 +13,10 @@ export const load: PageServerLoad = async (event) => {
 	}
 	// An old address still finds the game; send the visitor to the current one.
 	if (result.game.slug !== event.params.slug) redirect(308, `/games/${result.game.slug}`);
-	return { game: result.game };
+	// Re-run after the visitor rates, reviews or lists the game (`invalidate('app:social')`).
+	event.depends('app:social');
+	return {
+		game: result.game,
+		social: await getGameSocial(event, result.game.slug, event.locals.token)
+	};
 };

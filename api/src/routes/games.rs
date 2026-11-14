@@ -19,6 +19,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list))
         .route("/{slug}", get(detail))
+        .merge(super::social::game_router())
 }
 
 /// `/v1/tags`: süzgeçlerde ve tür sayfasında gösterilen etiketler.

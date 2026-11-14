@@ -1,3 +1,6 @@
+import { invalidate } from '$app/navigation';
+import { failToast, promptSignIn, socialRequest } from './social-api.js';
+
 export type ListGame = {
 	slug: string;
 	title: string;
@@ -33,9 +36,7 @@ export const toListGame = (game: {
 	year: game.releaseDate?.slice(0, 4) ?? ''
 });
 
-// Shared by the game page menu, the list pages and the profile so a change shows up everywhere during the session.
-// Not stored yet: lists live in the browser's memory and reset on a full reload.
-export const userLists = $state<UserList[]>([
+const defaultLists = (): UserList[] => [
 	{
 		id: 'played',
 		kind: 'played',
@@ -56,7 +57,29 @@ export const userLists = $state<UserList[]>([
 		backdrop: '',
 		items: []
 	}
-]);
+];
+
+// Shared by the game page menu, the list pages and the profile so a change shows up everywhere.
+// The server sends the member's lists once per visit (`hydrateLists`); changes are applied here
+// right away and sent to the API, then undone if the API refuses them. This lives in the browser
+// only: it is never filled during server rendering, so one visitor's lists can't reach another.
+export const userLists = $state<UserList[]>(defaultLists());
+const session = $state({ signedIn: false });
+
+export function hydrateLists(lists: UserList[] | null) {
+	session.signedIn = lists !== null;
+	// The cover and image are not stored yet; keep what was picked during this visit.
+	const local = (id: string) => userLists.find((list) => list.id === id);
+	userLists.splice(
+		0,
+		userLists.length,
+		...(lists ?? defaultLists()).map((list) => ({
+			...list,
+			image: local(list.id)?.image ?? '',
+			backdrop: local(list.id)?.backdrop ?? ''
+		}))
+	);
+}
 
 export const listHref = (list: Pick<UserList, 'id' | 'kind'>) =>
 	list.kind === 'played'
@@ -78,31 +101,77 @@ export const listsWithGame = (slug: string) =>
 export const hasGame = (list: UserList, slug: string) =>
 	list.items.some((item) => item.slug === slug);
 
-export function setGame(list: UserList, game: GameSummary, on: boolean) {
-	if (on === hasGame(list, game.slug)) return;
-	list.items = on
-		? [{ ...game, added: Date.now() }, ...list.items]
-		: list.items.filter((item) => item.slug !== game.slug);
+const withGame = (items: ListGame[], game: GameSummary) =>
+	items.some((item) => item.slug === game.slug)
+		? items
+		: [{ ...game, added: Date.now() }, ...items];
+const withoutGame = (items: ListGame[], slug: string) => items.filter((item) => item.slug !== slug);
+
+/** Adds or removes a game. Resolves to false when it was refused and has been undone. */
+export async function setGame(list: UserList, game: GameSummary, on: boolean): Promise<boolean> {
+	if (on === hasGame(list, game.slug)) return true;
+	if (!session.signedIn) {
+		promptSignIn('save games to your library');
+		return false;
+	}
+	list.items = on ? withGame(list.items, game) : withoutGame(list.items, game.slug);
+	const result = await socialRequest(
+		on ? 'PUT' : 'DELETE',
+		`me/lists/${list.id}/games/${game.slug}`
+	);
+	if (!result.ok) {
+		list.items = on ? withoutGame(list.items, game.slug) : withGame(list.items, game);
+		failToast(result.error);
+		return false;
+	}
+	void invalidate('app:social');
+	return true;
 }
 
-export function createList(name: string, game?: GameSummary): UserList {
-	const list: UserList = {
-		id: `${Date.now().toString(36)}-${name.toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşıöç]+/g, '-')}`,
+export async function createList(name: string, game?: GameSummary): Promise<UserList | null> {
+	if (!session.signedIn) {
+		promptSignIn('create lists');
+		return null;
+	}
+	const result = await socialRequest<{ id: string }>('POST', 'me/lists', {
+		name,
+		game_slug: game?.slug
+	});
+	if (!result.ok) {
+		failToast(result.error);
+		return null;
+	}
+	userLists.push({
+		id: result.data.id,
 		kind: 'custom',
 		name,
 		description: '',
 		visibility: 'private',
 		image: '',
 		backdrop: '',
-		items: []
-	};
-	userLists.push(list);
-	const created = userLists[userLists.length - 1];
-	if (game) setGame(created, game, true);
-	return created;
+		items: game ? [{ ...game, added: Date.now() }] : []
+	});
+	if (game) void invalidate('app:social');
+	return userLists[userLists.length - 1];
 }
 
-// The viewer's own score (1-10) and review per game. Demo only, like the lists.
-export const gameRating = $state<Record<string, number | undefined>>({});
-export type MyReview = { text: string; spoiler: boolean };
-export const myReviews = $state<Record<string, MyReview | undefined>>({});
+/** Saves a list's name, description and visibility. System lists keep their name. */
+export async function saveListDetails(
+	list: UserList,
+	details: Pick<UserList, 'name' | 'description' | 'visibility'>
+): Promise<boolean> {
+	const before = { name: list.name, description: list.description, visibility: list.visibility };
+	const name = list.kind === 'custom' ? details.name : list.name;
+	Object.assign(list, { ...details, name });
+	const result = await socialRequest('PATCH', `me/lists/${list.id}`, {
+		name: list.kind === 'custom' ? name : undefined,
+		description: details.description,
+		visibility: details.visibility
+	});
+	if (!result.ok) {
+		Object.assign(list, before);
+		failToast(result.error);
+		return false;
+	}
+	return true;
+}

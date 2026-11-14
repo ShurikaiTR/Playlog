@@ -11,24 +11,24 @@
 	import * as Item from '#lib/components/ui/item/index.js';
 	import ResponsivePanel from '#lib/components/layout/responsive-panel.svelte';
 	import * as Collapsible from '#lib/components/ui/collapsible/index.js';
-	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { toast } from 'svelte-sonner';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
-	import { compactCount, gameSocial } from '#lib/features/games/game-social.js';
+	import { compactCount, initials, type SocialReview } from '#lib/features/games/game-social.js';
+	import { invalidate } from '$app/navigation';
+	import { promptSignIn, socialRequest, failToast } from '#lib/features/lists/social-api.js';
 	import { cn } from '#lib/utils.js';
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
 	import GameSaveMenu from '#lib/features/lists/game-save-menu.svelte';
-	import { gameRating, myReviews, toListGame } from '#lib/features/lists/user-lists.svelte.js';
+	import { toListGame } from '#lib/features/lists/user-lists.svelte.js';
 	import GameGalleryDialog from '#lib/features/games/game-gallery-dialog.svelte';
 	import GameReportDialog from '#lib/features/games/game-report-dialog.svelte';
 	import GameRow from '#lib/features/games/game-row.svelte';
 	import { formatDayMonth, formatRelease } from '#lib/features/games/games.js';
 	import FlagIcon from '@lucide/svelte/icons/flag';
-	import ThumbsUpIcon from '@lucide/svelte/icons/thumbs-up';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
 	import GamepadIcon from '@lucide/svelte/icons/gamepad-2';
@@ -100,20 +100,16 @@
 		...(game.trailer ? [{ kind: 'video' as const, src: game.trailer }] : []),
 		...screenshots.map((src) => ({ kind: 'image' as const, src }))
 	]);
-	// Reviews are not stored yet: the only one here is the visitor's own, kept for this visit.
-	type Review = {
-		key: string;
-		text: string;
-		name: string;
-		initials: string;
-		score?: number;
-		date: string;
-		helpful: number;
-		spoiler: boolean;
-		mine?: boolean;
-	};
+	type Review = SocialReview;
 
-	const rating = $derived(gameRating[game.slug]);
+	const social = $derived(data.social);
+	const myRating = $derived(social.mine?.rating ?? null);
+	const myReview = $derived(social.mine?.review ?? null);
+	// The server sends the viewer's own review first, then the newest.
+	const reviews = $derived<Review[]>(social.reviews);
+	// The featured review never contains spoilers, since it shows without a click.
+	const featuredReview = $derived(reviews.find((review) => !review.spoiler));
+	let revealed = $state<Record<string, boolean>>({});
 	const scoreWords = [
 		'Awful',
 		'Very bad',
@@ -126,36 +122,6 @@
 		'Great',
 		'Masterpiece'
 	];
-	const social = $derived(gameSocial(game.slug));
-	const myReview = $derived(myReviews[game.slug]);
-	const reviews = $derived<Review[]>(
-		myReview
-			? [
-					{
-						key: 'mine',
-						name: 'You',
-						initials: 'Y',
-						score: rating,
-						date: 'Just now',
-						helpful: 0,
-						spoiler: myReview.spoiler,
-						text: myReview.text,
-						mine: true
-					}
-				]
-			: []
-	);
-	let reviewSort = $state('helpful');
-	let revealed = $state<Record<string, boolean>>({});
-	let voted = $state<Record<string, boolean>>({});
-	const votes = (review: Review) => review.helpful + (voted[review.key] ? 1 : 0);
-	const sortedReviews = $derived(
-		reviewSort === 'helpful' ? [...reviews].sort((a, b) => votes(b) - votes(a)) : reviews
-	);
-	// The featured review never contains spoilers, since it shows without a click.
-	const featuredReview = $derived(
-		[...reviews].filter((review) => !review.spoiler).sort((a, b) => votes(b) - votes(a))[0]
-	);
 
 	function scrollToSection(event: MouseEvent, id: string) {
 		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
@@ -176,19 +142,28 @@
 
 	let reviewsSheetOpen = $state(false);
 	let reviewSheetOpen = $state(false);
+	let draftRating = $state<number | null>(null);
 	let draftText = $state('');
 	let draftSpoiler = $state(false);
 	let reviewError = $state('');
+	let saving = $state(false);
 
 	// Unsent writing survives closing the dialog by accident, per game, until it is sent.
-	let drafts = $state<Record<string, { text: string; spoiler: boolean }>>({});
+	let drafts = $state<Record<string, { rating: number | null; text: string; spoiler: boolean }>>(
+		{}
+	);
 	$effect(() => {
 		if (!reviewSheetOpen) return;
-		drafts[game.slug] = { text: draftText, spoiler: draftSpoiler };
+		drafts[game.slug] = { rating: draftRating, text: draftText, spoiler: draftSpoiler };
 	});
 
 	function openReview() {
+		if (!data.user) {
+			promptSignIn('rate and review games');
+			return;
+		}
 		const draft = drafts[game.slug];
+		draftRating = draft?.rating ?? myRating;
 		draftText = draft?.text ?? myReview?.text ?? '';
 		draftSpoiler = draft?.spoiler ?? myReview?.spoiler ?? false;
 		reviewError = '';
@@ -196,29 +171,38 @@
 		reviewSheetOpen = true;
 	}
 
-	function saveReview(event: SubmitEvent) {
+	async function saveReview(event: SubmitEvent) {
 		event.preventDefault();
-		if (!rating) {
+		if (!draftRating) {
 			reviewError = 'Pick a score from 1 to 10 first.';
 			return;
 		}
 		const text = draftText.trim();
-		const slug = game.slug;
 		if (text && text.length < 10) {
 			reviewError = 'Write at least 10 characters, or leave it empty.';
 			return;
 		}
-		reviewSheetOpen = false;
-		delete drafts[slug];
-		if (!text) {
-			toast('Your rating was saved');
+		const slug = game.slug;
+		saving = true;
+		let result = await socialRequest('PUT', `games/${slug}/rating`, { score: draftRating });
+		if (result.ok && text) {
+			result = await socialRequest('PUT', `games/${slug}/review`, {
+				text,
+				spoiler: draftSpoiler
+			});
+		} else if (result.ok && myReview) {
+			// The text was cleared: the rating stays, the review goes.
+			result = await socialRequest('DELETE', `games/${slug}/review`);
+		}
+		saving = false;
+		if (!result.ok) {
+			failToast(result.error);
 			return;
 		}
-		const previous = myReviews[slug];
-		myReviews[slug] = { text, spoiler: draftSpoiler };
-		toast('Your review was saved', {
-			action: { label: 'Undo', onClick: () => (myReviews[slug] = previous) }
-		});
+		reviewSheetOpen = false;
+		delete drafts[slug];
+		await invalidate('app:social');
+		toast(text ? 'Your review was saved' : 'Your rating was saved');
 	}
 </script>
 
@@ -234,12 +218,13 @@
 		<Card.Content>
 			<div class="flex items-center gap-3">
 				<Avatar.Root class="size-9">
+					{#if review.image}<Avatar.Image src={review.image} alt="" />{/if}
 					<Avatar.Fallback class="bg-foreground text-xs font-semibold text-background"
-						>{review.initials}</Avatar.Fallback
+						>{initials(review.name)}</Avatar.Fallback
 					>
 				</Avatar.Root>
 				<div class="min-w-0 flex-1">
-					<p class="text-sm font-semibold">{review.name}</p>
+					<p class="text-sm font-semibold">{review.mine ? 'You' : review.name}</p>
 					<p class="text-[0.68rem] text-muted-foreground">{review.date}</p>
 				</div>
 				{#if review.score}
@@ -268,20 +253,6 @@
 				</p>
 			{/if}
 			<div class="mt-3 -ml-2 flex gap-1">
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					class="h-auto cursor-pointer rounded-full px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
-					aria-pressed={!!voted[review.key]}
-					onclick={() => (voted[review.key] = !voted[review.key])}
-				>
-					<ThumbsUpIcon
-						data-icon="inline-start"
-						class={cn('size-3.5.5', voted[review.key] && 'fill-current')}
-					/>
-					Helpful · {votes(review)}
-				</Button>
 				{#if review.spoiler && revealed[review.key]}
 					<Button
 						type="button"
@@ -378,22 +349,32 @@
 								{/each}
 							</ul>
 						{/if}
-						<div class="mt-3 flex items-center gap-3">
-							<Avatar.Group aria-hidden="true">
-								{#each social.people as initials (initials)}
-									<Avatar.Root class="size-7">
-										<Avatar.Fallback
-											class="bg-foreground text-[0.625rem] font-semibold text-background"
-											>{initials}</Avatar.Fallback
+						{#if social.played || social.playLater}
+							<div class="mt-3 flex items-center gap-3">
+								{#if social.people.length}
+									<Avatar.Group aria-hidden="true">
+										{#each social.people as person (person.username)}
+											<Avatar.Root class="size-7">
+												{#if person.image}<Avatar.Image src={person.image} alt="" />{/if}
+												<Avatar.Fallback
+													class="bg-foreground text-[0.625rem] font-semibold text-background"
+													>{initials(person.name)}</Avatar.Fallback
+												>
+											</Avatar.Root>
+										{/each}
+									</Avatar.Group>
+								{/if}
+								<p class="text-footnote text-muted-foreground">
+									{#if social.played}<span class="tabular-nums">{compactCount(social.played)}</span>
+										played{/if}{#if social.played && social.playLater}
+										·
+									{/if}{#if social.playLater}<span class="tabular-nums"
+											>{compactCount(social.playLater)}</span
 										>
-									</Avatar.Root>
-								{/each}
-							</Avatar.Group>
-							<p class="text-footnote text-muted-foreground">
-								<span class="tabular-nums">{compactCount(social.played)}</span> played ·
-								<span class="tabular-nums">{compactCount(social.wantToPlay)}</span> want to play
-							</p>
-						</div>
+										play later{/if}
+								</p>
+							</div>
+						{/if}
 					</div>
 					<div class="flex items-center gap-2">
 						<GameSaveMenu game={toListGame(game)} />
@@ -429,23 +410,36 @@
 						onclick={(event) => scrollToSection(event, 'reviews-title')}
 						variant="ghost"
 						class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
-						aria-label="{social.score.toFixed(1)} out of 10, {social.votes.toLocaleString(
-							'en'
-						)} votes. Go to the ratings section"
+						aria-label={social.score === null
+							? 'No ratings yet. Go to the ratings section'
+							: `${social.score.toFixed(1)} out of 10, ${social.ratings.toLocaleString('en')} ${social.ratings === 1 ? 'rating' : 'ratings'}. Go to the ratings section`}
 					>
-						<span class="stat-label text-muted-foreground"
-							>{social.votes.toLocaleString('en')} votes</span
-						>
-						<span class="stat-value tabular-nums">{social.score.toFixed(1)}</span>
-						<span class="stat-caption flex gap-px text-muted-foreground" aria-hidden="true">
-							{#each [0, 1, 2, 3, 4] as i (i)}
-								<StarIcon
-									class={cn(
-										'size-3',
-										i < Math.round(social.score / 2) ? 'fill-current' : 'opacity-30'
-									)}
-								/>
-							{/each}
+						<span class="stat-label text-muted-foreground">Rating</span>
+						<span class="stat-value tabular-nums">
+							{#if social.score === null}
+								<span class="text-muted-foreground">–</span>
+							{:else}
+								{social.score.toFixed(1)}<span
+									class="ms-0.5 self-end pb-1 text-xs font-medium text-muted-foreground">/10</span
+								>
+							{/if}
+						</span>
+						<span class="stat-caption flex items-center gap-1.5 text-muted-foreground">
+							{#if social.score === null}
+								Be the first to rate
+							{:else}
+								<span class="flex gap-px" aria-hidden="true">
+									{#each [0, 1, 2, 3, 4] as i (i)}
+										<StarIcon
+											class={cn(
+												'size-3',
+												i < Math.round(social.score / 2) ? 'fill-current' : 'opacity-30'
+											)}
+										/>
+									{/each}
+								</span>
+								<span class="tabular-nums">{compactCount(social.ratings)}</span>
+							{/if}
 						</span>
 					</Button>
 				</div>
@@ -713,7 +707,9 @@
 					<Card.Content class="py-6">
 						{#if featuredReview}
 							<Item.Root variant="muted" class="flex-col items-stretch gap-4 p-5 sm:p-6">
-								<p class="text-xs font-medium text-muted-foreground">Your review</p>
+								<p class="text-xs font-medium text-muted-foreground">
+									{featuredReview.mine ? 'Your review' : 'Latest review'}
+								</p>
 								<Item.Content>
 									<Item.Description
 										class="line-clamp-none text-lg leading-8 font-medium tracking-tight text-pretty text-primary sm:text-xl"
@@ -724,10 +720,12 @@
 									<Avatar.Root class="size-7">
 										<Avatar.Fallback
 											class="bg-primary text-[0.65rem] font-semibold text-primary-foreground"
-											>{featuredReview.initials}</Avatar.Fallback
+											>{initials(featuredReview.name)}</Avatar.Fallback
 										>
 									</Avatar.Root>
-									<span class="text-sm font-semibold text-primary">{featuredReview.name}</span>
+									<span class="text-sm font-semibold text-primary"
+										>{featuredReview.mine ? 'You' : featuredReview.name}</span
+									>
 									{#if featuredReview.score}<Badge variant="secondary"
 											><StarIcon
 												data-icon="inline-start"
@@ -868,21 +866,9 @@
 		titleClass="text-lg font-medium tracking-tight text-primary"
 		footerClass="border-t"
 	>
-		{#snippet header()}
-			<Tabs.Root bind:value={reviewSort} class="mt-2 max-md:items-center">
-				<Tabs.List class="rounded-xl" aria-label="Sort reviews">
-					<Tabs.Trigger value="helpful" class="cursor-pointer rounded-lg px-3 text-xs"
-						>Most helpful</Tabs.Trigger
-					>
-					<Tabs.Trigger value="newest" class="cursor-pointer rounded-lg px-3 text-xs"
-						>Newest</Tabs.Trigger
-					>
-				</Tabs.List>
-			</Tabs.Root>
-		{/snippet}
 		<div class="min-h-0 flex-1 overflow-y-auto">
 			<div class="space-y-3 p-4">
-				{#each sortedReviews as review (review.key)}
+				{#each reviews as review (review.key)}
 					{@render reviewCard(review)}
 				{/each}
 			</div>
@@ -915,18 +901,20 @@
 				<div class="space-y-4 rounded-2xl bg-muted/50 p-4">
 					<div class="text-center" aria-live="polite">
 						<p class="text-large-title tabular-nums">
-							{rating ?? '–'}<span class="text-title-3 font-normal text-muted-foreground">/10</span>
+							{draftRating ?? '–'}<span class="text-title-3 font-normal text-muted-foreground"
+								>/10</span
+							>
 						</p>
 						<p class="mt-1 text-callout text-muted-foreground">
-							{rating ? scoreWords[rating - 1] : 'Pick a score'}
+							{draftRating ? scoreWords[draftRating - 1] : 'Pick a score'}
 						</p>
 					</div>
 					<ToggleGroup.Root
 						type="single"
 						variant="outline"
 						spacing={1}
-						value={rating ? String(rating) : ''}
-						onValueChange={(value) => value && (gameRating[game.slug] = Number(value))}
+						value={draftRating ? String(draftRating) : ''}
+						onValueChange={(value) => value && (draftRating = Number(value))}
 						aria-label="Your score, from 1 to 10"
 						class="grid w-full grid-cols-5 gap-1.5 sm:grid-cols-10"
 					>
@@ -968,7 +956,7 @@
 					<Button variant="outline" class="cursor-pointer" onclick={() => (reviewSheetOpen = false)}
 						>Cancel</Button
 					>
-					<Button type="submit" class="cursor-pointer"
+					<Button type="submit" class="cursor-pointer" disabled={saving}
 						>{draftText.trim() ? 'Post review' : 'Save rating'}</Button
 					>
 				</Dialog.Footer>

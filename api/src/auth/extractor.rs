@@ -86,3 +86,22 @@ impl FromRequestParts<AppState> for CurrentUser {
         })
     }
 }
+
+/// Oturum varsa kullanıcı, yoksa `None`: herkese açık ama kişiselleştirilen uçlar için.
+/// Başlık yoksa ya da geçersizse anonim sayılır; yalnızca altyapı hataları dışarı çıkar.
+pub struct MaybeUser(pub Option<CurrentUser>);
+
+impl FromRequestParts<AppState> for MaybeUser {
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        match CurrentUser::from_request_parts(parts, state).await {
+            Ok(user) => Ok(Self(Some(user))),
+            Err(AppError::Unauthorized(_)) => Ok(Self(None)),
+            Err(err) => Err(err),
+        }
+    }
+}

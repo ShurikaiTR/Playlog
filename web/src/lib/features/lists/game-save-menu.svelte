@@ -37,10 +37,10 @@
 			custom.some((list) => hasGame(list, game.slug))
 	);
 
-	function toggle(list: UserList, on: boolean) {
-		setGame(list, game, on);
+	async function toggle(list: UserList, on: boolean) {
+		if (!(await setGame(list, game, on))) return;
 		toast(on ? `Added to ${list.name}` : `Removed from ${list.name}`, {
-			action: { label: 'Undo', onClick: () => setGame(list, game, !on) }
+			action: { label: 'Undo', onClick: () => void setGame(list, game, !on) }
 		});
 	}
 
@@ -54,14 +54,19 @@
 		dialogOpen = true;
 	}
 
-	function submitList(event: SubmitEvent) {
+	let creating = $state(false);
+
+	async function submitList(event: SubmitEvent) {
 		event.preventDefault();
 		const trimmed = name.trim();
 		if (!trimmed) {
 			error = 'Give the list a name.';
 			return;
 		}
-		createList(trimmed, game);
+		creating = true;
+		const created = await createList(trimmed, game);
+		creating = false;
+		if (!created) return;
 		dialogOpen = false;
 		toast(`Created ${trimmed}`);
 	}
@@ -148,7 +153,7 @@
 				<p class="text-xs text-destructive" role="alert">{error}</p>
 			{/if}
 			<Dialog.Footer>
-				<Button type="submit" class="px-5">Create list</Button>
+				<Button type="submit" class="px-5" disabled={creating}>Create list</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

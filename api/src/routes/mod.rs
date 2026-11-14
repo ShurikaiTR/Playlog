@@ -4,6 +4,7 @@ mod auth;
 mod games;
 mod guard;
 mod oauth;
+mod social;
 
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 use serde::Serialize;
@@ -19,6 +20,7 @@ pub fn router() -> Router<AppState> {
         .nest("/v1/admin", admin::router())
         .nest("/v1/games", games::router())
         .nest("/v1/tags", games::tags_router())
+        .nest("/v1/me", social::me_router())
 }
 
 #[derive(Serialize)]

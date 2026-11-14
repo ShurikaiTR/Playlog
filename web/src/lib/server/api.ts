@@ -14,7 +14,7 @@ export type ApiResult<T> =
 	{ ok: true; status: number; data: T } | { ok: false; status: number; error: string };
 
 type Options = {
-	method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 	body?: unknown;
 	token?: string | null;
 };
