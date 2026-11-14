@@ -108,18 +108,18 @@
 		</Card.Content>
 		<!-- One drawing per theme; the dark one is swapped in by the site's dark class. -->
 		<img
-			src="/mascot/confused.svg"
+			src="/mascot/happy.svg"
 			alt=""
-			width="168"
-			height="168"
-			class="pointer-events-none absolute end-2 -bottom-4 hidden size-40 object-contain sm:block dark:hidden"
+			width="220"
+			height="165"
+			class="pointer-events-none absolute -bottom-2 end-3 hidden h-auto w-52 sm:block dark:hidden"
 		/>
 		<img
-			src="/mascot/confused-dark.svg"
+			src="/mascot/happy-dark.svg"
 			alt=""
-			width="168"
-			height="168"
-			class="pointer-events-none absolute end-2 -bottom-4 hidden size-40 object-contain dark:sm:block"
+			width="220"
+			height="165"
+			class="pointer-events-none absolute -bottom-2 end-3 hidden h-auto w-52 dark:sm:block"
 		/>
 	</Card.Root>
 
