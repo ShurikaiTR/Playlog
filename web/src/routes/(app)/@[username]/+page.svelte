@@ -1,15 +1,11 @@
 <script lang="ts">
+	import ListCard from '#lib/features/lists/list-card.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
-	import { AspectRatio } from '#lib/components/ui/aspect-ratio/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
 	import { listHref, ownLists } from '#lib/features/lists/user-lists.svelte.js';
-	import ClockIcon from '@lucide/svelte/icons/clock-3';
-	import GamepadIcon from '@lucide/svelte/icons/gamepad-2';
-	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 
 	let { data } = $props();
 	const profile = $derived(data.profile);
@@ -53,8 +49,6 @@
 					}))
 			: profile.lists.map((list) => ({ ...list, href: null as string | null }))
 	);
-
-	const listIcon = { played: CircleCheckIcon, play_later: ClockIcon, custom: GamepadIcon };
 </script>
 
 <svelte:head>
@@ -204,52 +198,14 @@
 		{:else}
 			<div class="grid gap-4 sm:grid-cols-2 xl:max-w-3xl">
 				{#each lists as list (list.id)}
-					{@const Icon = listIcon[list.kind]}
-					{#snippet listCard()}
-						<div class="relative">
-							<AspectRatio ratio={2.6} class="bg-muted">
-								{#if list.cover}
-									<img
-										src={list.cover}
-										alt=""
-										width="1600"
-										height="560"
-										loading="lazy"
-										class="size-full object-cover"
-									/>
-								{/if}
-							</AspectRatio>
-							<Avatar.Root
-								class="absolute -bottom-7 left-(--card-spacing) size-14 ring-4 ring-card"
-							>
-								<Avatar.Fallback><Icon class="size-5 text-muted-foreground" /></Avatar.Fallback>
-							</Avatar.Root>
-						</div>
-						<Card.Header class="pt-10">
-							<Card.Title class="truncate">{list.name}</Card.Title>
-							<Card.Description class="truncate"
-								>{list.gameCount}
-								{list.gameCount === 1 ? 'game' : 'games'}{list.description
-									? ` · ${list.description}`
-									: ''}</Card.Description
-							>
-						</Card.Header>
-					{/snippet}
-					<Card.Root
-						class="group/list gap-0 pt-0 pb-5 {list.href
-							? 'transition-transform duration-300 hover:-translate-y-1'
-							: ''}"
-					>
-						{#if list.href}
-							<a
-								href={list.href}
-								class="flex flex-col rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-								aria-label="View {list.name}">{@render listCard()}</a
-							>
-						{:else}
-							<div class="flex flex-col">{@render listCard()}</div>
-						{/if}
-					</Card.Root>
+					<ListCard
+						name={list.name}
+						kind={list.kind}
+						cover={list.cover}
+						gameCount={list.gameCount}
+						description={list.description}
+						href={list.href}
+					/>
 				{/each}
 			</div>
 		{/if}
