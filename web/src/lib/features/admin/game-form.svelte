@@ -94,7 +94,7 @@
 <form
 	method="POST"
 	{action}
-	class="grid gap-6"
+	class="mx-auto grid w-full max-w-4xl gap-6"
 	use:enhance={() => {
 		saving = true;
 		return async ({ result, update }) => {

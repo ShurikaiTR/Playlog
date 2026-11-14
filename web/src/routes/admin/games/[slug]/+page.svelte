@@ -28,7 +28,7 @@
 	});
 </script>
 
-<Button href="/admin/games" variant="ghost" size="sm" class="-ms-3 mb-2">
+<Button href="/admin/games" variant="ghost" size="sm" class="-ms-3 -mb-2 self-start">
 	<ArrowLeftIcon />Games
 </Button>
 

@@ -101,13 +101,13 @@
 	]);
 </script>
 
-<AdminPageHeader title="Games" description="Everything in the catalog, drafts included.">
+<AdminPageHeader description="Everything in the catalog, drafts included.">
 	{#snippet actions()}
 		<Button href="/admin/games/new" size="lg"><PlusIcon />New game</Button>
 	{/snippet}
 </AdminPageHeader>
 
-<div class="mb-4 flex flex-col gap-3 sm:flex-row">
+<div class="flex flex-col gap-3 sm:flex-row">
 	<div class="relative flex-1">
 		<SearchIcon
 			class="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -136,7 +136,7 @@
 </div>
 
 {#if data.failed}
-	<p class="mb-4 text-callout text-destructive" role="alert">
+	<p class="text-callout text-destructive" role="alert">
 		The games could not be loaded. Try again.
 	</p>
 {/if}

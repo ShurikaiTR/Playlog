@@ -61,6 +61,8 @@ export type AdminStats = {
 	users: number;
 	reviews: number;
 	lists: number;
+	/** New users and games per day, the last 90 days, oldest first. */
+	activity: { date: string; users: number; games: number }[];
 };
 
 export type PlatformOption = { slug: string; name: string; family: string };

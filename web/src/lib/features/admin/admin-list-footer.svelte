@@ -14,7 +14,7 @@
 	const last = $derived(Math.min(page * perPage, total));
 </script>
 
-<div class="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
+<div class="flex flex-col items-center justify-between gap-3 sm:flex-row">
 	<p class="text-footnote text-muted-foreground numeric">
 		{number.format(first)}–{number.format(last)} of {number.format(total)}
 	</p>

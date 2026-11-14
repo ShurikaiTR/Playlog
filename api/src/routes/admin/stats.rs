@@ -1,6 +1,7 @@
 //! Yönetim paneli özeti: kayıt sayıları.
 
 use axum::{Json, Router, extract::State, routing::get};
+use chrono::NaiveDate;
 use serde::Serialize;
 use sqlx::FromRow;
 
@@ -8,6 +9,22 @@ use crate::{auth::role::RequireModerator, error::AppError, state::AppState};
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/stats", get(stats))
+}
+
+/// Gün başına yeni kayıt; grafikte gösterilir.
+#[derive(Serialize, FromRow)]
+struct Day {
+    date: NaiveDate,
+    users: i64,
+    games: i64,
+}
+
+#[derive(Serialize)]
+struct Report {
+    #[serde(flatten)]
+    totals: Stats,
+    /// Son 90 gün, eskiden yeniye; kaydı olmayan günler de sıfırla yer alır.
+    activity: Vec<Day>,
 }
 
 #[derive(Serialize, FromRow)]
@@ -23,8 +40,8 @@ struct Stats {
 async fn stats(
     State(state): State<AppState>,
     _: RequireModerator,
-) -> Result<Json<Stats>, AppError> {
-    let stats = sqlx::query_as(
+) -> Result<Json<Report>, AppError> {
+    let totals = sqlx::query_as(
         "SELECT (SELECT count(*) FROM games) AS games,
                 (SELECT count(*) FROM games WHERE status = 'published') AS games_published,
                 (SELECT count(*) FROM games WHERE status = 'draft') AS games_draft,
@@ -34,5 +51,19 @@ async fn stats(
     )
     .fetch_one(&state.db)
     .await?;
-    Ok(Json(stats))
+    let activity = sqlx::query_as(
+        "WITH days AS (SELECT current_date - g AS day FROM generate_series(0, 89) AS g),
+              new_users AS (SELECT created_at::date AS day, count(*) AS n FROM users
+                             WHERE created_at >= current_date - 89 GROUP BY 1),
+              new_games AS (SELECT created_at::date AS day, count(*) AS n FROM games
+                             WHERE created_at >= current_date - 89 GROUP BY 1)
+         SELECT d.day AS date, COALESCE(u.n, 0) AS users, COALESCE(g.n, 0) AS games
+           FROM days d
+           LEFT JOIN new_users u ON u.day = d.day
+           LEFT JOIN new_games g ON g.day = d.day
+          ORDER BY d.day",
+    )
+    .fetch_all(&state.db)
+    .await?;
+    Ok(Json(Report { totals, activity }))
 }
