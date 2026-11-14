@@ -429,11 +429,24 @@
 						onclick={(event) => scrollToSection(event, 'reviews-title')}
 						variant="ghost"
 						class="h-auto w-full cursor-pointer flex-col gap-1 rounded-2xl px-2 py-0 font-normal whitespace-normal"
-						aria-label="Reviews. Go to the ratings and reviews section"
+						aria-label="{social.score.toFixed(1)} out of 10, {social.votes.toLocaleString(
+							'en'
+						)} votes. Go to the ratings section"
 					>
-						<span class="stat-label text-muted-foreground">Reviews</span>
-						<span class="stat-value tabular-nums">{reviews.length}</span>
-						<span class="stat-caption text-muted-foreground">Read or write</span>
+						<span class="stat-label text-muted-foreground"
+							>{social.votes.toLocaleString('en')} votes</span
+						>
+						<span class="stat-value tabular-nums">{social.score.toFixed(1)}</span>
+						<span class="stat-caption flex gap-px text-muted-foreground" aria-hidden="true">
+							{#each [0, 1, 2, 3, 4] as i (i)}
+								<StarIcon
+									class={cn(
+										'size-3',
+										i < Math.round(social.score / 2) ? 'fill-current' : 'opacity-30'
+									)}
+								/>
+							{/each}
+						</span>
 					</Button>
 				</div>
 				{#if game.playtime}
