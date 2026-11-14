@@ -21,7 +21,7 @@
 		icon: Component;
 	}
 
-	const groups: { label: string; items: Item[] }[] = [
+	const allGroups: { label: string; items: Item[]; membersOnly?: boolean }[] = [
 		{
 			label: 'Browse',
 			items: [
@@ -33,9 +33,13 @@
 		},
 		{
 			label: 'Library',
+			membersOnly: true,
 			items: [{ label: 'Library', href: '/library', icon: LibraryIcon }]
 		}
 	];
+
+	// The library belongs to a member; guests don't see it.
+	const groups = $derived(allGroups.filter((group) => !group.membersOnly || page.data.user));
 
 	const sidebar = Sidebar.useSidebar();
 	// Only read while a tooltip is open, so it never runs during server rendering.
