@@ -1,6 +1,7 @@
 //! Yönetim uçları. Her uç rolünü kendi çıkarıcısıyla ister; korumasız uç yoktur.
 
 mod games;
+mod import;
 mod staff;
 mod stats;
 mod users;
@@ -12,6 +13,7 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     staff::router()
         .merge(games::router())
+        .merge(import::router())
         .merge(stats::router())
         .merge(users::router())
 }

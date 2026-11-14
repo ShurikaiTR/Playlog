@@ -61,7 +61,8 @@ async fn main() -> anyhow::Result<()> {
             code_secret: std::sync::Arc::from(config.code_secret.as_slice()),
             dummy_hash: password::dummy_hash().await?.into(),
             limiter: Default::default(),
-            catalog_import_token: config.catalog_import_token.map(Into::into),
+            source: std::sync::Arc::new(catalog::source::Source::new()?),
+            import_job: Default::default(),
             turnstile: config
                 .turnstile_secret
                 .map(|secret| Turnstile::new(secret, config.turnstile_hostnames))

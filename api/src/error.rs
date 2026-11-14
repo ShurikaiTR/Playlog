@@ -20,6 +20,8 @@ pub enum AppError {
     Conflict(&'static str),
     /// Çok fazla deneme.
     TooManyRequests(&'static str),
+    /// Dış bir kaynak (Wikidata, Steam) yanıt vermedi.
+    Unavailable(&'static str),
     /// Beklenmeyen sunucu hatası; ayrıntı istemciye gitmez.
     Internal(anyhow::Error),
 }
@@ -38,6 +40,7 @@ impl IntoResponse for AppError {
             Self::NotFound(code) => (StatusCode::NOT_FOUND, code),
             Self::Conflict(code) => (StatusCode::CONFLICT, code),
             Self::TooManyRequests(code) => (StatusCode::TOO_MANY_REQUESTS, code),
+            Self::Unavailable(code) => (StatusCode::SERVICE_UNAVAILABLE, code),
             Self::Internal(err) => {
                 tracing::error!(error = ?err, "beklenmeyen hata");
                 (StatusCode::INTERNAL_SERVER_ERROR, "internal")

@@ -42,6 +42,8 @@ export type AdminGameRow = {
 	release_date: string | null;
 	release_precision: string;
 	cover_url: string | null;
+	/** Set by an import that could not be trusted (no date, sources disagree); cleared on save. */
+	review_reason: string | null;
 	updated_at: string;
 };
 
@@ -255,5 +257,84 @@ export function buildGameInput(values: GameFormValues, stored: AdminGameDetail |
 		languages,
 		age_ratings: stored?.age_ratings ?? {},
 		alt_titles: list(values.altTitles)
+	};
+}
+
+/** A game as the import endpoints return it: the API's game input, before anything is saved. */
+export type ImportedGame = {
+	title: string;
+	summary: string | null;
+	release_date: string | null;
+	release_precision: string | null;
+	cover_url: string | null;
+	backdrop_url: string | null;
+	logo_url: string | null;
+	series: string | null;
+	releases: { platform: string }[];
+	genres: string[];
+	modes: string[];
+	developers: string[];
+	publishers: string[];
+	alt_titles: string[];
+	languages: { language: string; interface: boolean; audio: boolean; subtitles: boolean }[];
+	screenshots: string[];
+	age_ratings: Record<string, string>;
+	pc_requirements: unknown;
+	external_ids: Record<string, string>;
+};
+
+/** The form values for an imported game. The slug stays empty so the API picks a free one. */
+export function valuesFromImport(game: ImportedGame): GameFormValues {
+	return {
+		...valuesFromDetail({
+			...detailFromImport(game),
+			slug: '',
+			status: 'draft'
+		}),
+		slug: ''
+	};
+}
+
+/**
+ * The imported game in the shape of a stored one, so `buildGameInput` carries over what the form
+ * does not show (screenshots, age ratings, requirements, language flags).
+ */
+export function detailFromImport(game: ImportedGame): AdminGameDetail {
+	const named = (items: string[] | undefined) =>
+		(items ?? []).map((name) => ({ slug: name, name }));
+	return {
+		id: '',
+		slug: '',
+		title: game.title,
+		kind: 'game',
+		status: 'draft',
+		summary: game.summary ?? null,
+		release_date: game.release_date ?? null,
+		release_precision: game.release_precision ?? 'day',
+		cover_url: game.cover_url ?? null,
+		backdrop_url: game.backdrop_url ?? null,
+		logo_url: game.logo_url ?? null,
+		time_to_beat_minutes: null,
+		pc_requirements: game.pc_requirements ?? null,
+		parent: null,
+		series: game.series ? { slug: game.series, name: game.series } : null,
+		releases: (game.releases ?? []).map((release) => ({
+			platform: { slug: release.platform },
+			region: 'worldwide',
+			release_date: null,
+			release_precision: 'tba'
+		})),
+		genres: named(game.genres),
+		themes: [],
+		modes: named(game.modes),
+		perspectives: [],
+		developers: named(game.developers),
+		publishers: named(game.publishers),
+		screenshots: game.screenshots ?? [],
+		artworks: [],
+		trailers: [],
+		languages: game.languages ?? [],
+		age_ratings: game.age_ratings ?? {},
+		alt_titles: game.alt_titles ?? []
 	};
 }

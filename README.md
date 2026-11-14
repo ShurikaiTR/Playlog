@@ -18,7 +18,6 @@ tarayıcı ──> Cloudflare Tunnel ──> web (SvelteKit, SSR) ──> api (R
 ├── compose.yaml        Üretim: web + api + db (Openship bunu çalıştırır)
 ├── .env.example        Üretim sırları (compose.yaml okur)
 ├── docs/               Ürün planı ve tasarım
-├── tools/catalog/      Katalog verisi: Wikidata + Steam'den çeker, API'ye yükler
 ├── web/                SvelteKit uygulaması (adapter-node, Tailwind, shadcn-svelte)
 │   ├── src/
 │   │   ├── routes/         Sayfalar ve sunucu uçları
@@ -87,15 +86,8 @@ npm install
 npm run dev
 ```
 
-Katalog boş başlar. Oyun yüklemek için API'yi `CATALOG_IMPORT_TOKEN` ile başlat, sonra:
-
-```bash
-node tools/catalog/catalog.mjs fetch --limit 100 --out catalog.json
-```
-
-```bash
-API_URL=http://localhost:8080 CATALOG_IMPORT_TOKEN=… node tools/catalog/catalog.mjs push catalog.json
-```
+Katalog boş başlar. Oyunlar yönetim panelinden eklenir: `/admin/games/import` (yalnızca admin) Wikidata ve
+Steam'den tek oyun ya da toplu içe aktarır; ayrıntı için `docs/plan.md` bölüm 8.
 
 `RESEND_API_KEY` tanımlı değilse e-postalar gönderilmez, API günlüğüne yazılır; doğrulama
 kodlarını oradan okuyabilirsin.

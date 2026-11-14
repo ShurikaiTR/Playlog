@@ -294,80 +294,45 @@ açmak, başlıklardaki "Playlog", `/terms` ve `/privacy`, dil seçicinin kaldı
 
 ## 8. Veri akışı
 
-Veriyi `tools/catalog/catalog.mjs` derler (Node 22+, bağımlılığı yok):
+Veri yönetim panelinden (`/admin/games/import`, yalnızca admin) içe aktarılır; ayrı bir araç ya da
+servis yoktur. Kaynaklar yalnızca Wikidata ve Steam'dir; yeni bir API anahtarı gerekmez. Kod
+`api/src/catalog/source.rs` (kaynaklar), `job.rs` (toplu iş) ve `routes/admin/import.rs` (uçlar).
 
-1. **Wikidata:** Steam'de olan ve Vikipedi'de en çok dilde yer alan oyunlar (popülerlik ölçüsü);
-   her biri için ilk çıkış tarihi, platformlar ve seri.
-2. **Steam:** açıklama, türler, oyun modları, geliştirici/yayıncı, dil desteği, yaş sınırları, PC
-   gereksinimleri, ekran görüntüleri; kapak ve afiş adresleri Steam'in mağaza API'sinden.
-3. Çıktı, içe aktarma ucunun biçiminde bir JSON dosyasıdır; `push` bunu yüzer yüzer gönderir.
+**Kaynakların rolü**
 
-```bash
-# Sunucuda (compose ağı içinde)
-docker compose run --rm catalog fetch --limit 500 --out /data/catalog.json
-docker compose run --rm catalog push /data/catalog.json
+1. **Wikidata:** ana liste ve kimlik, tüm platformlar için. Ad, ilk çıkış tarihi, platformlar,
+   seri, tür, geliştirici/yayıncı ve mağaza kimlikleri (Steam, GOG, PlayStation, Xbox, Nintendo,
+   `external_ids` olarak saklanır). Toplu içe aktarma Vikipedi'de en çok dilde yer alan oyunlardan
+   başlar; platform ve çıkış yılına göre süzülebilir.
+2. **Steam** (oyunun Steam kimliği varsa): açıklama (yer tutucu), türler, modlar, geliştirici/yayıncı,
+   diller, yaş sınırları, PC gereksinimleri, ekran görüntüleri ve görseller: kapak
+   (`library_600x900`), arka plan (`library_hero`) ve logo (`logo.png`, yalnızca varsa). Fragman yok.
+3. **Birleştirme:** tarih Steam, sonra Wikidata; tür ve şirketler Steam, sonra Wikidata; görseller
+   ve açıklama yalnızca Steam (Steam'siz oyunda boş kalır, elle doldurulur); platformlar ikisinin
+   birleşimi.
 
-# Yerelde
-node tools/catalog/catalog.mjs fetch --limit 200 --out catalog.json
-API_URL=http://localhost:8080 CATALOG_IMPORT_TOKEN=… node tools/catalog/catalog.mjs push catalog.json
-```
+**Gözden geçirme:** tarih hiçbir kaynakta yoksa ya da iki kaynak bir yıldan fazla ayrışıyorsa oyun
+`review_reason` ile işaretlenir; panelde Games listesinde "Needs review" süzgeci ve not görünür.
+Oyun panelden kaydedilince işaret kalkar.
 
-`push`, API'nin `CATALOG_IMPORT_TOKEN` değeriyle kimlik doğrular; bu anahtar yalnızca içe aktarma
-ucunda geçer. Aynı dosyayı yeniden göndermek kopya oluşturmaz, kayıtları günceller.
+**Kilitli alanlar:** panelde elle değiştirilen alan grupları (ad, özet, çıkış tarihi, kapak,
+arka plan, logo, seri, etiketler, şirketler, platformlar, medya, diller, diğer adlar)
+`games.locked_fields` içinde tutulur. Sonraki içe aktarmalar bunlara dokunmaz; ayrıca durum, tür ve
+ana oyun içe aktarmayla hiç değişmez.
+
+**Tek oyun:** ada ya da Steam bağlantısı/uygulama kimliğine göre ara → önizle → form dolu gelir →
+yönetici kaydeder (yeni oyun, `draft`). Katalogda olan oyun "In catalog" görünür ve içe aktarılmaz.
+
+**Toplu:** `POST /v1/admin/import/jobs/current` tek bir arka plan işi başlatır (en çok 500 oyun,
+oyun başına yaklaşık 2 sn; Steam hız sınırı için bekleme). `GET` ilerlemeyi ve oyun başına sonucu
+(`created`, `updated`, `skipped`, `failed`, not) verir, `DELETE` durdurur. İş bellekte yaşar; API
+yeniden başlarsa kaybolur. Katalogda olan oyunlar atlanır; "refresh" açıksa yeniden işlenir.
 
 Bilinen sınırlar:
 
-- Yalnızca Steam'de olan oyunlar gelir. Konsol özelleri için üçüncü bir kaynak gerekiyor.
+- Steam'siz (konsol özel) oyunlarda görsel ve açıklama gelmez; elle eklenir.
 - Platform başına çıkış tarihi yok; yalnızca ilk çıkış tarihi biliniyor.
 - Steam hangi dillerde altyazı olduğunu ayırmıyor; yalnızca arayüz ve seslendirme geliyor.
 - Fragman ve bitirme süresi henüz yok; sayfalar bu alanları veri olunca gösterir.
-- Wikidata yoğun adresleri dakikada bir isteğe düşürebiliyor; betik bekleyip yeniden dener.
-- Kaynak yanıtları önbelleğe alınır: yerelde `tools/catalog/.cache`, sunucuda `catalogdata`
-  volume'u (`/data/.cache`). Taze veri için önbelleği silin.
-
-### İçe aktarma biçimi
-
-`POST /v1/admin/games/import` (admin), tek istekte en fazla 500 oyun. Yalnızca `title` zorunludur.
-
-```json
-{
-  "games": [
-    {
-      "title": "The Witcher 3: Wild Hunt",
-      "status": "published",
-      "series": "The Witcher",
-      "summary": "A story-driven open world RPG.",
-      "cover_url": "https://…/cover.jpg",
-      "time_to_beat_minutes": 3090,
-      "releases": [
-        { "platform": "pc", "date": "2015-05-19" },
-        { "platform": "switch", "date": "2019-10-15" },
-        { "platform": "ps5", "date": "2027-01-01", "precision": "year" }
-      ],
-      "genres": ["RPG", "Action"],
-      "themes": ["Fantasy"],
-      "modes": ["Single player"],
-      "developers": ["CD Projekt Red"],
-      "publishers": ["CD Projekt"],
-      "external_ids": { "steam": "292030", "wikidata": "Q11163283" },
-      "screenshots": ["https://…/1.jpg"],
-      "trailers": [{ "provider": "youtube", "video_id": "c0i88t0Kacs" }],
-      "languages": [{ "language": "tr", "interface": true, "subtitles": true }],
-      "age_ratings": { "pegi": "18" },
-      "alt_titles": ["Wiedźmin 3: Dziki Gon"]
-    }
-  ]
-}
-```
-
-Kurallar:
-
-- Oyun önce `external_ids`, sonra `slug` ile eşlenir; eşleşirse güncellenir, yoksa eklenir.
-- Güncelleme oyunun tam halini yazar: ilişkiler (çıkışlar, etiketler, şirketler, medya, diller)
-  gönderilenle değiştirilir. Dış kimlikler silinmez, yalnızca eklenir.
-- Aynı adlı farklı oyun (aynı kaynakta başka kimlik) ayrı kayıt olur; slug'ına çıkış yılı eklenir.
-- `status` verilmezse yeni oyun `draft` girer, var olanın durumu korunur.
-- Ek paketlerde `kind` ve `parent_slug` verilir; ana oyun önce eklenmiş olmalıdır.
-- Görsel adresleri yalnızca `https` olabilir. Platformlar `platforms` tablosundaki slug'lardır.
-- Her oyun ayrı işlenir; yanıt her biri için `created`, `updated` ya da `failed` ve hata kodunu verir.
-
+- Wikidata yoğun adresleri yavaşlatabilir; iş bir kez yeniden dener, Steam hız sınırında bekleyip üç kez dener.
+- Wikidata tarihlerinin kesinliği okunmaz; hepsi gün sayılır. Steam tarihlerinde ay/çeyrek/yıl kesinliği korunur.

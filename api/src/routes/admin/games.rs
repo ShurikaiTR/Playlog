@@ -1,21 +1,20 @@
-//! Katalog yönetimi: toplu içe aktarma, yayın durumu ve taslak önizleme.
+//! Katalog yönetimi: oyun listesi, ekleme, düzenleme, yayın durumu ve taslak önizleme.
 
 use axum::{
     Json, Router,
-    extract::{DefaultBodyLimit, FromRequestParts, Path, Query, State},
-    http::{StatusCode, header::AUTHORIZATION, request::Parts},
-    routing::{get, patch, post},
+    extract::{Path, Query, State},
+    http::StatusCode,
+    routing::{get, patch},
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use subtle::ConstantTimeEq;
 use uuid::Uuid;
 
 use crate::{
     auth::role::{RequireAdmin, RequireModerator},
     catalog::{
-        import::{GameInput, ImportError, create_game, import_game, update_game_by_id},
+        import::{GameInput, ImportError, create_game, update_game_by_id},
         read::{self, GameDetail},
     },
     error::AppError,
@@ -23,17 +22,8 @@ use crate::{
     state::AppState,
 };
 
-/// Tek istekte en fazla bu kadar oyun; daha büyük yüklemeler parçalara bölünür.
-const MAX_BATCH: usize = 500;
-/// Açıklamalar ve görsel listeleriyle 500 oyun birkaç megabayt tutabilir.
-const MAX_BODY_BYTES: usize = 16 * 1024 * 1024;
-
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/games/import",
-            post(import).layer(DefaultBodyLimit::max(MAX_BODY_BYTES)),
-        )
         .route("/games", get(list).post(create))
         .route("/games/{key}", get(preview).put(update).delete(remove))
         .route("/games/{key}/status", patch(set_status))
@@ -78,6 +68,8 @@ struct AdminGameRow {
     release_date: Option<NaiveDate>,
     release_precision: String,
     cover_url: Option<String>,
+    /// İçe aktarma bu kaydı elle bakılacak diye işaretlediyse nedeni.
+    review_reason: Option<String>,
     updated_at: DateTime<Utc>,
     #[serde(skip)]
     total: i64,
@@ -96,8 +88,10 @@ async fn list(
     Query(query): Query<ListQuery>,
 ) -> Result<Json<AdminGamePage>, AppError> {
     read_limit(&state, actor.user_id)?;
+    // "review": içe aktarmanın elle bakılacak diye işaretlediği oyunlar.
+    let review_only = query.status.as_deref() == Some("review");
     let status = match query.status.as_deref() {
-        None | Some("") | Some("all") => None,
+        None | Some("") | Some("all") | Some("review") => None,
         Some(status @ ("draft" | "published" | "hidden")) => Some(status),
         Some(_) => return Err(AppError::Validation("invalid_status")),
     };
@@ -119,10 +113,11 @@ async fn list(
     let items: Vec<AdminGameRow> = sqlx::query_as(
         "SELECT g.id, g.slug::text AS slug, g.title, g.kind::text AS kind,
                 g.status::text AS status, g.release_date,
-                g.release_precision::text AS release_precision, g.cover_url, g.updated_at,
+                g.release_precision::text AS release_precision, g.cover_url, g.review_reason, g.updated_at,
                 count(*) OVER () AS total
            FROM games g
           WHERE ($1::text IS NULL OR g.status = $1::publish_status)
+            AND (NOT $5 OR g.review_reason IS NOT NULL)
             AND ($2::text IS NULL OR g.title ILIKE $2 OR g.slug::text ILIKE $2)
           ORDER BY g.updated_at DESC, g.id
           LIMIT $3 OFFSET $4",
@@ -131,6 +126,7 @@ async fn list(
     .bind(pattern)
     .bind(limit)
     .bind(offset)
+    .bind(review_only)
     .fetch_all(&state.db)
     .await?;
     let total = items.first().map_or(0, |row| row.total);
@@ -219,160 +215,6 @@ async fn platforms(
     .fetch_all(&state.db)
     .await?;
     Ok(Json(rows))
-}
-
-/// İçe aktarmayı kimin yaptığı: admin oturumu ya da betiğin makine anahtarı.
-/// Anahtar yalnızca bu uçta geçer; başka hiçbir yönetim ucunu açmaz.
-struct Importer(String);
-
-impl FromRequestParts<AppState> for Importer {
-    type Rejection = AppError;
-
-    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, AppError> {
-        let bearer = parts
-            .headers
-            .get(AUTHORIZATION)
-            .and_then(|value| value.to_str().ok())
-            .and_then(|value| value.strip_prefix("Bearer "));
-        if let (Some(given), Some(expected)) = (bearer, state.catalog_import_token.as_deref())
-            && bool::from(given.as_bytes().ct_eq(expected.as_bytes()))
-        {
-            return Ok(Self("import-token".into()));
-        }
-        let RequireAdmin(admin) = RequireAdmin::from_request_parts(parts, state).await?;
-        Ok(Self(admin.user_id.to_string()))
-    }
-}
-
-/// Oyunlar burada ham JSON olarak alınır ve tek tek çözülür: biçimi bozuk bir kayıt (örn. geçersiz
-/// tarih) yalnızca kendisini düşürür, gruptaki diğer oyunları değil.
-#[derive(Deserialize)]
-struct ImportBody {
-    games: Vec<serde_json::Value>,
-}
-
-#[derive(Serialize)]
-struct ImportReport {
-    created: usize,
-    updated: usize,
-    failed: usize,
-    results: Vec<ImportResult>,
-}
-
-#[derive(Serialize)]
-struct ImportResult {
-    /// Gönderilen listedeki sıra.
-    index: usize,
-    title: String,
-    outcome: &'static str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    slug: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<&'static str>,
-    /// Biçim hatasında hangi alanın neden reddedildiği.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    detail: Option<String>,
-}
-
-/// Oyunları ekler ya da günceller. Her oyun kendi transaction'ında işlenir: biri hatalıysa
-/// diğerleri yine yazılır ve rapor hangisinin neden reddedildiğini söyler.
-async fn import(
-    State(state): State<AppState>,
-    importer: Importer,
-    Json(body): Json<ImportBody>,
-) -> Result<Json<ImportReport>, AppError> {
-    if body.games.is_empty() || body.games.len() > MAX_BATCH {
-        return Err(AppError::Validation("invalid_batch_size"));
-    }
-
-    let mut report = ImportReport {
-        created: 0,
-        updated: 0,
-        failed: 0,
-        results: Vec::with_capacity(body.games.len()),
-    };
-    for (index, raw) in body.games.into_iter().enumerate() {
-        let title = raw
-            .get("title")
-            .and_then(|title| title.as_str())
-            .unwrap_or_default()
-            .chars()
-            .take(300)
-            .collect::<String>();
-        let game: GameInput = match serde_json::from_value(raw) {
-            Ok(game) => game,
-            Err(err) => {
-                report.failed += 1;
-                report.results.push(ImportResult {
-                    index,
-                    title,
-                    outcome: "failed",
-                    id: None,
-                    slug: None,
-                    error: Some("invalid_format"),
-                    detail: Some(err.to_string()),
-                });
-                continue;
-            }
-        };
-        let mut tx = state.db.begin().await?;
-        let result = match import_game(&mut tx, game).await {
-            Ok(imported) => {
-                tx.commit().await?;
-                if imported.created {
-                    report.created += 1;
-                } else {
-                    report.updated += 1;
-                }
-                ImportResult {
-                    index,
-                    title,
-                    outcome: if imported.created {
-                        "created"
-                    } else {
-                        "updated"
-                    },
-                    id: Some(imported.id),
-                    slug: Some(imported.slug),
-                    error: None,
-                    detail: None,
-                }
-            }
-            Err(err) => {
-                // Transaction bırakılınca geri alınır; bu oyundan hiçbir şey yazılmaz.
-                drop(tx);
-                report.failed += 1;
-                let code = match err {
-                    ImportError::Invalid(code) => code,
-                    ImportError::Db(err) => {
-                        tracing::error!(error = ?err, index, title, "oyun içe aktarılamadı");
-                        "internal"
-                    }
-                };
-                ImportResult {
-                    index,
-                    title,
-                    outcome: "failed",
-                    id: None,
-                    slug: None,
-                    error: Some(code),
-                    detail: None,
-                }
-            }
-        };
-        report.results.push(result);
-    }
-
-    tracing::info!(
-        actor = %importer.0,
-        created = report.created,
-        updated = report.updated,
-        failed = report.failed,
-        "katalog içe aktarma"
-    );
-    Ok(Json(report))
 }
 
 /// Yayında olmayanlar dahil oyunun tamamı; yayına almadan önce gözden geçirmek için.

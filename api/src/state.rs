@@ -2,7 +2,13 @@ use std::sync::Arc;
 
 use sqlx::PgPool;
 
-use crate::{mail::Mailer, oauth::OAuth, ratelimit::RateLimiter, turnstile::Turnstile};
+use crate::{
+    catalog::{job::JobSlot, source::Source},
+    mail::Mailer,
+    oauth::OAuth,
+    ratelimit::RateLimiter,
+    turnstile::Turnstile,
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -15,6 +21,8 @@ pub struct AppState {
     pub oauth: Arc<OAuth>,
     /// Yalnızca TURNSTILE_SECRET tanımlıysa var; yoksa bot doğrulaması atlanır (yerel geliştirme).
     pub turnstile: Option<Arc<Turnstile>>,
-    /// Katalog içe aktarma betiği için makine anahtarı; yalnızca içe aktarma ucunda geçer.
-    pub catalog_import_token: Option<Arc<str>>,
+    /// Wikidata ve Steam istemcisi (katalog içe aktarma).
+    pub source: Arc<Source>,
+    /// Çalışan ya da son biten toplu içe aktarma işi.
+    pub import_job: Arc<JobSlot>,
 }

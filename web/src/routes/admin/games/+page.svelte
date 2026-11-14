@@ -17,6 +17,7 @@
 	import StatusBadge from '#lib/features/admin/status-badge.svelte';
 	import { formatRelease, type DatePrecision } from '#lib/features/games/games.js';
 	import type { AdminGameRow } from '#lib/server/admin.js';
+	import DownloadIcon from '@lucide/svelte/icons/download';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import type { PageProps } from './$types';
@@ -33,7 +34,8 @@
 		all: 'All statuses',
 		published: 'Published',
 		draft: 'Draft',
-		hidden: 'Hidden'
+		hidden: 'Hidden',
+		review: 'Needs review'
 	};
 
 	const dateFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
@@ -63,7 +65,8 @@
 				renderComponent(GameTitleCell, {
 					slug: row.original.slug,
 					title: row.original.title,
-					cover: row.original.cover_url
+					cover: row.original.cover_url,
+					review: row.original.review_reason
 				})
 		},
 		{
@@ -103,6 +106,11 @@
 
 <AdminPageHeader description="Everything in the catalog, drafts included.">
 	{#snippet actions()}
+		{#if data.canImport}
+			<Button href="/admin/games/import" size="lg" variant="secondary"
+				><DownloadIcon />Import</Button
+			>
+		{/if}
 		<Button href="/admin/games/new" size="lg"><PlusIcon />New game</Button>
 	{/snippet}
 </AdminPageHeader>

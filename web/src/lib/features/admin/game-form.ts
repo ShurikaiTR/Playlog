@@ -93,6 +93,17 @@ export const adminErrors: Record<string, string> = {
 	game_not_found: 'That game no longer exists.',
 	rate_limited: 'Too many changes in a short time. Try again in a few minutes.',
 	forbidden: 'You are not allowed to do that.',
+	conflicting_external_ids: 'That game is already in the catalog under another entry.',
+	invalid_query: 'Type at least two characters, or paste a Steam link.',
+	invalid_steam_reference: 'That is not a Steam link or app id.',
+	steam_app_not_found: 'Steam has no game with that id.',
+	steam_app_not_a_game: 'That Steam item is not a game (DLC, tool or video).',
+	wikidata_item_not_found: 'No game was found for that entry.',
+	source_unavailable: 'Wikidata or Steam did not answer. Try again in a moment.',
+	import_running: 'An import is already running.',
+	no_import_job: 'There is no import to stop.',
+	invalid_batch_size: 'Pick between 1 and 500 games.',
+	invalid_year: 'Years must be between 1950 and 2100.',
 	unavailable: 'The API could not be reached. Try again.'
 };
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
@@ -22,7 +23,8 @@
 		platforms,
 		submitLabel,
 		action = undefined,
-		error = null
+		error = null,
+		extra
 	}: {
 		initial: GameFormValues;
 		platforms: PlatformOption[];
@@ -30,6 +32,8 @@
 		/** The form action to post to; the page's default action when empty. */
 		action?: string;
 		error?: string | null;
+		/** Extra markup inside the form, e.g. hidden fields. */
+		extra?: Snippet;
 	} = $props();
 
 	// The form owns its values from here on, so a failed save keeps what was typed.
@@ -110,6 +114,7 @@
 		};
 	}}
 >
+	{@render extra?.()}
 	<div class="grid min-w-0 gap-6">
 		{#if error}
 			<p class="rounded-2xl bg-destructive/10 px-4 py-3 text-callout text-destructive" role="alert">

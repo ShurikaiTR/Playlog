@@ -4,7 +4,7 @@ import { adminApi, requireStaff, type AdminGameRow } from '#lib/server/admin.js'
 import type { Actions, PageServerLoad } from './$types';
 
 const PER_PAGE = 25;
-const STATUSES = ['draft', 'published', 'hidden'];
+const STATUSES = ['draft', 'published', 'hidden', 'review'];
 
 export const load: PageServerLoad = async (event) => {
 	const { user } = requireStaff(event.locals);
@@ -29,7 +29,8 @@ export const load: PageServerLoad = async (event) => {
 		status,
 		page,
 		perPage: PER_PAGE,
-		canDelete: user.role === 'admin'
+		canDelete: user.role === 'admin',
+		canImport: user.role === 'admin'
 	};
 };
 

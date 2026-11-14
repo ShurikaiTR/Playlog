@@ -1,7 +1,7 @@
 //! Kataloğa oyun ekleme ve güncelleme. Veri dış kaynaklardan (Wikidata, Steam...) derlenip
 //! bu biçimde gönderilir; aynı oyun dış kimliğinden tanınır ve ikinci kez eklenmez.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use chrono::NaiveDate;
 use serde::Deserialize;
@@ -78,6 +78,8 @@ pub struct GameInput {
     pub age_ratings: BTreeMap<String, String>,
     #[serde(default)]
     pub alt_titles: Vec<String>,
+    /// İçe aktarmanın bu kaydı elle bakılacak diye işaretlediği neden; panelden kaydedilince temizlenir.
+    pub review_reason: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -130,13 +132,21 @@ pub struct Imported {
 /// Güncellemede oyunun alanları ve tüm ilişkileri (çıkışlar, etiketler, şirketler, medya, diller)
 /// gönderilenle değiştirilir: içe aktarma kaynağı o oyunun tam halini gönderir.
 pub async fn import_game(tx: &mut PgConnection, input: GameInput) -> Result<Imported, ImportError> {
-    let game = Validated::new(input)?;
+    let mut game = Validated::new(input)?;
 
     let existing = find_existing(tx, &game).await?;
     let (id, slug, created) = match existing {
         Some((id, slug)) => {
+            // Yeniden içe aktarma yönetici düzenlemelerinin üzerine yazmaz.
+            let snapshot = Snapshot::load(tx, id).await?;
+            game.keep_manual_edits(&snapshot);
             update_game(tx, id, &game).await?;
-            (id, slug, false)
+            replace_relations(tx, id, &game, &snapshot.locked).await?;
+            return Ok(Imported {
+                id,
+                slug,
+                created: false,
+            });
         }
         None => {
             let slug = free_slug(tx, &game).await?;
@@ -145,7 +155,7 @@ pub async fn import_game(tx: &mut PgConnection, input: GameInput) -> Result<Impo
         }
     };
 
-    replace_relations(tx, id, &game).await?;
+    replace_relations(tx, id, &game, &BTreeSet::new()).await?;
     Ok(Imported { id, slug, created })
 }
 
@@ -167,7 +177,7 @@ pub async fn create_game(tx: &mut PgConnection, input: GameInput) -> Result<Impo
         free_slug(tx, &game).await?
     };
     let id = insert_game(tx, &slug, &game).await?;
-    replace_relations(tx, id, &game).await?;
+    replace_relations(tx, id, &game, &BTreeSet::new()).await?;
     Ok(Imported {
         id,
         slug,
@@ -226,8 +236,17 @@ pub async fn update_game_by_id(
         .await?;
     }
 
+    // Elle değiştirilen alanlar kilitlenir: sonraki içe aktarmalar onlara dokunmaz.
+    let snapshot = Snapshot::load(tx, id).await?;
+    let mut locked = snapshot.locked.clone();
+    locked.extend(snapshot.changed_by(&game).into_iter().map(str::to_owned));
     update_game(tx, id, &game).await?;
-    replace_relations(tx, id, &game).await?;
+    sqlx::query("UPDATE games SET locked_fields = $2 WHERE id = $1")
+        .bind(id)
+        .bind(locked.iter().cloned().collect::<Vec<_>>())
+        .execute(&mut *tx)
+        .await?;
+    replace_relations(tx, id, &game, &BTreeSet::new()).await?;
     Ok(Some(Imported {
         id,
         slug,
@@ -259,6 +278,7 @@ struct Validated {
     status: Option<&'static str>,
     release: (Option<NaiveDate>, &'static str),
     releases: Vec<(String, String, Option<NaiveDate>, &'static str)>,
+    review: Option<String>,
 }
 
 impl Validated {
@@ -385,6 +405,12 @@ impl Validated {
             }
         }
 
+        let review = input
+            .review_reason
+            .as_deref()
+            .map(str::trim)
+            .filter(|reason| !reason.is_empty())
+            .map(|reason| reason.chars().take(200).collect::<String>());
         Ok(Self {
             input,
             slug,
@@ -392,6 +418,7 @@ impl Validated {
             status,
             release,
             releases,
+            review,
         })
     }
 }
@@ -580,9 +607,9 @@ async fn insert_game(
         "INSERT INTO games
              (slug, title, kind, parent_id, series_id, summary, release_date,
               release_precision, cover_url, backdrop_url, logo_url, time_to_beat_minutes,
-              pc_requirements, status)
+              pc_requirements, status, review_reason)
          VALUES ($1, $2, $3::game_kind, $4, $5, $6, $7, $8::date_precision, $9, $10, $11,
-                 $12, $13, $14::publish_status)
+                 $12, $13, $14::publish_status, $15)
          RETURNING id",
     )
     .bind(slug)
@@ -599,6 +626,7 @@ async fn insert_game(
     .bind(input.time_to_beat_minutes)
     .bind(&input.pc_requirements)
     .bind(game.status.unwrap_or("draft"))
+    .bind(&game.review)
     .fetch_one(&mut *tx)
     .await?)
 }
@@ -616,6 +644,7 @@ async fn update_game(tx: &mut PgConnection, id: Uuid, game: &Validated) -> Resul
                 cover_url = $9, backdrop_url = $10, logo_url = $11, time_to_beat_minutes = $12,
                 pc_requirements = $13,
                 status = COALESCE($14::publish_status, status),
+                review_reason = $15,
                 updated_at = now()
           WHERE id = $1",
     )
@@ -633,6 +662,7 @@ async fn update_game(tx: &mut PgConnection, id: Uuid, game: &Validated) -> Resul
     .bind(input.time_to_beat_minutes)
     .bind(&input.pc_requirements)
     .bind(game.status)
+    .bind(&game.review)
     .execute(&mut *tx)
     .await?;
     Ok(())
@@ -644,22 +674,32 @@ async fn replace_relations(
     tx: &mut PgConnection,
     id: Uuid,
     game: &Validated,
+    locked: &BTreeSet<String>,
 ) -> Result<(), ImportError> {
     let input = &game.input;
+    let open = |group: &str| !locked.contains(group);
 
-    for delete in [
-        "DELETE FROM game_releases WHERE game_id = $1",
-        "DELETE FROM game_tags WHERE game_id = $1",
-        "DELETE FROM game_companies WHERE game_id = $1",
-        "DELETE FROM game_media WHERE game_id = $1",
-        "DELETE FROM game_languages WHERE game_id = $1",
-        "DELETE FROM game_age_ratings WHERE game_id = $1",
-        "DELETE FROM game_alt_titles WHERE game_id = $1",
+    for (group, delete) in [
+        ("platforms", "DELETE FROM game_releases WHERE game_id = $1"),
+        ("tags", "DELETE FROM game_tags WHERE game_id = $1"),
+        ("companies", "DELETE FROM game_companies WHERE game_id = $1"),
+        ("media", "DELETE FROM game_media WHERE game_id = $1"),
+        ("languages", "DELETE FROM game_languages WHERE game_id = $1"),
+        (
+            "age_ratings",
+            "DELETE FROM game_age_ratings WHERE game_id = $1",
+        ),
+        (
+            "alt_titles",
+            "DELETE FROM game_alt_titles WHERE game_id = $1",
+        ),
     ] {
-        sqlx::query(delete).bind(id).execute(&mut *tx).await?;
+        if open(group) {
+            sqlx::query(delete).bind(id).execute(&mut *tx).await?;
+        }
     }
 
-    for (platform, region, date, precision) in &game.releases {
+    for (platform, region, date, precision) in game.releases.iter().filter(|_| open("platforms")) {
         let platform_id: i16 = sqlx::query_scalar("SELECT id FROM platforms WHERE slug = $1")
             .bind(platform)
             .fetch_optional(&mut *tx)
@@ -685,7 +725,7 @@ async fn replace_relations(
         ("mode", &input.modes),
         ("perspective", &input.perspectives),
     ] {
-        for name in names {
+        for name in names.iter().filter(|_| open("tags")) {
             let name = name.trim();
             let tag_slug = slugify(name);
             if tag_slug.is_empty() || name.chars().count() > 80 {
@@ -712,7 +752,7 @@ async fn replace_relations(
         ("developer", &input.developers),
         ("publisher", &input.publishers),
     ] {
-        for name in names {
+        for name in names.iter().filter(|_| open("companies")) {
             let name = name.trim();
             let company_slug = slugify(name);
             if company_slug.is_empty() || name.chars().count() > 200 {
@@ -756,7 +796,7 @@ async fn replace_relations(
         ("screenshot", &input.screenshots),
         ("artwork", &input.artworks),
     ] {
-        for (position, url) in urls.iter().enumerate() {
+        for (position, url) in urls.iter().enumerate().filter(|_| open("media")) {
             sqlx::query(
                 "INSERT INTO game_media (game_id, kind, url, position)
                  VALUES ($1, $2::media_kind, $3, $4)",
@@ -769,7 +809,7 @@ async fn replace_relations(
             .await?;
         }
     }
-    for (position, trailer) in input.trailers.iter().enumerate() {
+    for (position, trailer) in input.trailers.iter().enumerate().filter(|_| open("media")) {
         sqlx::query(
             "INSERT INTO game_media (game_id, kind, provider, video_id, position)
              VALUES ($1, 'trailer', $2, $3, $4)",
@@ -782,7 +822,7 @@ async fn replace_relations(
         .await?;
     }
 
-    for language in &input.languages {
+    for language in input.languages.iter().filter(|_| open("languages")) {
         sqlx::query(
             "INSERT INTO game_languages (game_id, language, interface, audio, subtitles)
              VALUES ($1, $2, $3, $4, $5)
@@ -797,7 +837,7 @@ async fn replace_relations(
         .await?;
     }
 
-    for (board, rating) in &input.age_ratings {
+    for (board, rating) in input.age_ratings.iter().filter(|_| open("age_ratings")) {
         sqlx::query("INSERT INTO game_age_ratings (game_id, board, rating) VALUES ($1, $2, $3)")
             .bind(id)
             .bind(board)
@@ -806,7 +846,7 @@ async fn replace_relations(
             .await?;
     }
 
-    for title in &input.alt_titles {
+    for title in input.alt_titles.iter().filter(|_| open("alt_titles")) {
         let title = title.trim();
         if title.is_empty() || title.chars().count() > 300 {
             return Err(ImportError::Invalid("invalid_alt_title"));
@@ -821,6 +861,285 @@ async fn replace_relations(
     }
 
     Ok(())
+}
+
+/// Oyunun veritabanındaki hali; yönetici düzenlemelerini kilitlemek ve korumak için.
+struct Snapshot {
+    title: String,
+    kind: String,
+    parent_slug: Option<String>,
+    summary: Option<String>,
+    release: (Option<NaiveDate>, String),
+    cover_url: Option<String>,
+    backdrop_url: Option<String>,
+    logo_url: Option<String>,
+    series: Option<String>,
+    genres: Vec<String>,
+    themes: Vec<String>,
+    modes: Vec<String>,
+    perspectives: Vec<String>,
+    developers: Vec<String>,
+    publishers: Vec<String>,
+    platforms: BTreeSet<String>,
+    media: BTreeSet<String>,
+    languages: BTreeSet<String>,
+    alt_titles: BTreeSet<String>,
+    locked: BTreeSet<String>,
+}
+
+#[derive(sqlx::FromRow)]
+struct GameRow {
+    title: String,
+    kind: String,
+    parent_slug: Option<String>,
+    summary: Option<String>,
+    release_date: Option<NaiveDate>,
+    release_precision: String,
+    cover_url: Option<String>,
+    backdrop_url: Option<String>,
+    logo_url: Option<String>,
+    series: Option<String>,
+    locked_fields: Vec<String>,
+}
+
+fn blank_to_none(value: &Option<String>) -> Option<&str> {
+    value.as_deref().map(str::trim).filter(|v| !v.is_empty())
+}
+
+/// Ad listesini kıyaslanabilir bir kümeye çevirir (slug'a göre, tekrarsız).
+fn slugs(prefix: &str, names: &[String]) -> BTreeSet<String> {
+    names
+        .iter()
+        .map(|name| format!("{prefix}:{}", slugify(name.trim())))
+        .collect()
+}
+
+impl Snapshot {
+    async fn load(tx: &mut PgConnection, id: Uuid) -> Result<Self, ImportError> {
+        let row: GameRow = sqlx::query_as(
+            "SELECT g.title, g.kind::text AS kind, p.slug::text AS parent_slug, g.summary,
+                    g.release_date, g.release_precision::text AS release_precision,
+                    g.cover_url, g.backdrop_url, g.logo_url, s.name AS series, g.locked_fields
+               FROM games g
+               LEFT JOIN games p ON p.id = g.parent_id
+               LEFT JOIN series s ON s.id = g.series_id
+              WHERE g.id = $1",
+        )
+        .bind(id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let tags: Vec<(String, String)> = sqlx::query_as(
+            "SELECT t.kind::text, t.name FROM game_tags gt JOIN tags t ON t.id = gt.tag_id
+              WHERE gt.game_id = $1 ORDER BY t.name",
+        )
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await?;
+        let of_kind = |kind: &str| {
+            tags.iter()
+                .filter(|(k, _)| k == kind)
+                .map(|(_, name)| name.clone())
+                .collect::<Vec<_>>()
+        };
+        let companies: Vec<(String, String)> = sqlx::query_as(
+            "SELECT gc.role::text, c.name FROM game_companies gc JOIN companies c ON c.id = gc.company_id
+              WHERE gc.game_id = $1 ORDER BY c.name",
+        )
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await?;
+        let role = |role: &str| {
+            companies
+                .iter()
+                .filter(|(r, _)| r == role)
+                .map(|(_, name)| name.clone())
+                .collect::<Vec<_>>()
+        };
+        let platforms: Vec<String> = sqlx::query_scalar(
+            "SELECT p.slug::text FROM game_releases r JOIN platforms p ON p.id = r.platform_id
+              WHERE r.game_id = $1",
+        )
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await?;
+        let media: Vec<String> = sqlx::query_scalar(
+            "SELECT kind::text || ':' || COALESCE(url, provider || ':' || video_id)
+               FROM game_media WHERE game_id = $1",
+        )
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await?;
+        let languages: Vec<String> =
+            sqlx::query_scalar("SELECT language FROM game_languages WHERE game_id = $1")
+                .bind(id)
+                .fetch_all(&mut *tx)
+                .await?;
+        let alt_titles: Vec<String> =
+            sqlx::query_scalar("SELECT title FROM game_alt_titles WHERE game_id = $1")
+                .bind(id)
+                .fetch_all(&mut *tx)
+                .await?;
+
+        Ok(Self {
+            title: row.title,
+            kind: row.kind,
+            parent_slug: row.parent_slug,
+            summary: row.summary,
+            release: (row.release_date, row.release_precision),
+            cover_url: row.cover_url,
+            backdrop_url: row.backdrop_url,
+            logo_url: row.logo_url,
+            series: row.series,
+            genres: of_kind("genre"),
+            themes: of_kind("theme"),
+            modes: of_kind("mode"),
+            perspectives: of_kind("perspective"),
+            developers: role("developer"),
+            publishers: role("publisher"),
+            platforms: platforms.into_iter().collect(),
+            media: media.into_iter().collect(),
+            languages: languages.into_iter().collect(),
+            alt_titles: alt_titles.into_iter().collect(),
+            locked: row.locked_fields.into_iter().collect(),
+        })
+    }
+
+    /// Gönderilenle farklı olan alan grupları: yönetici bunları elle değiştirmiştir.
+    fn changed_by(&self, game: &Validated) -> Vec<&'static str> {
+        let input = &game.input;
+        let mut changed = Vec::new();
+        let mut check = |group: &'static str, differs: bool| {
+            if differs {
+                changed.push(group);
+            }
+        };
+        check("title", self.title != input.title);
+        check(
+            "summary",
+            blank_to_none(&self.summary) != blank_to_none(&input.summary),
+        );
+        check(
+            "release",
+            self.release != (game.release.0, game.release.1.to_owned()),
+        );
+        check(
+            "cover",
+            blank_to_none(&self.cover_url) != blank_to_none(&input.cover_url),
+        );
+        check(
+            "backdrop",
+            blank_to_none(&self.backdrop_url) != blank_to_none(&input.backdrop_url),
+        );
+        check(
+            "logo",
+            blank_to_none(&self.logo_url) != blank_to_none(&input.logo_url),
+        );
+        check(
+            "series",
+            blank_to_none(&self.series).map(slugify) != blank_to_none(&input.series).map(slugify),
+        );
+        let tags =
+            |genres: &[String], themes: &[String], modes: &[String], perspectives: &[String]| {
+                let mut all = slugs("genre", genres);
+                all.extend(slugs("theme", themes));
+                all.extend(slugs("mode", modes));
+                all.extend(slugs("perspective", perspectives));
+                all
+            };
+        check(
+            "tags",
+            tags(&self.genres, &self.themes, &self.modes, &self.perspectives)
+                != tags(
+                    &input.genres,
+                    &input.themes,
+                    &input.modes,
+                    &input.perspectives,
+                ),
+        );
+        let companies = |developers: &[String], publishers: &[String]| {
+            let mut all = slugs("developer", developers);
+            all.extend(slugs("publisher", publishers));
+            all
+        };
+        check(
+            "companies",
+            companies(&self.developers, &self.publishers)
+                != companies(&input.developers, &input.publishers),
+        );
+        let platforms: BTreeSet<String> = game.releases.iter().map(|r| r.0.clone()).collect();
+        check("platforms", self.platforms != platforms);
+        let mut media: BTreeSet<String> = input
+            .screenshots
+            .iter()
+            .map(|url| format!("screenshot:{url}"))
+            .collect();
+        media.extend(input.artworks.iter().map(|url| format!("artwork:{url}")));
+        media.extend(
+            input
+                .trailers
+                .iter()
+                .map(|t| format!("trailer:{}:{}", t.provider, t.video_id)),
+        );
+        check("media", self.media != media);
+        let languages: BTreeSet<String> =
+            input.languages.iter().map(|l| l.language.clone()).collect();
+        check("languages", self.languages != languages);
+        let alt_titles: BTreeSet<String> = input
+            .alt_titles
+            .iter()
+            .map(|t| t.trim().to_owned())
+            .collect();
+        check("alt_titles", self.alt_titles != alt_titles);
+        changed
+    }
+}
+
+impl Validated {
+    /// Yeniden içe aktarmada: kilitli alanlar kayıtlı değerinde kalır; tür, ana oyun ve durum
+    /// içe aktarmayla hiç değişmez.
+    fn keep_manual_edits(&mut self, stored: &Snapshot) {
+        let locked = |group: &str| stored.locked.contains(group);
+        self.kind = KINDS
+            .iter()
+            .find(|kind| **kind == stored.kind)
+            .copied()
+            .unwrap_or(self.kind);
+        self.input.parent_slug = stored.parent_slug.clone();
+        self.status = None;
+        if locked("title") {
+            self.input.title = stored.title.clone();
+        }
+        if locked("summary") {
+            self.input.summary = stored.summary.clone();
+        }
+        if locked("release") {
+            self.release = (
+                stored.release.0,
+                PRECISIONS
+                    .iter()
+                    .chain(&["tba"])
+                    .find(|p| **p == stored.release.1)
+                    .copied()
+                    .unwrap_or("tba"),
+            );
+            self.input.release_date = stored.release.0;
+            // Tarihi elle verilmiş bir oyun gözden geçirmeye gerek bırakmaz.
+            self.review = None;
+        }
+        if locked("cover") {
+            self.input.cover_url = stored.cover_url.clone();
+        }
+        if locked("backdrop") {
+            self.input.backdrop_url = stored.backdrop_url.clone();
+        }
+        if locked("logo") {
+            self.input.logo_url = stored.logo_url.clone();
+        }
+        if locked("series") {
+            self.input.series = stored.series.clone();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -933,5 +1252,127 @@ mod tests {
         for bad in ["", "e", "EN", "english", "pt_BR", "pt-"] {
             assert!(!language_ok(bad), "{bad}");
         }
+    }
+}
+
+/// Gerçek bir PostgreSQL ister: `TEST_DATABASE_URL=… cargo test -- --ignored locks`.
+#[cfg(test)]
+mod db_tests {
+    use super::*;
+
+    async fn pool() -> sqlx::PgPool {
+        let url = std::env::var("TEST_DATABASE_URL").unwrap();
+        let pool = sqlx::PgPool::connect(&url).await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        pool
+    }
+
+    fn game(json: serde_json::Value) -> GameInput {
+        serde_json::from_value(json).unwrap()
+    }
+
+    #[tokio::test]
+    #[ignore = "veritabanı ister"]
+    async fn locks_survive_reimport() {
+        let pool = pool().await;
+        let ids = serde_json::json!({ "steam": "424242", "wikidata": "Q424242" });
+        let mut tx = pool.begin().await.unwrap();
+        let first = import_game(
+            &mut tx,
+            game(serde_json::json!({
+                "title": "Lock Test", "status": "published", "summary": "from steam",
+                "release_date": "2020-01-01", "genres": ["Action"], "developers": ["Studio A"],
+                "review_reason": "No release date found",
+                "releases": [{ "platform": "pc" }], "external_ids": ids
+            })),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(first.created);
+        tx.commit().await.unwrap();
+
+        // Yönetici yalnızca özeti ve türleri değiştirir.
+        let mut tx = pool.begin().await.unwrap();
+        update_game_by_id(
+            &mut tx,
+            first.id,
+            game(serde_json::json!({
+                "title": "Lock Test", "slug": first.slug, "status": "published",
+                "summary": "written by hand", "release_date": "2020-01-01",
+                "genres": ["Action", "Puzzle"], "developers": ["Studio A"],
+                "releases": [{ "platform": "pc" }], "external_ids": ids
+            })),
+        )
+        .await
+        .ok()
+        .unwrap();
+        tx.commit().await.unwrap();
+        let (locked, review): (Vec<String>, Option<String>) =
+            sqlx::query_as("SELECT locked_fields, review_reason FROM games WHERE id = $1")
+                .bind(first.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(locked, vec!["summary".to_owned(), "tags".to_owned()]);
+        assert_eq!(review, None);
+
+        // Yeniden içe aktarma: kilitli alanlar kalır, açık olanlar güncellenir, durum değişmez.
+        let mut tx = pool.begin().await.unwrap();
+        let again = import_game(
+            &mut tx,
+            game(serde_json::json!({
+                "title": "Lock Test (Remaster)", "status": "draft", "summary": "from steam again",
+                "release_date": "2021-02-02", "genres": ["Shooter"], "developers": ["Studio B"],
+                "releases": [{ "platform": "pc" }, { "platform": "ps5" }], "external_ids": ids
+            })),
+        )
+        .await
+        .ok()
+        .unwrap();
+        tx.commit().await.unwrap();
+        assert!(!again.created);
+        assert_eq!(again.id, first.id);
+        let (title, summary, status, date): (String, Option<String>, String, Option<NaiveDate>) =
+            sqlx::query_as(
+                "SELECT title, summary, status::text, release_date FROM games WHERE id = $1",
+            )
+            .bind(first.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(summary.as_deref(), Some("written by hand"));
+        assert_eq!(title, "Lock Test (Remaster)");
+        assert_eq!(status, "published");
+        assert_eq!(date, NaiveDate::from_ymd_opt(2021, 2, 2));
+        let genres: Vec<String> = sqlx::query_scalar(
+            "SELECT t.name FROM game_tags g JOIN tags t ON t.id = g.tag_id WHERE g.game_id = $1 ORDER BY 1",
+        )
+        .bind(first.id)
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+        assert_eq!(genres, vec!["Action".to_owned(), "Puzzle".to_owned()]);
+        let companies: Vec<String> = sqlx::query_scalar(
+            "SELECT c.name FROM game_companies g JOIN companies c ON c.id = g.company_id WHERE g.game_id = $1",
+        )
+        .bind(first.id)
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+        assert_eq!(companies, vec!["Studio B".to_owned()]);
+        let platforms: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM game_releases WHERE game_id = $1")
+                .bind(first.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(platforms, 2);
+
+        sqlx::query("DELETE FROM games WHERE id = $1")
+            .bind(first.id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 }
