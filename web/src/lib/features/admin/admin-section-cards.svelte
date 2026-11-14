@@ -112,14 +112,14 @@
 			alt=""
 			width="220"
 			height="165"
-			class="pointer-events-none absolute -bottom-2 end-3 hidden h-auto w-52 sm:block dark:hidden"
+			class="pointer-events-none absolute end-3 -bottom-2 hidden h-auto w-52 sm:block dark:hidden"
 		/>
 		<img
 			src="/mascot/happy-dark.svg"
 			alt=""
 			width="220"
 			height="165"
-			class="pointer-events-none absolute -bottom-2 end-3 hidden h-auto w-52 dark:sm:block"
+			class="pointer-events-none absolute end-3 -bottom-2 hidden h-auto w-52 dark:sm:block"
 		/>
 	</Card.Root>
 
