@@ -130,10 +130,7 @@ impl OAuth {
         let apple = apple.map(Apple::from_config).transpose()?;
         let http = openidconnect::reqwest::ClientBuilder::new()
             .redirect(openidconnect::reqwest::redirect::Policy::none())
-            .connect_timeout(Duration::from_secs(3))
-            // Sunucuda IPv6 çıkışı bozuksa Google'a bağlanma 10 sn takılıp girişi düşürüyordu; yalnızca IPv4.
-            .local_address(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
-            .timeout(Duration::from_secs(8))
+            .timeout(Duration::from_secs(10))
             .build()?;
         let api_http = reqwest::Client::builder()
             .timeout(Duration::from_secs(10))
